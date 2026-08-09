@@ -2550,9 +2550,10 @@ function saveCreatedCoord() {
 // ⚠️ サイト公開URLが決まったらここを差し替えてください
 const SITE_URL = 'https://taipak5000.github.io/tai-item/';
 const SHARE_HASHTAG = '#Skyアイテム所持率';
-// ランダムコーデ・マイコーデ・お気に入りアイテムの共有専用タグ
-// （達成率の共有は引き続きSHARE_HASHTAGを使う）
+// ランダムコーデ・マイコーデの共有専用タグ（達成率の共有は引き続きSHARE_HASHTAGを使う）
 const COORD_SHARE_HASHTAG = '#Sky所持率管理コーデ';
+// お気に入りアイテム紹介の共有専用タグ
+const FAV_SHARE_HASHTAG = '#Sky所持率管理お気に入り';
 
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, c => ({
@@ -3302,10 +3303,10 @@ function buildFavExportCardEl(items, comment, style, theme, bgImageDataUrl) {
 
 // お気に入り共有時のコメント文（未入力時は既定の文言、入力時はそちらを使う）
 function buildFavShareText(comment) {
-  if (comment) return `${comment}\n\n${SITE_URL}\n${COORD_SHARE_HASHTAG}`;
+  if (comment) return `${comment}\n\n${SITE_URL}\n${FAV_SHARE_HASHTAG}`;
   return CURRENT_LANG === 'en'
-    ? `⭐ My favorite items\n\n${SITE_URL}\n${COORD_SHARE_HASHTAG}`
-    : `⭐ お気に入りアイテムまとめ\n\n${SITE_URL}\n${COORD_SHARE_HASHTAG}`;
+    ? `⭐ My favorite items\n\n${SITE_URL}\n${FAV_SHARE_HASHTAG}`
+    : `⭐ お気に入りアイテムまとめ\n\n${SITE_URL}\n${FAV_SHARE_HASHTAG}`;
 }
 
 function saveFavAsImage() {
