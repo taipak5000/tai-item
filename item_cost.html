@@ -643,6 +643,23 @@ const CAT_LABELS = {
   large_placeable: '大きい設置アイテム', small_placeable: '小さい設置アイテム',
 };
 
+// ギフトパスはカテゴリ別アイテムではなく単体の課金プロダクトのため、
+// 「giftpass」という特殊なカテゴリキー1件だけを持つ疑似アイテムとして扱う
+const GIFT_PASS_CAT_KEY = 'giftpass';
+const GIFT_PASS_ITEM = { id: 'gift_pass', name: 'ギフトパス', nameEn: 'Gift Pass', icon: '🎟️', cost: { type: 'money', value: 867 } };
+
+// カテゴリキーに対応する「実額（money）」アイテム一覧を返す（ギフトパスの特殊枠を含む）
+function getGiftPickableItems(catKey) {
+  if (catKey === GIFT_PASS_CAT_KEY) return [GIFT_PASS_ITEM];
+  return (ITEM_COST_DATA[catKey] || []).filter(it => it.cost && it.cost.type === 'money');
+}
+
+// カテゴリキー＋アイテムIDから実額アイテムを1件引く（ギフトパスの特殊枠を含む）
+function getGiftPickableItem(catKey, itemId) {
+  if (catKey === GIFT_PASS_CAT_KEY) return itemId === GIFT_PASS_ITEM.id ? GIFT_PASS_ITEM : null;
+  return (ITEM_COST_DATA[catKey] || []).find(i => i.id === itemId);
+}
+
 const GIFT_HISTORY_KEY = nsKey('giftHistory_v1');
 function loadGiftHistory() {
   try { return JSON.parse(localStorage.getItem(GIFT_HISTORY_KEY)) || []; }
@@ -685,6 +702,7 @@ function populateGiftCatSelect() {
   const sel = document.getElementById('giftCatSelect');
   const en = CURRENT_LANG === 'en';
   sel.innerHTML = `<option value="">${en ? 'Select a category' : 'カテゴリを選択'}</option>` +
+    `<option value="${GIFT_PASS_CAT_KEY}">🎟️ ${en ? 'Gift Pass' : 'ギフトパス'}</option>` +
     Object.keys(CAT_LABELS).map(k => `<option value="${k}">${escapeHtml(trCat(CAT_LABELS[k]))}</option>`).join('');
 }
 
@@ -719,8 +737,7 @@ function renderGiftItemPicker() {
   picker.style.display = 'flex';
 
   const q = filterInput.value.trim().toLowerCase();
-  const moneyItems = (ITEM_COST_DATA[catKey] || [])
-    .filter(it => it.cost && it.cost.type === 'money')
+  const moneyItems = getGiftPickableItems(catKey)
     .filter(it => !q || it.name.toLowerCase().includes(q));
 
   if (moneyItems.length === 0) {
@@ -735,7 +752,7 @@ function renderGiftItemPicker() {
       <div class="gift-item-picker-row ${selected ? 'selected' : ''}" onclick="selectGiftItem('${catKey}','${it.id}')">
         <div class="item-thumb ${img ? '' : 'img-fallback'}">
           ${img ? `<img src="${img}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('img-fallback')">` : ''}
-          <span class="item-thumb-fallback">🏷️</span>
+          <span class="item-thumb-fallback">${it.icon || '🏷️'}</span>
         </div>
         <span class="gift-item-picker-name">${escapeHtml(it.name)}</span>
         <span class="gift-item-picker-cost">¥${it.cost.value.toLocaleString()}</span>
@@ -753,14 +770,14 @@ function selectGiftItem(catKey, itemId) {
 function updateGiftItemPreview() {
   const preview = document.getElementById('giftItemPreview');
   const thumb = document.getElementById('giftItemPreviewThumb');
-  const it = giftSelectedItem
-    ? (ITEM_COST_DATA[giftSelectedItem.catKey] || []).find(i => i.id === giftSelectedItem.itemId)
-    : null;
+  const it = giftSelectedItem ? getGiftPickableItem(giftSelectedItem.catKey, giftSelectedItem.itemId) : null;
   if (!it) { preview.style.display = 'none'; return; }
 
   const img = itemImgMap && itemImgMap[giftSelectedItem.itemId];
   thumb.classList.toggle('img-fallback', !img);
   if (img) document.getElementById('giftItemPreviewImg').src = img;
+  const fallbackEl = thumb.querySelector('.item-thumb-fallback');
+  if (fallbackEl) fallbackEl.textContent = it.icon || '🏷️';
   document.getElementById('giftItemPreviewLabel').textContent = it.name;
   preview.style.display = 'flex';
 }
@@ -832,7 +849,7 @@ function renderGiftHistoryList() {
   }
 
   el.innerHTML = list.slice().reverse().map(g => {
-    const it = (ITEM_COST_DATA[g.catKey] || []).find(i => i.id === g.itemId);
+    const it = getGiftPickableItem(g.catKey, g.itemId);
     const itemName = it ? it.name : g.itemId;
     const costTxt = (it && it.cost && it.cost.type === 'money') ? `¥${it.cost.value.toLocaleString()}` : (en ? 'No data' : 'データなし');
     const img = itemImgMap && itemImgMap[g.itemId];
@@ -840,7 +857,7 @@ function renderGiftHistoryList() {
       <div class="gift-record">
         <div class="item-thumb gift-record-thumb ${img ? '' : 'img-fallback'}">
           ${img ? `<img src="${img}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('img-fallback')">` : ''}
-          <span class="item-thumb-fallback">🏷️</span>
+          <span class="item-thumb-fallback">${(it && it.icon) || '🏷️'}</span>
         </div>
         <div class="gift-record-info">
           <b>${escapeHtml(itemName)}</b>（${costTxt}）
@@ -1378,7 +1395,7 @@ function renderSummary(items) {
   const giftHistory = loadGiftHistory().filter(g => g.include);
   let giftGivenMoneySum = 0;
   giftHistory.forEach(g => {
-    const it = (ITEM_COST_DATA[g.catKey] || []).find(i => i.id === g.itemId);
+    const it = getGiftPickableItem(g.catKey, g.itemId);
     if (it && it.cost && it.cost.type === 'money' && typeof it.cost.value === 'number') {
       giftGivenMoneySum += it.cost.value;
     }
