@@ -216,6 +216,12 @@
     .gift-record-info { flex: 1; min-width: 160px; font-size: 13px; line-height: 1.5; }
     .gift-record-info b { font-size: 13.5px; }
     .gift-record-meta { color: var(--text-2); font-size: 11.5px; }
+    .gift-record-edit-row { display: flex; gap: 6px; margin-top: 5px; flex-wrap: wrap; }
+    .gift-record-edit-input {
+      background: var(--card); border: 1px solid var(--sep); border-radius: 7px;
+      padding: 5px 8px; font-size: 11.5px; font-family: inherit; color: var(--text);
+      flex: 1; min-width: 110px;
+    }
     .gift-item-preview { display: none; align-items: center; gap: 10px; margin-top: 2px; }
     .gift-item-preview .item-thumb { width: 36px; height: 36px; }
     .gift-item-preview-label { font-size: 12.5px; color: var(--text-2); }
@@ -693,6 +699,16 @@ function toggleGiftInclude(id, checked) {
   renderItems();
 }
 
+// プレゼント履歴の相手・日付を後から編集できるようにする（金額の集計には影響しないため再描画は不要）
+function updateGiftField(id, field, value) {
+  const list = loadGiftHistory();
+  const rec = list.find(g => g.id === id);
+  if (!rec) return;
+  rec[field] = value;
+  saveGiftHistory(list);
+  showToast(CURRENT_LANG === 'en' ? 'Updated' : '更新しました');
+}
+
 function renderGiftHistoryList() {
   const el = document.getElementById('giftHistoryList');
   if (!el) return;
@@ -708,9 +724,6 @@ function renderGiftHistoryList() {
     const it = (ITEM_COST_DATA[g.catKey] || []).find(i => i.id === g.itemId);
     const itemName = it ? it.name : g.itemId;
     const costTxt = (it && it.cost && it.cost.type === 'money') ? `¥${it.cost.value.toLocaleString()}` : (en ? 'No data' : 'データなし');
-    const metaParts = [];
-    if (g.recipient) metaParts.push(`${en ? 'To' : '相手'}: ${escapeHtml(g.recipient)}`);
-    if (g.date) metaParts.push(g.date);
     const img = itemImgMap && itemImgMap[g.itemId];
     return `
       <div class="gift-record">
@@ -720,7 +733,10 @@ function renderGiftHistoryList() {
         </div>
         <div class="gift-record-info">
           <b>${escapeHtml(itemName)}</b>（${costTxt}）
-          ${metaParts.length ? `<div class="gift-record-meta">${metaParts.join(' ・ ')}</div>` : ''}
+          <div class="gift-record-edit-row">
+            <input type="text" class="gift-record-edit-input" data-i18n-en-placeholder="Recipient's name (optional)" placeholder="相手のプレイヤーネーム（任意）" maxlength="60" value="${escapeHtml(g.recipient || '')}" onchange="updateGiftField('${g.id}','recipient',this.value)">
+            <input type="date" class="gift-record-edit-input" value="${g.date || ''}" onchange="updateGiftField('${g.id}','date',this.value)">
+          </div>
         </div>
         <label class="gift-include-toggle">
           <input type="checkbox" ${g.include ? 'checked' : ''} onchange="toggleGiftInclude('${g.id}', this.checked)">
@@ -863,6 +879,9 @@ function buildCostExportCardEl() {
   const starCandle = document.getElementById('sumStarCandle').textContent;
   const heart = document.getElementById('sumHeart').textContent;
   const money = document.getElementById('sumMoney').textContent;
+  // 「分けて表示」設定中は、上の画面表示と同じくプレゼント分を別枠でも見せる
+  const giftRowVisible = document.getElementById('summaryGiftRow').style.display !== 'none';
+  const giftMoney = document.getElementById('summaryGiftMoney').textContent;
 
   const today = new Date();
   const dateTxt = en
@@ -898,6 +917,7 @@ function buildCostExportCardEl() {
         <div class="exp-cat-cell-name">${en ? 'Real Money' : '実額'}</div>
       </div>
     </div>
+    ${giftRowVisible ? `<div class="exp-comment" style="margin-top:12px; margin-bottom:0;">🎁 ${en ? 'Gift purchases (shown separately)' : 'プレゼント分（実額とは別）'}: ${giftMoney}</div>` : ''}
     <div class="exp-date">${dateTxt}</div>
   `;
   document.body.appendChild(card);
