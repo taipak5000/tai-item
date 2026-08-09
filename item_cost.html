@@ -168,6 +168,52 @@
     }
 
     .item-badge.owned { background: var(--green-bg); color: var(--green); }
+
+    .toast {
+      position: fixed; bottom: 100px; left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(0,0,0,0.75); color: #fff;
+      font-size: 13px; font-weight: 500; padding: 10px 20px;
+      border-radius: 20px; z-index: 2000; opacity: 0;
+      transition: all 0.25s ease; white-space: nowrap; pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .share-row { display: flex; gap: 10px; margin-top: 12px; }
+    .share-btn {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+      background: #000; color: #fff; border-radius: var(--r-sm); padding: 11px 14px;
+      font-size: 13.5px; font-weight: 700;
+    }
+    .share-btn:active { opacity: 0.8; }
+
+    .gift-card { background: var(--card); border-radius: var(--r); padding: 16px; margin-top: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+    .gift-card .summary-title-row { color: var(--text); }
+    .gift-card .summary-title { color: var(--text); opacity: 1; }
+    .gift-card .summary-toggle-icon { color: var(--text-2); }
+    .gift-form { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+    .gift-form select, .gift-form input {
+      background: var(--bg); border: 1px solid var(--sep); border-radius: var(--r-sm);
+      padding: 9px 12px; font-size: 13.5px; font-family: inherit; color: var(--text); width: 100%;
+    }
+    .gift-form-row { display: flex; gap: 8px; }
+    .gift-form-row > * { flex: 1; min-width: 0; }
+    .gift-add-btn {
+      background: var(--orange); color: #fff; border-radius: var(--r-sm);
+      padding: 10px; font-size: 13.5px; font-weight: 700; text-align: center;
+    }
+    .gift-add-btn:active { opacity: 0.85; }
+    .gift-list { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+    .gift-record {
+      background: var(--bg); border-radius: var(--r-sm); padding: 10px 12px;
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    .gift-record-info { flex: 1; min-width: 160px; font-size: 13px; line-height: 1.5; }
+    .gift-record-info b { font-size: 13.5px; }
+    .gift-record-meta { color: var(--text-2); font-size: 11.5px; }
+    .gift-include-toggle { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--text-2); white-space: nowrap; }
+    .gift-remove-btn { color: var(--red); font-size: 16px; padding: 4px; flex-shrink: 0; }
+    .gift-empty { text-align: center; color: var(--text-2); font-size: 12.5px; padding: 14px 0; }
   </style>
 </head>
 <body>
@@ -248,6 +294,39 @@
           </div>
         </div>
         <div class="summary-hint" id="summaryHintRemain">読み込み中…</div>
+      </div>
+    </div>
+
+    <div class="share-row">
+      <button type="button" class="share-btn" onclick="shareCostOnTwitter()">
+        <span>𝕏</span>
+        <span data-i18n-en="Share on X">Xで共有</span>
+      </button>
+    </div>
+
+    <div class="gift-card">
+      <div class="summary-title-row" onclick="toggleGiftHistoryCard()">
+        <span class="summary-title" style="margin-bottom:0;" data-i18n-en="🎁 Gift Purchase History">🎁 課金アイテムプレゼント履歴</span>
+        <span class="summary-toggle-icon" id="giftToggleIcon">▶</span>
+      </div>
+      <div id="giftHistoryBody" style="display:none;">
+        <p class="item-note" style="margin:8px 0 0;" data-i18n-en="Record real-money items you bought to gift to another player. You can optionally include each one in the real-money total above.">相手にプレゼントするために購入した課金アイテムを記録できます。実額の合計に加算するかは1件ずつ任意で選べます。</p>
+        <div class="gift-form" style="margin-top:10px;">
+          <div class="gift-form-row">
+            <select id="giftCatSelect" onchange="populateGiftItemSelect()">
+              <option value="" data-i18n-en="Select a category">カテゴリを選択</option>
+            </select>
+            <select id="giftItemSelect" disabled>
+              <option value="" data-i18n-en="Select a category first">先にカテゴリを選択</option>
+            </select>
+          </div>
+          <div class="gift-form-row">
+            <input type="text" id="giftRecipientInput" data-i18n-en-placeholder="Recipient's player name (optional)" placeholder="相手のプレイヤーネーム（任意）" maxlength="60">
+            <input type="date" id="giftDateInput">
+          </div>
+          <button type="button" class="gift-add-btn" onclick="addGiftRecord()" data-i18n-en="Add">追加する</button>
+        </div>
+        <div class="gift-list" id="giftHistoryList"><!-- JS --></div>
       </div>
     </div>
 
@@ -366,6 +445,177 @@ function setSeasonAcquire(itemId, mode) {
   renderItems();
 }
 
+/* ================================================================
+   課金アイテムの入手経緯（自分で購入 / ギフトでもらった）
+   「ギフトでもらった」を選んだアイテムは自分の課金額の集計から除外する。
+   記憶が曖昧な場合を考慮し、デフォルトは「自分で購入」扱い（未設定=self）。
+   ================================================================ */
+const MONEY_ACQUIRE_KEY = nsKey('moneyAcquireMode_v1');
+function loadMoneyAcquireMap() {
+  try { return JSON.parse(localStorage.getItem(MONEY_ACQUIRE_KEY)) || {}; }
+  catch (_) { return {}; }
+}
+function saveMoneyAcquireMap(map) {
+  localStorage.setItem(MONEY_ACQUIRE_KEY, JSON.stringify(map));
+}
+function setMoneyAcquire(itemId, mode) {
+  const map = loadMoneyAcquireMap();
+  map[itemId] = mode;
+  saveMoneyAcquireMap(map);
+  renderItems();
+}
+
+/* ================================================================
+   🎁 課金アイテムプレゼント履歴
+   相手にプレゼントするために購入した課金アイテムを記録する。
+   実額の合計に含めるかどうかは1件ずつ任意で選べる（デフォルトON）。
+   ================================================================ */
+const CAT_LABELS = {
+  outfit: 'アウトフィット', shoes: 'シューズ', mask: 'マスク', face_accessory: 'フェイスアクセサリー',
+  necklace: 'ネックレス', hairstyle: 'ヘアスタイル', hair_accessory: 'ヘアアクセサリー',
+  head_accessory: 'ヘッドアクセサリー', cape: 'ケープ', portable_item: '持ち運べるアイテム',
+  large_placeable: '大きい設置アイテム', small_placeable: '小さい設置アイテム',
+};
+
+const GIFT_HISTORY_KEY = nsKey('giftHistory_v1');
+function loadGiftHistory() {
+  try { return JSON.parse(localStorage.getItem(GIFT_HISTORY_KEY)) || []; }
+  catch (_) { return []; }
+}
+function saveGiftHistory(list) {
+  localStorage.setItem(GIFT_HISTORY_KEY, JSON.stringify(list));
+}
+
+function toggleGiftHistoryCard() {
+  const body = document.getElementById('giftHistoryBody');
+  const icon = document.getElementById('giftToggleIcon');
+  const expanded = body.style.display !== 'none';
+  body.style.display = expanded ? 'none' : 'block';
+  icon.textContent = expanded ? '▶' : '▼';
+}
+
+function populateGiftCatSelect() {
+  const sel = document.getElementById('giftCatSelect');
+  const en = CURRENT_LANG === 'en';
+  sel.innerHTML = `<option value="">${en ? 'Select a category' : 'カテゴリを選択'}</option>` +
+    Object.keys(CAT_LABELS).map(k => `<option value="${k}">${escapeHtml(trCat(CAT_LABELS[k]))}</option>`).join('');
+}
+
+// 選択中カテゴリの「実額（money）」アイテムだけを選択肢にする（コスト集計に関係あるのはmoneyのみのため）
+function populateGiftItemSelect() {
+  const catKey = document.getElementById('giftCatSelect').value;
+  const sel = document.getElementById('giftItemSelect');
+  const en = CURRENT_LANG === 'en';
+  if (!catKey) {
+    sel.innerHTML = `<option value="">${en ? 'Select a category first' : '先にカテゴリを選択'}</option>`;
+    sel.disabled = true;
+    return;
+  }
+  const moneyItems = (ITEM_COST_DATA[catKey] || []).filter(it => it.cost && it.cost.type === 'money');
+  sel.disabled = false;
+  sel.innerHTML = `<option value="">${en ? 'Select an item' : 'アイテムを選択'}</option>` +
+    moneyItems.map(it => `<option value="${it.id}">${escapeHtml(it.name)}（¥${it.cost.value.toLocaleString()}）</option>`).join('');
+}
+
+function addGiftRecord() {
+  const catKey = document.getElementById('giftCatSelect').value;
+  const itemId = document.getElementById('giftItemSelect').value;
+  const recipient = document.getElementById('giftRecipientInput').value.trim();
+  const date = document.getElementById('giftDateInput').value;
+  const en = CURRENT_LANG === 'en';
+  if (!catKey || !itemId) {
+    showToast(en ? 'Please select a category and item' : 'カテゴリとアイテムを選択してください');
+    return;
+  }
+
+  const list = loadGiftHistory();
+  list.push({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    catKey, itemId, recipient, date,
+    include: true,
+    createdAt: new Date().toISOString(),
+  });
+  saveGiftHistory(list);
+
+  document.getElementById('giftRecipientInput').value = '';
+  document.getElementById('giftDateInput').value = '';
+  showToast(en ? 'Added' : '追加しました');
+  renderGiftHistoryList();
+  renderItems();
+}
+
+function removeGiftRecord(id) {
+  saveGiftHistory(loadGiftHistory().filter(g => g.id !== id));
+  renderGiftHistoryList();
+  renderItems();
+}
+
+function toggleGiftInclude(id, checked) {
+  const list = loadGiftHistory();
+  const rec = list.find(g => g.id === id);
+  if (rec) { rec.include = checked; saveGiftHistory(list); }
+  renderItems();
+}
+
+function renderGiftHistoryList() {
+  const el = document.getElementById('giftHistoryList');
+  if (!el) return;
+  const list = loadGiftHistory();
+  const en = CURRENT_LANG === 'en';
+
+  if (list.length === 0) {
+    el.innerHTML = `<div class="gift-empty">${en ? 'No gift purchases recorded yet.' : 'まだ記録がありません。'}</div>`;
+    return;
+  }
+
+  el.innerHTML = list.slice().reverse().map(g => {
+    const it = (ITEM_COST_DATA[g.catKey] || []).find(i => i.id === g.itemId);
+    const itemName = it ? it.name : g.itemId;
+    const costTxt = (it && it.cost && it.cost.type === 'money') ? `¥${it.cost.value.toLocaleString()}` : (en ? 'No data' : 'データなし');
+    const metaParts = [];
+    if (g.recipient) metaParts.push(`${en ? 'To' : '相手'}: ${escapeHtml(g.recipient)}`);
+    if (g.date) metaParts.push(g.date);
+    return `
+      <div class="gift-record">
+        <div class="gift-record-info">
+          <b>${escapeHtml(itemName)}</b>（${costTxt}）
+          ${metaParts.length ? `<div class="gift-record-meta">${metaParts.join(' ・ ')}</div>` : ''}
+        </div>
+        <label class="gift-include-toggle">
+          <input type="checkbox" ${g.include ? 'checked' : ''} onchange="toggleGiftInclude('${g.id}', this.checked)">
+          ${en ? 'Include in total' : '実額に含める'}
+        </label>
+        <button type="button" class="gift-remove-btn" onclick="removeGiftRecord('${g.id}')" aria-label="${en ? 'Remove' : '削除'}">✕</button>
+      </div>`;
+  }).join('');
+}
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.classList.add('show'), 10);
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2600);
+}
+
+/* ================================================================
+   🐦 Xで共有
+   ================================================================ */
+const COST_SITE_URL = 'https://taipak5000.github.io/tai-item/item_cost.html';
+function shareCostOnTwitter() {
+  const en = CURRENT_LANG === 'en';
+  const candle = document.getElementById('sumCandle').textContent;
+  const starCandle = document.getElementById('sumStarCandle').textContent;
+  const heart = document.getElementById('sumHeart').textContent;
+  const money = document.getElementById('sumMoney').textContent;
+  const text = en
+    ? `My Sky item collection cost so far:\n🕯️ Candles: ${candle}\n⭐ Season Candles: ${starCandle}\n💗 Hearts: ${heart}\n💴 Real money: ${money}\n\n${COST_SITE_URL}\n#SkyItemCost`
+    : `Skyのアイテム収集にかかったコストはこちら！\n🕯️ キャンドル: ${candle}\n⭐ 星のキャンドル: ${starCandle}\n💗 ハート: ${heart}\n💴 実額: ${money}\n\n${COST_SITE_URL}\n#Skyアイテムコスト管理`;
+  const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
 // 各カテゴリページ本体から画像URL（img: 'https://...'）を取り出し、
 // id をキーにしたマップを作る。cost-data.js 自体は画像を持たないため、
 // 各カテゴリページ（cape.html 等）を fetch して補完する。
@@ -447,12 +697,15 @@ function getAllItems() {
 
   const acquireMap = loadSeasonAcquireMap();
   const acquireEligibleTypes = ['candle', 'starCandle', 'heart'];
+  const moneyAcquireMap = loadMoneyAcquireMap();
   all.forEach(item => {
     item.seasonPendantOwned = pendantOwnedSeasons.has(extractSource(item.source)) && acquireEligibleTypes.includes(item.cost.type);
     item.isTicketItem = item.cost.type === 'ticket';
     // ペンダント経由の季節中入手は「revisit」がデフォルト（従来通り）、
     // チケット交換アイテムは「ticket」（チケットで入手＝0扱い）がデフォルト
     item.acquireMode = acquireMap[item.id] || (item.isTicketItem ? 'ticket' : 'revisit');
+    // 課金アイテムの入手経緯（未設定時は「自分で購入」扱い）
+    item.moneyAcquireMode = item.cost.type === 'money' ? (moneyAcquireMap[item.id] || 'self') : null;
   });
 
   return all;
@@ -508,6 +761,14 @@ function renderItemCard(item, owned) {
       </div>` : '';
   }
 
+  // 課金アイテム（実額）の場合のみ：自分で購入したか、ギフトでもらったかを選べる
+  // （ギフトでもらった分は自分の課金額の集計から除外される。記憶が曖昧な場合は自己判断でOK）
+  const moneyOriginToggleHtml = (owned && item.cost.type === 'money') ? `
+    <div class="acquire-toggle">
+      <button type="button" class="acquire-btn ${item.moneyAcquireMode !== 'gift' ? 'active' : ''}" onclick="setMoneyAcquire('${item.id}', 'self')">💳 ${CURRENT_LANG === 'en' ? 'Bought it myself' : '自分で購入'}</button>
+      <button type="button" class="acquire-btn ${item.moneyAcquireMode === 'gift' ? 'active free' : ''}" onclick="setMoneyAcquire('${item.id}', 'gift')">🎁 ${CURRENT_LANG === 'en' ? 'Received as a gift' : 'ギフトでもらった'}</button>
+    </div>` : '';
+
   return `
     <div class="item-card ${owned ? 'owned' : ''}">
       <div class="item-head">
@@ -531,6 +792,7 @@ function renderItemCard(item, owned) {
         return noteSource ? `<div class="item-note">※ ${escapeHtml(noteSource)}</div>` : '';
       })()}
       ${acquireToggleHtml}
+      ${moneyOriginToggleHtml}
     </div>`;
 }
 
@@ -622,6 +884,7 @@ function toggleRemainingCard() {
 
 function renderSummary(items) {
   let candleSum = 0, starCandleSum = 0, heartSum = 0, moneySum = 0, ownedCount = 0;
+  let giftReceivedCount = 0, giftReceivedMoneySum = 0;
   const countedSetIds = new Set();
 
   items.forEach(item => {
@@ -638,18 +901,46 @@ function renderSummary(items) {
         if (countedSetIds.has(cost.setId)) return;
         countedSetIds.add(cost.setId);
       }
+      if (item.moneyAcquireMode === 'gift') {
+        giftReceivedCount++;
+        giftReceivedMoneySum += cost.value;
+        return; // ギフトでもらった分は自分の課金額の集計から除外
+      }
       moneySum += cost.value;
     }
   });
+
+  // 課金アイテムプレゼント履歴：実額に含める設定のものだけ加算
+  const giftHistory = loadGiftHistory().filter(g => g.include);
+  let giftGivenMoneySum = 0;
+  giftHistory.forEach(g => {
+    const it = (ITEM_COST_DATA[g.catKey] || []).find(i => i.id === g.itemId);
+    if (it && it.cost && it.cost.type === 'money' && typeof it.cost.value === 'number') {
+      giftGivenMoneySum += it.cost.value;
+    }
+  });
+  moneySum += giftGivenMoneySum;
 
   const en = CURRENT_LANG === 'en';
   document.getElementById('sumCandle').textContent = `${candleSum.toLocaleString()}${en ? '' : '本'}`;
   document.getElementById('sumStarCandle').textContent = `${starCandleSum.toLocaleString()}${en ? '' : '本'}`;
   document.getElementById('sumHeart').textContent = `${heartSum.toLocaleString()}${en ? '' : '個'}`;
   document.getElementById('sumMoney').textContent = `¥${moneySum.toLocaleString()}`;
-  document.getElementById('summaryHint').innerHTML = en
+
+  let hint = en
     ? `Calculated from ${ownedCount} / ${items.length} owned items (within supported categories). For real-money items priced as part of a bundle, owning multiple items from the same bundle only adds that bundle's price once.`
     : `所持済み ${ownedCount} / ${items.length} 件（対応済みカテゴリ内）をもとに集計しています。他のアイテムとのセット価格（実額）の場合、セット内の複数アイテムを所持済みにしても実額は1回分のみ加算されます。`;
+  if (giftReceivedCount > 0) {
+    hint += en
+      ? ` ${giftReceivedCount} item(s) marked "Received as a gift" (¥${giftReceivedMoneySum.toLocaleString()}) are excluded from the real-money total.`
+      : `「ギフトでもらった」に設定した ${giftReceivedCount}件（¥${giftReceivedMoneySum.toLocaleString()}）は実額の合計から除外しています。`;
+  }
+  if (giftHistory.length > 0) {
+    hint += en
+      ? ` ${giftHistory.length} gift purchase(s) (¥${giftGivenMoneySum.toLocaleString()}) from your Gift Purchase History are included in the real-money total.`
+      : `課金アイテムプレゼント履歴のうち ${giftHistory.length}件（¥${giftGivenMoneySum.toLocaleString()}）を実額の合計に含めています。`;
+  }
+  document.getElementById('summaryHint').innerHTML = hint;
 }
 
 function renderRemainingSummary(items) {
@@ -692,6 +983,8 @@ function renderRemainingSummary(items) {
 document.addEventListener('DOMContentLoaded', () => {
   renderItems();
   loadItemImgMapOnce().then(() => renderItems());
+  populateGiftCatSelect();
+  renderGiftHistoryList();
 });
 </script>
 

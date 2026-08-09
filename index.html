@@ -2018,30 +2018,46 @@ let currentRandom = {};
 let favOnlyMode   = false;
 
 /* ── お気に入り管理 ─────────────────────────────
-   localStorage キー: randFav_<catKey> = JSON array of item IDs
+   各カテゴリページの★お気に入り（gameItems_<catKey> の itemFav）と
+   同じデータを参照・更新する（以前は randFav_<catKey> という別キーで
+   管理しており、★で登録したお気に入りがランダムコーデ側に反映されない
+   不具合の原因だったため統一した）
  ─────────────────────────────────────────────── */
 function getFavIds(catKey) {
-  try { return JSON.parse(localStorage.getItem(nsKey('randFav_' + catKey))) || []; }
-  catch { return []; }
+  const fav = readCatState(catKey).fav;
+  return Object.keys(fav).filter(id => fav[id]);
 }
 
 function isFav(catKey, itemId) {
-  return getFavIds(catKey).includes(String(itemId));
+  return !!readCatState(catKey).fav[itemId];
 }
 
 function toggleFavorite(catKey, itemId) {
-  const id   = String(itemId);
-  const favs = getFavIds(catKey);
-  const idx  = favs.indexOf(id);
-  if (idx === -1) favs.push(id); else favs.splice(idx, 1);
-  localStorage.setItem(nsKey('randFav_' + catKey), JSON.stringify(favs));
+  const id  = String(itemId);
+  const key = nsKey('gameItems_' + catKey);
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(key)) || {}; } catch { saved = {}; }
+
+  const favMap = saved.itemFav || {};
+  favMap[id] = !favMap[id];
+  const nowFav = favMap[id];
+
+  const ownedMap  = saved.itemOwned || {};
+  const catItems  = allItemsCache ? allItemsCache.filter(it => it.catKey === catKey) : null;
+  const dataToSave = catItems ? {
+    total: catItems.length,
+    owned: catItems.filter(it => ownedMap[it.id]).length,
+    itemOwned: ownedMap,
+    itemFav: favMap,
+    ownedItems: catItems.filter(it => ownedMap[it.id]).map(it => ({ id: it.id, name: it.name, nameEn: it.nameEn }))
+  } : { ...saved, itemFav: favMap };
+  localStorage.setItem(key, JSON.stringify(dataToSave));
 
   // DOM の❤️ボタンをその場で更新
   const btn = document.querySelector(`.rand-fav-btn[data-cat="${catKey}"][data-id="${id}"]`);
   if (btn) {
-    const on = favs.includes(id);
-    btn.classList.toggle('fav-on', on);
-    btn.textContent = on ? '❤️' : '🤍';
+    btn.classList.toggle('fav-on', nowFav);
+    btn.textContent = nowFav ? '❤️' : '🤍';
   }
 }
 
