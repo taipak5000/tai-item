@@ -215,6 +215,53 @@
     .gift-item-preview .item-thumb { width: 36px; height: 36px; }
     .gift-item-preview-label { font-size: 12.5px; color: var(--text-2); }
     .gift-record-thumb { width: 36px; height: 36px; flex-shrink: 0; }
+
+    /* ── 画像共有（Xで共有）── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45); z-index: 1000;
+      align-items: flex-end; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; animation: mfade 0.2s ease; }
+    @keyframes mfade { from { opacity:0 } to { opacity:1 } }
+    .modal-card {
+      background: var(--card); border-radius: var(--r) var(--r) 0 0;
+      width: 100%; max-width: 600px; max-height: 88vh;
+      overflow-y: auto; padding: 20px 20px 36px;
+      animation: mslide 0.3s cubic-bezier(0.22,1,0.36,1);
+    }
+    @keyframes mslide { from { transform:translateY(100%) } to { transform:translateY(0) } }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .modal-title { font-size: 17px; font-weight: 700; }
+    .modal-close { font-size: 22px; color: var(--text-2); padding: 2px 6px; }
+    .preview-img {
+      width: 100%; display: block; margin-top: 12px; border-radius: var(--r-sm);
+      background: var(--bg); -webkit-touch-callout: default;
+    }
+    .action-row { display: flex; gap: 10px; margin-top: 14px; }
+    .action-btn {
+      display: flex; align-items: center; justify-content: center; text-decoration: none;
+      border-radius: var(--r-sm); padding: 12px; font-size: 14.5px; font-weight: 700;
+    }
+    .action-btn.primary { background: var(--blue); color: #fff; }
+    .action-btn.full { width: 100%; }
+    .action-btn.twitter { background: #000; color: #fff; }
+
+    .export-card {
+      position: fixed; left: -9999px; top: 0; width: 560px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+      background: linear-gradient(135deg, var(--orange-d) 0%, var(--orange) 55%, #FFBB00 100%);
+      padding: 28px; border-radius: 28px; box-sizing: border-box;
+    }
+    .exp-brand { color: #fff; font-size: 12px; font-weight: 600; opacity: 0.85; letter-spacing: 0.3px; margin-bottom: 6px; }
+    .exp-hero { text-align: center; padding: 6px 0 18px; }
+    .exp-hero-label { color: rgba(255,255,255,0.9); font-size: 15px; font-weight: 700; letter-spacing: 0.3px; }
+    .exp-cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; background: #fff; border-radius: 18px; padding: 16px; }
+    .exp-cat-cell { background: var(--bg); border-radius: 12px; padding: 14px 8px; text-align: center; }
+    .exp-cat-cell-icon { font-size: 20px; }
+    .exp-cat-cell-pct { font-size: 17px; font-weight: 800; color: var(--orange-d); margin-top: 5px; }
+    .exp-cat-cell-name { font-size: 10.5px; color: var(--text-2); margin-top: 3px; }
+    .exp-date { color: rgba(255,255,255,0.75); font-size: 10.5px; text-align: right; margin-top: 10px; }
     .gift-include-toggle { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--text-2); white-space: nowrap; }
     .gift-remove-btn { color: var(--red); font-size: 16px; padding: 4px; flex-shrink: 0; }
     .gift-empty { text-align: center; color: var(--text-2); font-size: 12.5px; padding: 14px 0; }
@@ -375,6 +422,29 @@
 
   </div><!-- /wrap -->
 </div><!-- /.app-layout -->
+
+<!-- ▸ Modal: 画像プレビュー（Xで共有） -->
+<div class="modal-overlay" id="imagePreviewModal" onclick="if(event.target===this)closeModal('imagePreviewModal')">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title" id="previewModalTitle" data-i18n-en="🖼️ Save Image">🖼️ 画像を保存</span>
+      <button class="modal-close" onclick="closeModal('imagePreviewModal')">✕</button>
+    </div>
+
+    <div class="notice-card" style="margin-top:0;">
+      <span id="previewHintText" data-i18n-en="Long-press the image (right-click on PC) and choose &quot;Save Image&quot;">画像を長押し（PCの場合は右クリック）して「画像を保存」を選んでください</span>
+    </div>
+
+    <img id="previewImg" class="preview-img" src="" alt="共有用の画像" />
+
+    <div class="action-row">
+      <a id="previewDownloadLink" class="action-btn primary full" href="" download="" data-i18n-en="⬇️ Download">⬇️ ダウンロード</a>
+    </div>
+    <div class="action-row" id="previewTwitterRow" style="display:none;">
+      <a id="previewTwitterLink" class="action-btn twitter full" href="" target="_blank" rel="noopener noreferrer" data-i18n-en="📤 Open X Post Screen">📤 Xの投稿画面を開く</a>
+    </div>
+  </div>
+</div>
 
 <footer style="text-align:center; padding:24px 16px; color:var(--text-2); font-size:13px; border-top:1px solid var(--sep); margin-top:40px; line-height:1.6;">
   <span data-i18n-en="This is an unofficial fan site for Sky: Children of the Light. thatgamecompany is not involved in any way.">このサイトはSky 星を紡ぐ子どもたちの非公式ファンサイトです。thatgamecompanyは一切関与していません。</span><br>
@@ -634,20 +704,182 @@ function showToast(msg) {
 }
 
 /* ================================================================
-   🐦 Xで共有
+   🐦 Xで共有（画像＋テキスト）
+   index.html の画像共有パイプラインと同じ仕組み（html2canvasで画像化 →
+   スマホはWeb Share APIで画像＋テキストを共有、非対応環境は画像プレビュー
+   モーダルを開いてダウンロード＋Xの投稿画面を案内）をこのページ用に用意。
    ================================================================ */
-const COST_SITE_URL = 'https://taipak5000.github.io/tai-item/item_cost.html';
-function shareCostOnTwitter() {
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function sanitizeFilename(str) {
+  return String(str).replace(/[\\/:*?"<>|]/g, '_').trim() || 'cost';
+}
+
+// html2canvasを必要になった時点で読み込む（未読み込みの場合のみ）
+let html2canvasLoading = null;
+function ensureHtml2Canvas() {
+  if (window.html2canvas) return Promise.resolve();
+  if (html2canvasLoading) return html2canvasLoading;
+  html2canvasLoading = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    s.onload = () => resolve();
+    s.onerror = () => { html2canvasLoading = null; reject(new Error('html2canvas load failed')); };
+    document.head.appendChild(s);
+  });
+  return html2canvasLoading;
+}
+
+// スマホ端末かどうかを判定する（PCはWeb Shareの行き先がないことが多いため画像プレビューに回す）
+function isMobileDevice() {
+  if (navigator.userAgentData && typeof navigator.userAgentData.mobile === 'boolean') {
+    return navigator.userAgentData.mobile;
+  }
+  const ua = navigator.userAgent || '';
+  if (/Android|iPhone|iPod|iPad/i.test(ua)) return true;
+  if (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1) return true;
+  return false;
+}
+
+// Web Share API（ファイル共有）で画像（＋テキスト）の共有を試みる
+// 戻り値: 'success' / 'cancelled' / 'unsupported'
+async function tryShareImage(canvas, filename, text) {
+  if (!isMobileDevice()) return 'unsupported';
+  if (!navigator.share || !navigator.canShare) return 'unsupported';
+  try {
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    if (!blob) return 'unsupported';
+    const file = new File([blob], filename, { type: 'image/png' });
+    const shareData = text ? { files: [file], text } : { files: [file] };
+    if (!navigator.canShare(shareData)) return 'unsupported';
+    await navigator.share(shareData);
+    return 'success';
+  } catch (err) {
+    if (err && err.name === 'AbortError') return 'cancelled';
+    return 'unsupported';
+  }
+}
+
+// 画像プレビューモーダルを開く（長押し/右クリック、またはダウンロードボタンで保存）
+function openImagePreview(dataUrl, filename, shareText) {
+  document.getElementById('previewImg').src = dataUrl;
+  const link = document.getElementById('previewDownloadLink');
+  link.href = dataUrl;
+  link.download = filename;
+
+  const hint  = document.getElementById('previewHintText');
+  const twRow = document.getElementById('previewTwitterRow');
+  const title = document.getElementById('previewModalTitle');
+  const en = CURRENT_LANG === 'en';
+
+  if (shareText) {
+    title.textContent = en ? '🖼️ Save Image & Post to X' : '🖼️ 画像を保存してXへ投稿';
+    hint.textContent = en
+      ? '① Save the image with "Download" below → ② Tap "Open X Post Screen" and attach the saved image to your post'
+      : '① 下の「ダウンロード」で画像を保存 → ② 「Xの投稿画面を開く」を押して、保存した画像を添付して投稿してください';
+    document.getElementById('previewTwitterLink').href =
+      'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText);
+    twRow.style.display = '';
+  } else {
+    title.textContent = en ? '🖼️ Save Image' : '🖼️ 画像を保存';
+    hint.textContent = en
+      ? 'Long-press the image (right-click on PC) and choose "Save Image"'
+      : '画像を長押し（PCの場合は右クリック）して「画像を保存」を選んでください';
+    twRow.style.display = 'none';
+  }
+
+  openModal('imagePreviewModal');
+}
+
+// 要素を画像化し、共有（スマホ）or プレビュー表示（PC）を行う
+async function exportElementAsImage(buildCardFn, filenameBase, opts = {}) {
+  const { shareText, successToast = (CURRENT_LANG === 'en' ? 'Image saved!' : '画像を保存しました！') } = opts;
+  showToast(CURRENT_LANG === 'en' ? 'Generating image…' : '画像を生成中…');
+  let card = null;
+  try {
+    await ensureHtml2Canvas();
+    card = buildCardFn();
+    const canvas = await html2canvas(card, { backgroundColor: null, scale: 2, useCORS: true });
+    const filename = sanitizeFilename(filenameBase) + '.png';
+
+    const shareResult = await tryShareImage(canvas, filename, shareText);
+    if (shareResult === 'success') {
+      showToast(successToast);
+      return;
+    }
+    if (shareResult === 'cancelled') return;
+
+    openImagePreview(canvas.toDataURL('image/png'), filename, shareText);
+  } catch (err) {
+    console.error(err);
+    showToast(CURRENT_LANG === 'en' ? 'Failed to save the image' : '画像の保存に失敗しました');
+  } finally {
+    if (card) card.remove();
+  }
+}
+
+// コスト集計から画像保存用のカード（画面外）を生成
+function buildCostExportCardEl() {
   const en = CURRENT_LANG === 'en';
   const candle = document.getElementById('sumCandle').textContent;
   const starCandle = document.getElementById('sumStarCandle').textContent;
   const heart = document.getElementById('sumHeart').textContent;
   const money = document.getElementById('sumMoney').textContent;
-  const text = en
-    ? `My Sky item collection cost so far:\n🕯️ Candles: ${candle}\n⭐ Season Candles: ${starCandle}\n💗 Hearts: ${heart}\n💴 Real money: ${money}\n\n${COST_SITE_URL}\n#SkyItemCost`
-    : `Skyのアイテム収集にかかったコストはこちら！\n🕯️ キャンドル: ${candle}\n⭐ 星のキャンドル: ${starCandle}\n💗 ハート: ${heart}\n💴 実額: ${money}\n\n${COST_SITE_URL}\n#Skyアイテムコスト管理`;
-  const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
-  window.open(url, '_blank', 'noopener,noreferrer');
+
+  const today = new Date();
+  const dateTxt = en
+    ? `Created ${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`
+    : `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日作成`;
+
+  const card = document.createElement('div');
+  card.className = 'export-card';
+  card.innerHTML = `
+    <div class="exp-brand">${en ? '💴 Item Cost Tracker' : '💴 アイテム別コスト管理'}</div>
+    <div class="exp-hero">
+      <div class="exp-hero-label">${en ? 'Cost of owned items (all categories)' : '所持済みアイテムにかかったコスト（全カテゴリ）'}</div>
+    </div>
+    <div class="exp-cat-grid">
+      <div class="exp-cat-cell">
+        <div class="exp-cat-cell-icon">🕯️</div>
+        <div class="exp-cat-cell-pct">${candle}</div>
+        <div class="exp-cat-cell-name">${en ? 'Candles' : 'キャンドル'}</div>
+      </div>
+      <div class="exp-cat-cell">
+        <div class="exp-cat-cell-icon">⭐</div>
+        <div class="exp-cat-cell-pct">${starCandle}</div>
+        <div class="exp-cat-cell-name">${en ? 'Season Candles' : '星のキャンドル'}</div>
+      </div>
+      <div class="exp-cat-cell">
+        <div class="exp-cat-cell-icon">💗</div>
+        <div class="exp-cat-cell-pct">${heart}</div>
+        <div class="exp-cat-cell-name">${en ? 'Hearts' : 'ハート'}</div>
+      </div>
+      <div class="exp-cat-cell">
+        <div class="exp-cat-cell-icon">💴</div>
+        <div class="exp-cat-cell-pct">${money}</div>
+        <div class="exp-cat-cell-name">${en ? 'Real Money' : '実額'}</div>
+      </div>
+    </div>
+    <div class="exp-date">${dateTxt}</div>
+  `;
+  document.body.appendChild(card);
+  return card;
+}
+
+const COST_SITE_URL = 'https://taipak5000.github.io/tai-item/item_cost.html';
+function buildCostTweetText() {
+  const en = CURRENT_LANG === 'en';
+  return en
+    ? `Here's my Sky item collection cost so far! 💴\n\n${COST_SITE_URL}\n#SkyItemCost`
+    : `Skyのアイテム収集にかかったコストはこちら！💴\n\n${COST_SITE_URL}\n#Skyアイテムコスト管理`;
+}
+
+function shareCostOnTwitter() {
+  return exportElementAsImage(buildCostExportCardEl, CURRENT_LANG === 'en' ? 'Item Cost' : 'アイテム別コスト', {
+    shareText: buildCostTweetText(),
+    successToast: CURRENT_LANG === 'en' ? 'Shared!' : '共有しました！'
+  });
 }
 
 // 各カテゴリページ本体から画像URL（img: 'https://...'）を取り出し、
