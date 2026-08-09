@@ -140,6 +140,11 @@
       margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.25);
       font-size: 11.5px; line-height: 1.6; opacity: 0.95;
     }
+    .summary-gift-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.25);
+      font-size: 13px;
+    }
     .summary-card.remaining {
       background: linear-gradient(135deg, var(--blue) 0%, #0051A8 100%);
       box-shadow: 0 4px 14px rgba(0,122,255,0.25); margin-top: 12px;
@@ -317,6 +322,10 @@
           <div class="summary-item-value" id="sumMoney">¥0</div>
         </div>
       </div>
+      <div class="summary-gift-row" id="summaryGiftRow" style="display:none;">
+        <span data-i18n-en="🎁 Gift purchases (shown separately)">🎁 プレゼント分（実額とは別）</span>
+        <b id="summaryGiftMoney">¥0</b>
+      </div>
       <div class="summary-hint" id="summaryHint">読み込み中…</div>
     </div>
 
@@ -362,6 +371,13 @@
       </div>
       <div id="giftHistoryBody" style="display:none;">
         <p class="item-note" style="margin:8px 0 0;" data-i18n-en="Record real-money items you bought to gift to another player. You can optionally include each one in the real-money total above.">相手にプレゼントするために購入した課金アイテムを記録できます。実額の合計に加算するかは1件ずつ任意で選べます。</p>
+        <div style="margin-top:10px;">
+          <p class="item-note" style="margin:0 0 4px;" data-i18n-en="How to reflect included gifts in the real-money total above:">上の実額の合計への反映方法：</p>
+          <div class="acquire-toggle" id="giftDisplayModeToggle">
+            <button type="button" class="acquire-btn" onclick="setGiftDisplayMode('combined')" data-i18n-en="Merge into the total">合計に含める</button>
+            <button type="button" class="acquire-btn" onclick="setGiftDisplayMode('separate')" data-i18n-en="Show separately">分けて表示</button>
+          </div>
+        </div>
         <div class="gift-form" style="margin-top:10px;">
           <div class="gift-form-row">
             <select id="giftCatSelect" onchange="populateGiftItemSelect()">
@@ -565,6 +581,27 @@ function loadGiftHistory() {
 }
 function saveGiftHistory(list) {
   localStorage.setItem(GIFT_HISTORY_KEY, JSON.stringify(list));
+}
+
+// 実額に含めるプレゼント履歴を、上の合計に「合算」するか「別枠で表示」するか
+const GIFT_DISPLAY_MODE_KEY = nsKey('giftDisplayMode_v1');
+function loadGiftDisplayMode() {
+  const v = localStorage.getItem(GIFT_DISPLAY_MODE_KEY);
+  return v === 'separate' ? 'separate' : 'combined';
+}
+function setGiftDisplayMode(mode) {
+  localStorage.setItem(GIFT_DISPLAY_MODE_KEY, mode === 'separate' ? 'separate' : 'combined');
+  renderGiftDisplayModeToggle();
+  renderItems();
+}
+function renderGiftDisplayModeToggle() {
+  const mode = loadGiftDisplayMode();
+  const wrap = document.getElementById('giftDisplayModeToggle');
+  if (!wrap) return;
+  const buttons = wrap.querySelectorAll('.acquire-btn');
+  buttons[0].classList.toggle('active', mode === 'combined');
+  buttons[1].classList.toggle('active', mode === 'separate');
+  buttons[1].classList.toggle('free', mode === 'separate');
 }
 
 function toggleGiftHistoryCard() {
@@ -1186,13 +1223,22 @@ function renderSummary(items) {
       giftGivenMoneySum += it.cost.value;
     }
   });
-  moneySum += giftGivenMoneySum;
+  const giftDisplayMode = loadGiftDisplayMode(); // 'combined'（合計に含める） or 'separate'（別枠で表示）
+  if (giftDisplayMode === 'combined') moneySum += giftGivenMoneySum;
 
   const en = CURRENT_LANG === 'en';
   document.getElementById('sumCandle').textContent = `${candleSum.toLocaleString()}${en ? '' : '本'}`;
   document.getElementById('sumStarCandle').textContent = `${starCandleSum.toLocaleString()}${en ? '' : '本'}`;
   document.getElementById('sumHeart').textContent = `${heartSum.toLocaleString()}${en ? '' : '個'}`;
   document.getElementById('sumMoney').textContent = `¥${moneySum.toLocaleString()}`;
+
+  const giftRow = document.getElementById('summaryGiftRow');
+  if (giftHistory.length > 0 && giftDisplayMode === 'separate') {
+    document.getElementById('summaryGiftMoney').textContent = `¥${giftGivenMoneySum.toLocaleString()}`;
+    giftRow.style.display = 'flex';
+  } else {
+    giftRow.style.display = 'none';
+  }
 
   let hint = en
     ? `Calculated from ${ownedCount} / ${items.length} owned items (within supported categories). For real-money items priced as part of a bundle, owning multiple items from the same bundle only adds that bundle's price once.`
@@ -1203,9 +1249,13 @@ function renderSummary(items) {
       : `「ギフトでもらった」に設定した ${giftReceivedCount}件（¥${giftReceivedMoneySum.toLocaleString()}）は実額の合計から除外しています。`;
   }
   if (giftHistory.length > 0) {
-    hint += en
-      ? ` ${giftHistory.length} gift purchase(s) (¥${giftGivenMoneySum.toLocaleString()}) from your Gift Purchase History are included in the real-money total.`
-      : `課金アイテムプレゼント履歴のうち ${giftHistory.length}件（¥${giftGivenMoneySum.toLocaleString()}）を実額の合計に含めています。`;
+    hint += giftDisplayMode === 'combined'
+      ? (en
+        ? ` ${giftHistory.length} gift purchase(s) (¥${giftGivenMoneySum.toLocaleString()}) from your Gift Purchase History are included in the real-money total.`
+        : `課金アイテムプレゼント履歴のうち ${giftHistory.length}件（¥${giftGivenMoneySum.toLocaleString()}）を実額の合計に含めています。`)
+      : (en
+        ? ` ${giftHistory.length} gift purchase(s) (¥${giftGivenMoneySum.toLocaleString()}) from your Gift Purchase History are shown separately below, not included in the real-money total.`
+        : `課金アイテムプレゼント履歴のうち ${giftHistory.length}件（¥${giftGivenMoneySum.toLocaleString()}）は実額の合計に含めず、別枠で表示しています。`);
   }
   document.getElementById('summaryHint').innerHTML = hint;
 }
@@ -1256,6 +1306,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   populateGiftCatSelect();
   renderGiftHistoryList();
+  renderGiftDisplayModeToggle();
 });
 </script>
 
