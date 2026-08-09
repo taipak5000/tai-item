@@ -798,6 +798,16 @@
     }
     .coord-grid-photo-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
 
+    /* ── 写真の位置調整（ドラッグ＆ズームでトリミング範囲を選べる） ── */
+    .crop-viewport {
+      position: relative; width: 100%; overflow: hidden; border-radius: 14px;
+      background: #000; margin-top: 12px; touch-action: none; cursor: grab; user-select: none;
+    }
+    .crop-viewport.dragging { cursor: grabbing; }
+    .crop-viewport img { position: absolute; top: 0; left: 0; max-width: none; pointer-events: none; }
+    .crop-zoom-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; font-size: 18px; }
+    .crop-zoom-row input[type="range"] { flex: 1; accent-color: var(--blue); }
+
     /* ── 共有画像カスタマイズモーダル ─────────────── */
     .customize-section-label {
       font-size: 12px; font-weight: 700; color: var(--text-2);
@@ -1420,6 +1430,34 @@
 
     <div class="action-row" style="margin-top:16px;">
       <button class="action-btn primary full" onclick="closeModal('coordPhotoModal')" data-i18n-en="Done">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- ▸ 写真の位置調整（ドラッグ＆ズームでトリミング範囲を自分で選べる） -->
+<div class="modal-overlay" id="photoCropModal" onclick="if(event.target===this)cancelPhotoCrop()">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title" data-i18n-en="🖼️ Adjust Photo Position">🖼️ 写真の位置を調整</span>
+      <button class="modal-close" onclick="cancelPhotoCrop()">✕</button>
+    </div>
+
+    <div class="hint" style="margin-top:0;" data-i18n-en="Drag to reposition, and use the slider to zoom in/out. Nothing outside the frame will be included.">ドラッグして位置を調整し、スライダーで拡大・縮小できます。枠の外側は画像に含まれません。</div>
+
+    <div class="crop-viewport" id="cropViewport"
+      onmousedown="cropPointerDown(event)" onmousemove="cropPointerMove(event)" onmouseup="cropPointerUp()" onmouseleave="cropPointerUp()"
+      ontouchstart="cropPointerDown(event)" ontouchmove="cropPointerMove(event)" ontouchend="cropPointerUp()">
+      <img id="cropImg" src="" alt="">
+    </div>
+
+    <div class="crop-zoom-row">
+      <span>🔍</span>
+      <input type="range" id="cropZoomSlider" min="100" max="300" value="100" oninput="onCropZoomChange(this.value)">
+    </div>
+
+    <div class="action-row" style="margin-top:16px;">
+      <button class="action-btn secondary full" onclick="cancelPhotoCrop()" data-i18n-en="Cancel">キャンセル</button>
+      <button class="action-btn primary full" onclick="confirmPhotoCrop()" data-i18n-en="Use This Position">この位置で決定</button>
     </div>
   </div>
 </div>
@@ -2457,28 +2495,134 @@ function deleteCoord(id) {
 // スマホの写真をそのまま保存するとlocalStorageの容量をすぐに圧迫するための対策。
 let coordPhotoTargetId = null;
 
-function resizeImageFile(file, maxDim, quality) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      let w = img.naturalWidth, h = img.naturalHeight;
-      if (w <= 0 || h <= 0) { reject(new Error('invalid image')); return; }
-      if (Math.max(w, h) > maxDim) {
-        const ratio = maxDim / Math.max(w, h);
-        w = Math.round(w * ratio);
-        h = Math.round(h * ratio);
-      }
-      const canvas = document.createElement('canvas');
-      canvas.width = w;
-      canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      resolve(canvas.toDataURL('image/jpeg', quality));
+/* ================================================================
+   🖼️ 写真の位置調整（ドラッグ＆ズームでトリミング範囲を自分で選べる）
+   マイコーデ・ランダムコーデ共通。選択直後に自動で縮小・中央クロップして
+   はめ込むのではなく、ユーザー自身がプレビューを見ながら位置とズームを
+   決めてから、選ばれた範囲だけを画像として書き出す。
+   ================================================================ */
+let cropCtx = null; // { img, naturalW, naturalH, viewportW, viewportH, scale, minScale, offsetX, offsetY, objectUrl, onConfirm }
+let cropDragging = false;
+let cropDragStart = null;
+
+// グリッドスタイルは正方形、ポラロイド風は写真枠の実際の比率（横長寄り）に合わせる
+function getCoordPhotoAspectRatio() {
+  return coordShareStyle === 'grid' ? 1 : (452 / 300);
+}
+
+function openPhotoCropModal(file, onConfirm) {
+  if (!file.type.startsWith('image/')) {
+    showToast(CURRENT_LANG === 'en' ? 'Please select an image file' : '画像ファイルを選択してください');
+    return;
+  }
+  const objectUrl = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    openModal('photoCropModal');
+    const viewport = document.getElementById('cropViewport');
+    const ratio = getCoordPhotoAspectRatio();
+    const vw = viewport.clientWidth;
+    const vh = vw / ratio;
+    viewport.style.aspectRatio = String(ratio);
+
+    const minScale = Math.max(vw / img.naturalWidth, vh / img.naturalHeight);
+    cropCtx = {
+      img, naturalW: img.naturalWidth, naturalH: img.naturalHeight,
+      viewportW: vw, viewportH: vh, scale: minScale, minScale,
+      offsetX: (vw - img.naturalWidth * minScale) / 2,
+      offsetY: (vh - img.naturalHeight * minScale) / 2,
+      objectUrl, onConfirm,
     };
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('failed to load image')); };
-    img.src = url;
-  });
+    document.getElementById('cropZoomSlider').value = 100;
+    document.getElementById('cropImg').src = objectUrl;
+    renderCropImage();
+  };
+  img.onerror = () => {
+    URL.revokeObjectURL(objectUrl);
+    showToast(CURRENT_LANG === 'en' ? 'Failed to load the image' : '画像の読み込みに失敗しました');
+  };
+  img.src = objectUrl;
+}
+
+function renderCropImage() {
+  const imgEl = document.getElementById('cropImg');
+  if (!cropCtx || !imgEl) return;
+  imgEl.style.width = `${cropCtx.naturalW * cropCtx.scale}px`;
+  imgEl.style.height = `${cropCtx.naturalH * cropCtx.scale}px`;
+  imgEl.style.transform = `translate(${cropCtx.offsetX}px, ${cropCtx.offsetY}px)`;
+}
+
+// 画像の端が枠内に隙間を作らないよう、移動範囲を制限する
+function clampCropOffsets() {
+  if (!cropCtx) return;
+  const w = cropCtx.naturalW * cropCtx.scale, h = cropCtx.naturalH * cropCtx.scale;
+  cropCtx.offsetX = Math.min(0, Math.max(cropCtx.viewportW - w, cropCtx.offsetX));
+  cropCtx.offsetY = Math.min(0, Math.max(cropCtx.viewportH - h, cropCtx.offsetY));
+}
+
+function onCropZoomChange(sliderValue) {
+  if (!cropCtx) return;
+  const factor = Number(sliderValue) / 100; // 100 = minScale（枠いっぱい）、300 = minScaleの3倍
+  const centerX = cropCtx.viewportW / 2, centerY = cropCtx.viewportH / 2;
+  // ズーム前に枠の中心に写っていた画像上の点を、ズーム後も中心に保つ
+  const imgCenterX = (centerX - cropCtx.offsetX) / cropCtx.scale;
+  const imgCenterY = (centerY - cropCtx.offsetY) / cropCtx.scale;
+  cropCtx.scale = cropCtx.minScale * factor;
+  cropCtx.offsetX = centerX - imgCenterX * cropCtx.scale;
+  cropCtx.offsetY = centerY - imgCenterY * cropCtx.scale;
+  clampCropOffsets();
+  renderCropImage();
+}
+
+function cropPointerDown(e) {
+  if (!cropCtx) return;
+  cropDragging = true;
+  const p = e.touches ? e.touches[0] : e;
+  cropDragStart = { x: p.clientX, y: p.clientY, offsetX: cropCtx.offsetX, offsetY: cropCtx.offsetY };
+  document.getElementById('cropViewport')?.classList.add('dragging');
+}
+function cropPointerMove(e) {
+  if (!cropDragging || !cropCtx) return;
+  e.preventDefault();
+  const p = e.touches ? e.touches[0] : e;
+  cropCtx.offsetX = cropDragStart.offsetX + (p.clientX - cropDragStart.x);
+  cropCtx.offsetY = cropDragStart.offsetY + (p.clientY - cropDragStart.y);
+  clampCropOffsets();
+  renderCropImage();
+}
+function cropPointerUp() {
+  cropDragging = false;
+  document.getElementById('cropViewport')?.classList.remove('dragging');
+}
+
+function cancelPhotoCrop() {
+  if (cropCtx && cropCtx.objectUrl) URL.revokeObjectURL(cropCtx.objectUrl);
+  cropCtx = null;
+  closeModal('photoCropModal');
+}
+
+function confirmPhotoCrop() {
+  if (!cropCtx) return;
+  const ratio = getCoordPhotoAspectRatio();
+  const outSize = 900;
+  const outW = ratio >= 1 ? outSize : Math.round(outSize * ratio);
+  const outH = ratio >= 1 ? Math.round(outSize / ratio) : outSize;
+  const canvas = document.createElement('canvas');
+  canvas.width = outW;
+  canvas.height = outH;
+  const drawRatio = outW / cropCtx.viewportW;
+  canvas.getContext('2d').drawImage(
+    cropCtx.img,
+    cropCtx.offsetX * drawRatio, cropCtx.offsetY * drawRatio,
+    cropCtx.naturalW * cropCtx.scale * drawRatio, cropCtx.naturalH * cropCtx.scale * drawRatio
+  );
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+  const onConfirm = cropCtx.onConfirm;
+  URL.revokeObjectURL(cropCtx.objectUrl);
+  cropCtx = null;
+  closeModal('photoCropModal');
+  onConfirm(dataUrl);
 }
 
 function openCoordPhotoModal(id) {
@@ -2506,32 +2650,27 @@ function renderCoordPhotoModal() {
   syncCoordShareStyleUI();
 }
 
-async function onCoordPhotoSelected(event) {
+function onCoordPhotoSelected(event) {
   const file = event.target.files && event.target.files[0];
+  event.target.value = '';
   if (!file) return;
-  if (!file.type.startsWith('image/')) {
-    showToast(CURRENT_LANG === 'en' ? 'Please select an image file' : '画像ファイルを選択してください');
-    event.target.value = '';
-    return;
-  }
-  try {
-    const dataUrl = await resizeImageFile(file, 1000, 0.82);
-    const sets = getSavedCoords();
-    const set = sets.find(s => s.id === coordPhotoTargetId);
-    if (!set) return;
-    set.photoDataUrl = dataUrl;
-    localStorage.setItem(nsKey('myCoords'), JSON.stringify(sets));
-    renderCoordPhotoModal();
-    renderMyCoordList();
-  } catch (err) {
-    console.error(err);
-    const msg = (err && err.name === 'QuotaExceededError')
-      ? (CURRENT_LANG === 'en' ? 'Not enough storage space to save this photo' : '写真を保存する容量が足りません')
-      : (CURRENT_LANG === 'en' ? 'Failed to attach the photo' : '写真の添付に失敗しました');
-    showToast(msg);
-  } finally {
-    event.target.value = '';
-  }
+  openPhotoCropModal(file, (dataUrl) => {
+    try {
+      const sets = getSavedCoords();
+      const set = sets.find(s => s.id === coordPhotoTargetId);
+      if (!set) return;
+      set.photoDataUrl = dataUrl;
+      localStorage.setItem(nsKey('myCoords'), JSON.stringify(sets));
+      renderCoordPhotoModal();
+      renderMyCoordList();
+    } catch (err) {
+      console.error(err);
+      const msg = (err && err.name === 'QuotaExceededError')
+        ? (CURRENT_LANG === 'en' ? 'Not enough storage space to save this photo' : '写真を保存する容量が足りません')
+        : (CURRENT_LANG === 'en' ? 'Failed to attach the photo' : '写真の添付に失敗しました');
+      showToast(msg);
+    }
+  });
 }
 
 function clearCoordPhoto() {
@@ -2913,23 +3052,14 @@ function shareRandomOnTwitter() {
   return shareCoordImageOnX(CURRENT_LANG === 'en' ? '🎲 Random Coord' : '🎲 ランダムコーデ', currentRandom, 'random-coord', buildRandomShareText(), randomCoordPhotoDataUrl);
 }
 
-async function onRandomCoordPhotoSelected(event) {
+function onRandomCoordPhotoSelected(event) {
   const file = event.target.files && event.target.files[0];
+  event.target.value = '';
   if (!file) return;
-  if (!file.type.startsWith('image/')) {
-    showToast(CURRENT_LANG === 'en' ? 'Please select an image file' : '画像ファイルを選択してください');
-    event.target.value = '';
-    return;
-  }
-  try {
-    randomCoordPhotoDataUrl = await resizeImageFile(file, 1000, 0.82);
+  openPhotoCropModal(file, (dataUrl) => {
+    randomCoordPhotoDataUrl = dataUrl;
     renderRandomCoordPhotoStatus();
-  } catch (err) {
-    console.error(err);
-    showToast(CURRENT_LANG === 'en' ? 'Failed to attach the photo' : '写真の添付に失敗しました');
-  } finally {
-    event.target.value = '';
-  }
+  });
 }
 
 function clearRandomCoordPhoto() {
