@@ -207,7 +207,7 @@ const ITEM_COST_DATA = {
     { id: 'large_placeable_100', name: 'シャンデリア', source: 'ムーミンの季節（季節精霊・過去）', cost: { type: 'unknown' }, dye: false },
     { id: 'large_placeable_101', name: 'おじいさんの時計', source: 'ムーミンの季節（季節精霊・過去）', cost: { type: 'unknown' }, dye: false },
     { id: 'large_placeable_102', name: '月灯りランタン飾り', source: '月灯りの日々（デイズ限定・過去開催）', cost: { type: 'ticket', note: 'イベント限定の通貨「チケット」での交換アイテムです（キャンドル等の通常価格はありません）。' }, revisitCost: { type: 'candle', value: 70 }, dye: false },
-    { id: 'large_placeable_103', name: 'ふわふわカフェテーブル', source: 'ふわふわカフェ（限定オファー・二度と復刻なし）', cost: { type: 'na', note: 'Sky×シナモロールコラボの限定アイテム。Wiki上は価格「N/A」表記で、実質は課金パック(コラボグッズ)付属品の可能性が高い' }, dye: false, limited: true },
+    { id: 'large_placeable_103', name: 'ふわふわカフェテーブル', source: 'もくもくカフェ（限定・復刻なし）', cost: { type: 'na', note: 'コラボイベント「もくもくカフェ」内で無償配布されたアイテムのため、購入価格は設定されていません。' }, dye: false, limited: true },
     { id: 'large_placeable_104', name: 'いたずら大鍋', source: 'いたずらな日々（デイズ限定・過去開催）', cost: { type: 'ticket', note: 'イベント限定の通貨「チケット」での交換アイテムです（キャンドル等の通常価格はありません）。' }, revisitCost: { type: 'candle', value: 48 }, dye: false },
     { id: 'large_placeable_105', name: '不思議のティーカップバス', source: '聖なる星の日々（デイズ限定・過去開催）', cost: { type: 'ticket', note: 'イベント限定の通貨「チケット」での交換アイテムです（キャンドル等の通常価格はありません）。' }, revisitCost: { type: 'candle', value: 75 }, dye: false },
     { id: 'large_placeable_106', name: '来福鉢植え', source: '来福の日々（デイズ限定・過去開催）', cost: { type: 'candle', value: 20, note: '単価20キャンドル×2個で合計40キャンドル' }, dye: false },
