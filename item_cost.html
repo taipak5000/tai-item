@@ -564,6 +564,18 @@ function saveMoneyAcquireMap(map) {
 function setMoneyAcquire(itemId, mode) {
   const map = loadMoneyAcquireMap();
   map[itemId] = mode;
+
+  // セット価格のアイテムは1回の購入/ギフトでセット全体を受け取っているため、
+  // 同じセットの他のアイテムにも同じ入手経緯（自分で購入/ギフトでもらった）を反映する
+  const allMoneyItems = Object.values(ITEM_COST_DATA).flat();
+  const target = allMoneyItems.find(it => it.id === itemId);
+  const setId = target && target.cost && target.cost.setId;
+  if (setId) {
+    allMoneyItems.forEach(it => {
+      if (it.cost && it.cost.setId === setId) map[it.id] = mode;
+    });
+  }
+
   saveMoneyAcquireMap(map);
   renderItems();
 }
