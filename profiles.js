@@ -118,6 +118,30 @@ function nsKey(rawKey) {
   return id === DEFAULT_PROFILE_ID ? rawKey : `${rawKey}__p_${id}`;
 }
 
+/* ================================================================
+   🛒 ウィッシュリスト（アイテム所持管理の全ページ共通・アイテム検索
+   ・カテゴリ一覧ページの両方から追加/削除できるよう共通化）
+   localStorage キー: wish_<catKey> = JSON array of item IDs
+   ================================================================ */
+function getWishIds(catKey) {
+  try { return JSON.parse(localStorage.getItem(nsKey('wish_' + catKey))) || []; }
+  catch { return []; }
+}
+
+function isWishItem(catKey, itemId) {
+  return getWishIds(catKey).includes(String(itemId));
+}
+
+// ウィッシュリストの追加/削除を切り替える。戻り値は切り替え後の状態（true=追加された/false=削除された）
+function toggleWishItem(catKey, itemId) {
+  const id = String(itemId);
+  const wishes = getWishIds(catKey);
+  const idx = wishes.indexOf(id);
+  if (idx === -1) wishes.push(id); else wishes.splice(idx, 1);
+  localStorage.setItem(nsKey('wish_' + catKey), JSON.stringify(wishes));
+  return idx === -1;
+}
+
 function switchProfile(id) {
   if (id === getActiveProfileId()) return;
   localStorage.setItem(ACTIVE_PROFILE_KEY, id);

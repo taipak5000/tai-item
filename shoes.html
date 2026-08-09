@@ -167,6 +167,15 @@
     }
     .tile-fav-btn:active { transform: scale(1.15); }
     .tile-fav-btn.is-fav { color: #FF9500; }
+    .tile-wish-btn {
+      position: absolute; top: 29px; right: 3px; z-index: 2;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: rgba(255,255,255,0.9); box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; color: var(--text-3); transition: transform 0.1s;
+    }
+    .tile-wish-btn:active { transform: scale(1.15); }
+    .tile-wish-btn.is-wish { color: var(--blue); background: rgba(0,122,255,0.15); }
     .tile-owned-check {
       position: absolute; bottom: 4px; right: 4px; z-index: 2;
       width: 19px; height: 19px; border-radius: 50%; background: var(--green); color: #fff;
@@ -233,6 +242,9 @@
     .fav-btn { font-size: 20px; color: var(--text-3); padding: 4px; transition: transform 0.1s; flex-shrink: 0; }
     .fav-btn:active { transform: scale(1.2); }
     .fav-btn.is-fav { color: #FFCC00; text-shadow: 0 0 2px rgba(255,180,0,0.4); }
+    .wish-btn { font-size: 18px; color: var(--text-3); padding: 4px; transition: transform 0.1s; flex-shrink: 0; }
+    .wish-btn:active { transform: scale(1.2); }
+    .wish-btn.is-wish { color: var(--blue); }
 
     /* Empty state */
     .empty-message { grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-2); font-size: 14px; background: var(--card); border-radius: var(--r); }
@@ -543,6 +555,12 @@ function toggleFav(id, btn) {
   btn.textContent = userStates.fav[id] ? '★' : '☆';
 }
 
+// ウィッシュリストの切り替え(profiles.js の toggleWishItem を利用する共通処理)
+function toggleWishBtn(id, btn) {
+  const added = toggleWishItem(CAT_KEY, id);
+  btn.classList.toggle('is-wish', added);
+}
+
 // 表示モードの切り替え（グリッド ⇔ リスト）
 function setViewMode(mode) {
   if (mode !== 'grid' && mode !== 'list') return;
@@ -631,16 +649,17 @@ function filterAndRender() {
   const getItemViewData = (item) => {
     const isOwned = !!userStates.owned[item.id];
     const isFav = !!userStates.fav[item.id];
+    const isWish = isWishItem(CAT_KEY, item.id);
     // Google 検索用URLを生成
     const wikiUrl = `https://www.google.com/search?q=${encodeURIComponent(trItem(item) + '　Sky')}`;
     // 画像パス（例: images/shoes/shoes_001.png）※未配置の間は自動でプレースホルダー表示
     const imgSrc = item.img || `${ITEM_IMG_DIR}${item.id}.png`;
-    return { isOwned, isFav, wikiUrl, imgSrc };
+    return { isOwned, isFav, isWish, wikiUrl, imgSrc };
   };
 
   // グリッド表示：画像タイル1枚分のHTML
   const renderItemGrid = (item) => {
-    const { isOwned, isFav, wikiUrl, imgSrc } = getItemViewData(item);
+    const { isOwned, isFav, isWish, wikiUrl, imgSrc } = getItemViewData(item);
     // タップ長押し等で全情報を確認できるツールチップ
     const en = CURRENT_LANG === 'en';
     const tip = [trItem(item), trEvent(item.event), item.cost === 'premium' ? (en ? 'Paid' : '課金') : (en ? 'Free' : '無課金'), en ? `Dye ${item.dye ? 'Yes' : 'No'}` : `染色${item.dye ? '〇' : '✕'}`, item.noReprint ? (en ? 'No Re-release' : '復刻なし') : '']
@@ -653,6 +672,7 @@ function filterAndRender() {
           ${item.noReprint ? '<span class="tile-nr-badge">NR</span>' : ''}
           <!-- お気に入りボタン（タイル選択とバブリングしないようストップ） -->
           <button class="tile-fav-btn ${isFav ? 'is-fav' : ''}" onclick="event.stopPropagation(); toggleFav('${item.id}', this)" aria-label="${CURRENT_LANG === 'en' ? 'Favorite' : 'お気に入り'}">${isFav ? '★' : '☆'}</button>
+          <button class="tile-wish-btn ${isWish ? 'is-wish' : ''}" onclick="event.stopPropagation(); toggleWishBtn('${item.id}', this)" aria-label="${CURRENT_LANG === 'en' ? 'Wishlist' : 'ウィッシュリスト'}" title="${CURRENT_LANG === 'en' ? 'Add to wishlist' : 'ウィッシュリストに追加'}">🛒</button>
           <div class="item-tile-img-wrap">
             <!-- 画像が未配置の場合は onerror でプレースホルダーアイコンに切り替え -->
             <img src="${imgSrc}" alt="${trItem(item)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('img-fallback')">
@@ -668,7 +688,7 @@ function filterAndRender() {
 
   // リスト表示：チェックボックスの代わりに画像サムネイルを配置したカード1枚分のHTML
   const renderItemList = (item) => {
-    const { isOwned, isFav, wikiUrl, imgSrc } = getItemViewData(item);
+    const { isOwned, isFav, isWish, wikiUrl, imgSrc } = getItemViewData(item);
 
     return `
       <div class="item-card ${isOwned ? 'is-owned' : ''}" id="card_${item.id}">
@@ -695,6 +715,9 @@ function filterAndRender() {
         <!-- お気に入りボタン -->
         <button class="fav-btn ${isFav ? 'is-fav' : ''}" onclick="toggleFav('${item.id}', this)">
           ${isFav ? '★' : '☆'}
+        </button>
+        <button class="wish-btn ${isWish ? 'is-wish' : ''}" onclick="toggleWishBtn('${item.id}', this)" aria-label="${CURRENT_LANG === 'en' ? 'Wishlist' : 'ウィッシュリスト'}" title="${CURRENT_LANG === 'en' ? 'Add to wishlist' : 'ウィッシュリストに追加'}">
+          🛒
         </button>
       </div>
     `;

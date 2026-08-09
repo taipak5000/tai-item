@@ -573,6 +573,12 @@
     .gs-control-row { display: flex; flex-wrap: wrap; gap: 8px; }
     .gs-control-row > .form-input,
     .gs-control-row > .cat-sel { flex: 1; min-width: 140px; }
+    .gs-current-toggle {
+      display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600;
+      color: var(--text); background: rgba(255,204,0,0.12); border: 1px solid rgba(255,204,0,0.35);
+      border-radius: var(--r-sm); padding: 7px 12px; cursor: pointer; user-select: none;
+    }
+    .gs-current-toggle input { accent-color: var(--orange); width: 16px; height: 16px; flex-shrink: 0; }
     .gs-row-main { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; cursor: pointer; }
     .gs-item-name {
       font-size: 14px; font-weight: 600; margin-top: 1px; color: var(--text); display: inline-block;
@@ -969,6 +975,11 @@
     <span class="feature-label" data-i18n-en="Search Items by Season / Event">季節・イベントでアイテムを検索</span>
     <span class="feature-desc" data-i18n-en="Search items across all categories by season, days, category, favorites, and ownership status">全カテゴリのアイテムを季節・日々・カテゴリ・お気に入り・所持状況で横断検索できます</span>
   </button>
+  <button class="feature-btn" onclick="openCurrentItems()">
+    <span class="feature-icon">🌟</span>
+    <span class="feature-label" data-i18n-en="Currently Available Items">今ゲットできるアイテム</span>
+    <span class="feature-desc" data-i18n-en="See all items from the currently running season/event across every category at a glance">現在開催中の季節・イベントで入手できるアイテムを、絞り込み不要で全カテゴリまとめて確認できます</span>
+  </button>
 
   <!-- ▸ コスト管理 -->
   <p class="sec-label" data-i18n-en="Cost Management">コスト管理</p>
@@ -1128,6 +1139,12 @@
         <select class="cat-sel" id="gsEvent" onchange="renderGlobalSearch()">
           <option value="all" data-i18n-en="All Seasons/Events">すべての季節・イベント</option>
         </select>
+      </div>
+      <div class="gs-control-row">
+        <label class="gs-current-toggle">
+          <input type="checkbox" id="gsCurrentOnly" onchange="renderGlobalSearch()">
+          <span data-i18n-en="🌟 Currently available only">🌟 現在開催中の季節・イベントのみ</span>
+        </label>
       </div>
       <div class="gs-control-row">
         <select class="cat-sel" id="gsCat" onchange="renderGlobalSearch()">
@@ -1571,6 +1588,15 @@ function buildCategoryFilterOptions(selectId = 'gsCat', catKeys = null) {
     cats.map(c => `<option value="${c.key}">${escapeHtml(trCat(c.name))}</option>`).join('');
 }
 
+// ▼▼▼ 現在開催中の季節・イベント（手動更新） ▼▼▼
+// 「🌟 今ゲットできるアイテム」機能で使用。ゲーム内で新しい季節・イベント・コラボが
+// 始まったら、ここに item.event の値（各カテゴリのITEMS_DATAに書かれている名前）と
+// 完全一致する文字列を追加/入れ替えてください。複数同時開催中なら複数列挙してOK。
+const CURRENT_EVENTS = [
+  'もくもくカフェ',
+];
+// ▲▲▲ 現在開催中の季節・イベント（手動更新） ▲▲▲
+
 // 季節は実装順（登場した順）、日々は来福の日々を起点とした年間の開催順。
 // リストに無いイベント名（コラボ・単発イベント等）は、元の登場順のまま末尾に続く。
 const EVENT_ORDER = [
@@ -1650,6 +1676,13 @@ async function openItemSearch() {
   }
 }
 
+// 「🌟 今ゲットできるアイテム」ボタンから、アイテム検索を「現在開催中のみ」表示で開く
+async function openCurrentItems() {
+  await openItemSearch();
+  const cb = document.getElementById('gsCurrentOnly');
+  if (cb) { cb.checked = true; renderGlobalSearch(); }
+}
+
 // 絞り込み条件を適用して検索結果を描画
 function renderGlobalSearch() {
   if (!allItemsCache) return;
@@ -1659,6 +1692,7 @@ function renderGlobalSearch() {
   const fCat   = document.getElementById('gsCat').value;
   const fOwned = document.getElementById('gsOwned').value;
   const fFav   = document.getElementById('gsFav').value;
+  const fCurrentOnly = document.getElementById('gsCurrentOnly').checked;
 
   const stateCache = {};
   const getState = catKey => stateCache[catKey] || (stateCache[catKey] = readCatState(catKey));
@@ -1670,6 +1704,7 @@ function renderGlobalSearch() {
       && !item.event.toLowerCase().includes(fName)
       && !trEvent(item.event).toLowerCase().includes(fName)) return false;
     if (fEvent !== 'all' && item.event !== fEvent) return false;
+    if (fCurrentOnly && !CURRENT_EVENTS.includes(item.event)) return false;
     if (fCat !== 'all' && item.catKey !== fCat) return false;
     if (fOwned !== 'all') {
       const isOwned = !!getState(item.catKey).owned[item.id];
@@ -1799,24 +1834,13 @@ function toggleFavFromSearch(catKey, itemId, btnEl) {
    コストは cost-data.js（item_cost.htmlと共通のWiki準拠データ）から引く。
    ================================================================ */
 
-// localStorage キー: wish_<catKey> = JSON array of item IDs（プロフィール別に nsKey で名前空間化）
-function getWishIds(catKey) {
-  try { return JSON.parse(localStorage.getItem(nsKey('wish_' + catKey))) || []; }
-  catch { return []; }
-}
-
-function isWishItem(catKey, itemId) {
-  return getWishIds(catKey).includes(String(itemId));
-}
+// wish_<catKey> の実体（getWishIds/isWishItem/toggleWishItem）は
+// カテゴリ一覧ページ（cape.html等）とも共有するため profiles.js 側に定義されている。
 
 function toggleWishFromSearch(catKey, itemId, btnEl) {
-  const id = String(itemId);
-  const wishes = getWishIds(catKey);
-  const idx = wishes.indexOf(id);
-  if (idx === -1) wishes.push(id); else wishes.splice(idx, 1);
-  localStorage.setItem(nsKey('wish_' + catKey), JSON.stringify(wishes));
-  if (btnEl) btnEl.classList.toggle('is-wish', idx === -1);
-  showToast(idx === -1
+  const added = toggleWishItem(catKey, itemId);
+  if (btnEl) btnEl.classList.toggle('is-wish', added);
+  showToast(added
     ? (CURRENT_LANG === 'en' ? 'Added to wishlist' : 'ウィッシュリストに追加しました')
     : (CURRENT_LANG === 'en' ? 'Removed from wishlist' : 'ウィッシュリストから外しました'));
 }
@@ -1836,14 +1860,15 @@ function getItemCost(catKey, itemId) {
 
 // 所持通貨の保存（プロフィール別）
 function getWishOwnCurrency() {
-  try { return JSON.parse(localStorage.getItem(nsKey('wishOwnCurrency'))) || { candle: 0, heart: 0 }; }
-  catch { return { candle: 0, heart: 0 }; }
+  try { return { candle: 0, heart: 0, starCandle: 0, ...JSON.parse(localStorage.getItem(nsKey('wishOwnCurrency'))) }; }
+  catch { return { candle: 0, heart: 0, starCandle: 0 }; }
 }
 
 function saveWishOwnCurrency() {
   const candle = Math.max(0, Number(document.getElementById('wishOwnCandle')?.value) || 0);
   const heart = Math.max(0, Number(document.getElementById('wishOwnHeart')?.value) || 0);
-  localStorage.setItem(nsKey('wishOwnCurrency'), JSON.stringify({ candle, heart }));
+  const starCandle = Math.max(0, Number(document.getElementById('wishOwnStarCandle')?.value) || 0);
+  localStorage.setItem(nsKey('wishOwnCurrency'), JSON.stringify({ candle, heart, starCandle }));
   renderWishList();
 }
 
@@ -1870,6 +1895,7 @@ function wishCostHtml(cost) {
   if (!cost) return `<span class="wish-cost unknown">${CURRENT_LANG === 'en' ? 'No data' : 'データなし'}</span>`;
   switch (cost.type) {
     case 'candle': return `<span class="wish-cost">🕯️ ${cost.value}</span>`;
+    case 'starCandle': return `<span class="wish-cost">⭐ ${cost.value}</span>`;
     case 'heart':  return `<span class="wish-cost">💗 ${cost.value}</span>`;
     case 'money':  return `<span class="wish-cost money">💴 ¥${Number(cost.value).toLocaleString()}</span>`;
     case 'ticket': return `<span class="wish-cost unknown">🎫 ${CURRENT_LANG === 'en' ? 'Ticket' : 'チケット'}</span>`;
@@ -1903,11 +1929,12 @@ function renderWishList() {
   }
 
   // 合計（入手済みは除外）
-  let sumCandle = 0, sumHeart = 0, sumMoney = 0, unknownCount = 0, ownedCount = 0;
+  let sumCandle = 0, sumStarCandle = 0, sumHeart = 0, sumMoney = 0, unknownCount = 0, ownedCount = 0;
   rows.forEach(r => {
     if (r.owned) { ownedCount++; return; }
     if (!r.cost) { unknownCount++; return; }
     if (r.cost.type === 'candle') sumCandle += Number(r.cost.value) || 0;
+    else if (r.cost.type === 'starCandle') sumStarCandle += Number(r.cost.value) || 0;
     else if (r.cost.type === 'heart') sumHeart += Number(r.cost.value) || 0;
     else if (r.cost.type === 'money') sumMoney += Number(r.cost.value) || 0;
     else unknownCount++;
@@ -1915,6 +1942,7 @@ function renderWishList() {
 
   const own = getWishOwnCurrency();
   const lackCandle = Math.max(0, sumCandle - own.candle);
+  const lackStarCandle = Math.max(0, sumStarCandle - own.starCandle);
   const lackHeart = Math.max(0, sumHeart - own.heart);
 
   const listHtml = rows.map(r => `
@@ -1936,6 +1964,9 @@ function renderWishList() {
       <label>🕯️ ${en ? 'Owned Candles' : '所持キャンドル'}
         <input type="number" id="wishOwnCandle" min="0" value="${own.candle}" onchange="saveWishOwnCurrency()">
       </label>
+      <label>⭐ ${en ? 'Owned Star Candles' : '所持星のキャンドル'}
+        <input type="number" id="wishOwnStarCandle" min="0" value="${own.starCandle}" onchange="saveWishOwnCurrency()">
+      </label>
       <label>💗 ${en ? 'Owned Hearts' : '所持ハート'}
         <input type="number" id="wishOwnHeart" min="0" value="${own.heart}" onchange="saveWishOwnCurrency()">
       </label>
@@ -1945,6 +1976,9 @@ function renderWishList() {
       <div class="wish-total-row"><span>🕯️ ${en ? 'Candles needed' : '必要キャンドル合計'}</span><b>${sumCandle}</b></div>
       <div class="wish-total-row"><span>　→ ${en ? 'Still short' : 'あと'}</span>
         <b class="${lackCandle > 0 ? 'lack' : 'enough'}">${lackCandle > 0 ? lackCandle + (en ? '' : ' 本') : (en ? 'Enough! ✓' : '足りています ✓')}</b></div>
+      <div class="wish-total-row"><span>⭐ ${en ? 'Star Candles needed' : '必要星のキャンドル合計'}</span><b>${sumStarCandle}</b></div>
+      <div class="wish-total-row"><span>　→ ${en ? 'Still short' : 'あと'}</span>
+        <b class="${lackStarCandle > 0 ? 'lack' : 'enough'}">${lackStarCandle > 0 ? lackStarCandle + (en ? '' : ' 本') : (en ? 'Enough! ✓' : '足りています ✓')}</b></div>
       <div class="wish-total-row"><span>💗 ${en ? 'Hearts needed' : '必要ハート合計'}</span><b>${sumHeart}</b></div>
       <div class="wish-total-row"><span>　→ ${en ? 'Still short' : 'あと'}</span>
         <b class="${lackHeart > 0 ? 'lack' : 'enough'}">${lackHeart > 0 ? lackHeart + (en ? '' : ' 個') : (en ? 'Enough! ✓' : '足りています ✓')}</b></div>
