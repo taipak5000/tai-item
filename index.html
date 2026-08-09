@@ -2550,8 +2550,10 @@ function saveCreatedCoord() {
 // ⚠️ サイト公開URLが決まったらここを差し替えてください
 const SITE_URL = 'https://taipak5000.github.io/tai-item/';
 const SHARE_HASHTAG = '#Skyアイテム所持率';
-// ランダムコーデ・マイコーデの共有専用タグ（達成率の共有は引き続きSHARE_HASHTAGを使う）
+// マイコーデの共有専用タグ（達成率の共有は引き続きSHARE_HASHTAGを使う）
 const COORD_SHARE_HASHTAG = '#Sky所持率管理コーデ';
+// ランダムコーデの共有専用タグ（「今日のランダムコーデ」感を出すため別タグにしている）
+const RANDOM_SHARE_HASHTAG = '#Sky所持率管理今日のコーデ';
 // お気に入りアイテム紹介の共有専用タグ
 const FAV_SHARE_HASHTAG = '#Sky所持率管理お気に入り';
 
@@ -2746,8 +2748,8 @@ function shareCoordImageOnX(title, items, filenameBase, shareText, photoDataUrl)
 // コーデ共有時のコメント文（アイテムの列挙はしない。内容は画像側で見せる）
 function buildRandomShareText() {
   return CURRENT_LANG === 'en'
-    ? `🎲 Here's my random coord!\n\n${SITE_URL}\n${COORD_SHARE_HASHTAG}`
-    : `🎲 ランダムコーデが決まりました！\n\n${SITE_URL}\n${COORD_SHARE_HASHTAG}`;
+    ? `🎲 Here's my random coord!\n\n${SITE_URL}\n${RANDOM_SHARE_HASHTAG}`
+    : `🎲 ランダムコーデが決まりました！\n\n${SITE_URL}\n${RANDOM_SHARE_HASHTAG}`;
 }
 
 function buildMyCoordShareText(label) {
