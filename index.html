@@ -750,6 +750,54 @@
       color: rgba(255,255,255,0.75); font-size: 10.5px; text-align: right; margin-top: 10px;
     }
 
+    /* ── コーデ画像（写真×アイコングリッド）スタイル ─── */
+    .grid-card {
+      position: fixed; left: -9999px; top: 0; width: 560px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+      background: linear-gradient(135deg, #3a2f28 0%, #6b5645 100%);
+      padding: 16px; border-radius: 24px; box-sizing: border-box;
+    }
+    .grid-card-brand {
+      color: rgba(255,255,255,0.85); font-size: 12px; font-weight: 600; margin-bottom: 10px;
+    }
+    .grid-card-body {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+    }
+    .grid-photo-cell {
+      grid-column: span 2; grid-row: span 2; position: relative;
+      aspect-ratio: 1 / 1; border-radius: 16px; overflow: hidden; background: #1c1c1e;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .grid-photo-cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .grid-photo-placeholder { color: rgba(255,255,255,0.35); font-size: 30px; }
+    .grid-photo-id {
+      position: absolute; right: 8px; bottom: 6px; color: #fff; font-size: 12px; font-weight: 700;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.85); letter-spacing: 0.2px; max-width: calc(100% - 16px);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .grid-icon-cell {
+      aspect-ratio: 1 / 1; border-radius: 14px; background: rgba(0,0,0,0.35);
+      border: 1.5px solid rgba(255,255,255,0.14);
+      display: flex; align-items: center; justify-content: center; overflow: hidden;
+    }
+    .grid-icon-cell img { width: 68%; height: 68%; object-fit: contain; }
+    .grid-icon-cell .cat-icon-fallback { font-size: 24px; }
+    .grid-card-date {
+      color: rgba(255,255,255,0.65); font-size: 10.5px; text-align: right; margin-top: 10px;
+    }
+    .coord-share-style-toggle { display: flex; gap: 8px; margin-top: 12px; }
+    .coord-share-style-btn {
+      flex: 1; font-size: 12px; font-weight: 700; padding: 9px 8px; border-radius: var(--r-sm);
+      background: var(--bg); color: var(--text-2); border: 1px solid var(--sep); text-align: center;
+    }
+    .coord-share-style-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+    .coord-share-id-row { margin-top: 10px; }
+    .coord-share-id-row input {
+      width: 100%; box-sizing: border-box; background: var(--bg); border: 1px solid var(--sep);
+      border-radius: var(--r-sm); padding: 9px 12px; font-size: 13px; font-family: inherit; color: var(--text);
+    }
+    .coord-grid-photo-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+
     /* ── 共有画像カスタマイズモーダル ─────────────── */
     .customize-section-label {
       font-size: 12px; font-weight: 700; color: var(--text-2);
@@ -1068,6 +1116,21 @@
     <div class="action-row">
       <button class="action-btn primary full" onclick="toggleSaveRow()" data-i18n-en="💾 Save">💾 保存する</button>
     </div>
+    <div class="coord-share-style-toggle">
+      <button type="button" class="coord-share-style-btn" onclick="setCoordShareStyle('polaroid')" data-i18n-en="🖼️ Polaroid">🖼️ ポラロイド風</button>
+      <button type="button" class="coord-share-style-btn" onclick="setCoordShareStyle('grid')" data-i18n-en="🎮 Icon Grid">🎮 アイコングリッド</button>
+    </div>
+    <div class="coord-share-id-row">
+      <input type="text" class="coord-share-id-input" maxlength="40" data-i18n-en-placeholder="Your ID (optional, shown on the photo)" placeholder="自分のID（任意・写真に表示されます）" oninput="setShareUserId(this.value)">
+    </div>
+    <div class="coord-grid-photo-row">
+      <label class="fav-bg-file-btn">
+        <span data-i18n-en="🖼️ Choose Photo">🖼️ 写真を選ぶ</span>
+        <input type="file" accept="image/*" style="display:none;" onchange="onRandomCoordPhotoSelected(event)">
+      </label>
+      <span id="randomCoordPhotoStatus" style="font-size:12px; color:var(--text-2);" data-i18n-en="Not selected">未選択</span>
+      <span id="randomCoordPhotoClearBtn" style="display:none; color:var(--blue); font-weight:600; font-size:12px; cursor:pointer;" onclick="clearRandomCoordPhoto()" data-i18n-en="Remove">削除</span>
+    </div>
     <div class="action-row">
       <button class="action-btn secondary" onclick="saveRandomAsImage()" data-i18n-en="🖼️ Save as Image">🖼️ 画像で保存</button>
       <button class="action-btn twitter"   onclick="shareRandomOnTwitter()" data-i18n-en="📤 Share on X">📤 Xでシェア</button>
@@ -1344,6 +1407,15 @@
       </label>
       <span id="coordPhotoStatus" style="font-size:12px; color:var(--text-2);" data-i18n-en="Not selected">未選択</span>
       <span id="coordPhotoClearBtn" style="display:none; color:var(--blue); font-weight:600; font-size:12px; cursor:pointer;" onclick="clearCoordPhoto()" data-i18n-en="Remove">削除</span>
+    </div>
+
+    <div class="hint" data-i18n-en="Image style (applies to Random Coord too)">画像のスタイル（ランダムコーデにも共通で適用されます）</div>
+    <div class="coord-share-style-toggle">
+      <button type="button" class="coord-share-style-btn" onclick="setCoordShareStyle('polaroid')" data-i18n-en="🖼️ Polaroid">🖼️ ポラロイド風</button>
+      <button type="button" class="coord-share-style-btn" onclick="setCoordShareStyle('grid')" data-i18n-en="🎮 Icon Grid">🎮 アイコングリッド</button>
+    </div>
+    <div class="coord-share-id-row">
+      <input type="text" class="coord-share-id-input" maxlength="40" data-i18n-en-placeholder="Your ID (optional, shown on the photo)" placeholder="自分のID（任意・写真に表示されます）" oninput="setShareUserId(this.value)">
     </div>
 
     <div class="action-row" style="margin-top:16px;">
@@ -2199,6 +2271,8 @@ function openRandomCoord() {
   hideSaveRow();
   openModal('randomModal');
   shuffleOutfit();
+  syncCoordShareStyleUI();
+  renderRandomCoordPhotoStatus();
 }
 
 function shuffleOutfit() {
@@ -2429,6 +2503,7 @@ function renderCoordPhotoModal() {
     status.textContent = CURRENT_LANG === 'en' ? 'Not selected' : '未選択';
     clearBtn.style.display = 'none';
   }
+  syncCoordShareStyleUI();
 }
 
 async function onCoordPhotoSelected(event) {
@@ -2619,6 +2694,39 @@ function buildExportCardEl(title, items, photoDataUrl) {
   return card;
 }
 
+// コーデ画像（写真×アイコングリッド）カードを生成する。
+// 左上に大きく写真（右下に任意のプレイヤーID表示）、その周りに装備アイテムのアイコンを並べる。
+function buildIconGridExportCardEl(items, photoDataUrl, playerName) {
+  const cells = CATS.map(cat => {
+    const item = items[cat.key];
+    if (!item) return '';
+    return `<div class="grid-icon-cell">${itemIconHtml(cat, item)}</div>`;
+  }).join('');
+
+  const today = new Date();
+  const dateTxt = CURRENT_LANG === 'en'
+    ? `Created ${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`
+    : `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日作成`;
+
+  const card = document.createElement('div');
+  card.className = 'grid-card';
+  card.innerHTML = `
+    <div class="grid-card-brand">${CURRENT_LANG === 'en' ? '🗂️ Item Collection Tracker' : '🗂️ アイテム所持率管理'}</div>
+    <div class="grid-card-body">
+      <div class="grid-photo-cell">
+        ${photoDataUrl
+          ? `<img src="${photoDataUrl}" alt="">`
+          : `<span class="grid-photo-placeholder">📷</span>`}
+        ${playerName ? `<div class="grid-photo-id">${escapeHtml(playerName)}</div>` : ''}
+      </div>
+      ${cells}
+    </div>
+    <div class="grid-card-date">${dateTxt}</div>
+  `;
+  document.body.appendChild(card);
+  return card;
+}
+
 // 指定したカード生成関数の出力を画像として書き出し、保存/共有する（共通処理）
 // 1) Web Share API（ファイル共有）に対応していれば、共有シートから直接「画像を保存」または他アプリへ渡せる
 //    opts.shareText を渡すと、画像と一緒にコメント文も共有できる（Xアプリ等が両方受け取れる）
@@ -2724,12 +2832,47 @@ function openImagePreview(dataUrl, filename, shareText) {
 
 // コーデを画像として書き出し、ダウンロードする
 // photoDataUrl を渡すと、そのコーデ用に添付した写真（実際に着ている写真など）を画像内に埋め込む
+/* ================================================================
+   🖼️ コーデ画像のスタイル設定（ポラロイド風 / 写真×アイコングリッド）
+   ランダムコーデ・マイコーデ共通の設定として保持する。
+   ================================================================ */
+const COORD_SHARE_STYLE_KEY = nsKey('coordShareStyle_v1');
+let coordShareStyle = localStorage.getItem(COORD_SHARE_STYLE_KEY) === 'grid' ? 'grid' : 'polaroid';
+const SHARE_USER_ID_KEY = nsKey('shareUserId_v1');
+let shareUserId = localStorage.getItem(SHARE_USER_ID_KEY) || '';
+// ランダムコーデは保存されない一時的なコーデのため、写真はセッション中のみ保持する
+let randomCoordPhotoDataUrl = null;
+
+function setCoordShareStyle(style) {
+  coordShareStyle = (style === 'grid') ? 'grid' : 'polaroid';
+  localStorage.setItem(COORD_SHARE_STYLE_KEY, coordShareStyle);
+  syncCoordShareStyleUI();
+}
+
+function setShareUserId(value) {
+  shareUserId = (value || '').trim();
+  localStorage.setItem(SHARE_USER_ID_KEY, shareUserId);
+}
+
+// スタイル切り替えUI（ランダムコーデ・マイコーデの各モーダルに1つずつ存在する）をまとめて同期する
+function syncCoordShareStyleUI() {
+  document.querySelectorAll('.coord-share-style-toggle').forEach(wrap => {
+    const btns = wrap.querySelectorAll('.coord-share-style-btn');
+    btns[0]?.classList.toggle('active', coordShareStyle === 'polaroid');
+    btns[1]?.classList.toggle('active', coordShareStyle === 'grid');
+  });
+  document.querySelectorAll('.coord-share-id-input').forEach(input => { input.value = shareUserId; });
+}
+
 function saveCoordAsImage(title, items, filenameBase, photoDataUrl) {
   if (!items || Object.keys(items).length === 0) {
     showToast(CURRENT_LANG === 'en' ? 'No coord selected' : 'コーデが選択されていません');
     return;
   }
-  return exportElementAsImage(() => buildExportCardEl(title, items, photoDataUrl), filenameBase);
+  const buildFn = coordShareStyle === 'grid'
+    ? () => buildIconGridExportCardEl(items, photoDataUrl, shareUserId)
+    : () => buildExportCardEl(title, items, photoDataUrl);
+  return exportElementAsImage(buildFn, filenameBase);
 }
 
 // コーデを「画像＋一言コメント」としてXへ共有する
@@ -2739,7 +2882,10 @@ function shareCoordImageOnX(title, items, filenameBase, shareText, photoDataUrl)
     showToast(CURRENT_LANG === 'en' ? 'No coord selected' : 'コーデが選択されていません');
     return;
   }
-  return exportElementAsImage(() => buildExportCardEl(title, items, photoDataUrl), filenameBase, {
+  const buildFn = coordShareStyle === 'grid'
+    ? () => buildIconGridExportCardEl(items, photoDataUrl, shareUserId)
+    : () => buildExportCardEl(title, items, photoDataUrl);
+  return exportElementAsImage(buildFn, filenameBase, {
     shareText,
     successToast: CURRENT_LANG === 'en' ? 'Shared!' : '共有しました！'
   });
@@ -2760,11 +2906,48 @@ function buildMyCoordShareText(label) {
 
 // ── ランダムコーデ: 画像保存・Xシェア ──────────
 function saveRandomAsImage() {
-  return saveCoordAsImage(CURRENT_LANG === 'en' ? '🎲 Random Coord' : '🎲 ランダムコーデ', currentRandom, 'random-coord');
+  return saveCoordAsImage(CURRENT_LANG === 'en' ? '🎲 Random Coord' : '🎲 ランダムコーデ', currentRandom, 'random-coord', randomCoordPhotoDataUrl);
 }
 
 function shareRandomOnTwitter() {
-  return shareCoordImageOnX(CURRENT_LANG === 'en' ? '🎲 Random Coord' : '🎲 ランダムコーデ', currentRandom, 'random-coord', buildRandomShareText());
+  return shareCoordImageOnX(CURRENT_LANG === 'en' ? '🎲 Random Coord' : '🎲 ランダムコーデ', currentRandom, 'random-coord', buildRandomShareText(), randomCoordPhotoDataUrl);
+}
+
+async function onRandomCoordPhotoSelected(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    showToast(CURRENT_LANG === 'en' ? 'Please select an image file' : '画像ファイルを選択してください');
+    event.target.value = '';
+    return;
+  }
+  try {
+    randomCoordPhotoDataUrl = await resizeImageFile(file, 1000, 0.82);
+    renderRandomCoordPhotoStatus();
+  } catch (err) {
+    console.error(err);
+    showToast(CURRENT_LANG === 'en' ? 'Failed to attach the photo' : '写真の添付に失敗しました');
+  } finally {
+    event.target.value = '';
+  }
+}
+
+function clearRandomCoordPhoto() {
+  randomCoordPhotoDataUrl = null;
+  renderRandomCoordPhotoStatus();
+}
+
+function renderRandomCoordPhotoStatus() {
+  const status = document.getElementById('randomCoordPhotoStatus');
+  const clearBtn = document.getElementById('randomCoordPhotoClearBtn');
+  if (!status || !clearBtn) return;
+  if (randomCoordPhotoDataUrl) {
+    status.textContent = CURRENT_LANG === 'en' ? 'Photo attached' : '写真を添付済み';
+    clearBtn.style.display = '';
+  } else {
+    status.textContent = CURRENT_LANG === 'en' ? 'Not selected' : '未選択';
+    clearBtn.style.display = 'none';
+  }
 }
 
 // ── マイコーデ: 画像保存・Xシェア ──────────────
