@@ -867,12 +867,13 @@ function buildCostExportCardEl() {
   return card;
 }
 
-const COST_SITE_URL = 'https://taipak5000.github.io/tai-item/item_cost.html';
+const COST_SITE_URL = 'https://taipak5000.github.io/tai-item/';
+const COST_SHARE_HASHTAG = '#Skyアイテム所持率';
 function buildCostTweetText() {
   const en = CURRENT_LANG === 'en';
   return en
-    ? `Here's my Sky item collection cost so far! 💴\n\n${COST_SITE_URL}\n#SkyItemCost`
-    : `Skyのアイテム収集にかかったコストはこちら！💴\n\n${COST_SITE_URL}\n#Skyアイテムコスト管理`;
+    ? `Here's my Sky item collection cost so far! 💴\n\n${COST_SITE_URL}\n${COST_SHARE_HASHTAG}`
+    : `Skyのアイテム収集にかかったコストはこちら！💴\n\n${COST_SITE_URL}\n${COST_SHARE_HASHTAG}`;
 }
 
 function shareCostOnTwitter() {
