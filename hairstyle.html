@@ -708,6 +708,7 @@ function buildEventFilter() {
 function toggleOwned(id) {
   userStates.owned[id] = !userStates.owned[id];
   saveUserData();
+  if (userStates.owned[id]) recordItemAcquire(CAT_KEY, id); else removeItemAcquireRecord(id);
   
   // クラスの切り替えだけでスムーズにUIに反映
   const card = document.getElementById(`card_${id}`);

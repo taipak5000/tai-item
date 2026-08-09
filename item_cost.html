@@ -124,6 +124,13 @@
     }
     .acquire-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
     .acquire-btn.active.free { background: var(--green); border-color: var(--green); }
+    .candle-money-input-row {
+      display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 11.5px; color: var(--text-2);
+    }
+    .candle-money-input {
+      width: 90px; background: var(--bg); border: 1px solid var(--sep); border-radius: var(--r-sm);
+      padding: 5px 8px; font-size: 12.5px; font-family: inherit; color: var(--text);
+    }
 
     .summary-card {
       background: linear-gradient(135deg, var(--orange) 0%, var(--orange-d) 100%);
@@ -591,6 +598,36 @@ function setMoneyAcquire(itemId, mode) {
   }
 
   saveMoneyAcquireMap(map);
+  renderItems();
+}
+
+/* ================================================================
+   🕯️💳 課金で購入したキャンドルで入手したアイテムの取り扱い
+   キャンドル/星のキャンドルで入手したアイテムでも、そのキャンドル自体を
+   リアルマネーで購入していた場合は、申告した金額を実額の集計にも加算する。
+   ================================================================ */
+const CANDLE_MONEY_KEY = nsKey('candleMoneyMode_v1');
+function loadCandleMoneyMap() {
+  try { return JSON.parse(localStorage.getItem(CANDLE_MONEY_KEY)) || {}; }
+  catch (_) { return {}; }
+}
+function saveCandleMoneyMap(map) {
+  localStorage.setItem(CANDLE_MONEY_KEY, JSON.stringify(map));
+}
+function setCandleMoneyMode(itemId, mode) {
+  const map = loadCandleMoneyMap();
+  const entry = map[itemId] || {};
+  entry.mode = mode;
+  map[itemId] = entry;
+  saveCandleMoneyMap(map);
+  renderItems();
+}
+function setCandleMoneyYen(itemId, rawValue) {
+  const map = loadCandleMoneyMap();
+  const entry = map[itemId] || {};
+  entry.yen = Math.max(0, Number(rawValue) || 0);
+  map[itemId] = entry;
+  saveCandleMoneyMap(map);
   renderItems();
 }
 
@@ -1096,6 +1133,7 @@ function getAllItems() {
   const acquireMap = loadSeasonAcquireMap();
   const acquireEligibleTypes = ['candle', 'starCandle', 'heart'];
   const moneyAcquireMap = loadMoneyAcquireMap();
+  const candleMoneyMap = loadCandleMoneyMap();
   all.forEach(item => {
     item.seasonPendantOwned = pendantOwnedSeasons.has(extractSource(item.source)) && acquireEligibleTypes.includes(item.cost.type);
     item.isTicketItem = item.cost.type === 'ticket';
@@ -1104,6 +1142,10 @@ function getAllItems() {
     item.acquireMode = acquireMap[item.id] || (item.isTicketItem ? 'ticket' : 'revisit');
     // 課金アイテムの入手経緯（未設定時は「自分で購入」扱い）
     item.moneyAcquireMode = item.cost.type === 'money' ? (moneyAcquireMap[item.id] || 'self') : null;
+    // 課金で購入したキャンドルで入手したかどうか（未設定時は「通常のキャンドル」扱い）
+    const candleEntry = (item.cost.type === 'candle' || item.cost.type === 'starCandle') ? candleMoneyMap[item.id] : null;
+    item.candleMoneyMode = candleEntry ? (candleEntry.mode || 'normal') : 'normal';
+    item.candleMoneyYen = candleEntry ? (candleEntry.yen || 0) : 0;
   });
 
   return all;
@@ -1167,6 +1209,22 @@ function renderItemCard(item, owned) {
       <button type="button" class="acquire-btn ${item.moneyAcquireMode === 'gift' ? 'active free' : ''}" onclick="setMoneyAcquire('${item.id}', 'gift')">🎁 ${CURRENT_LANG === 'en' ? 'Received as a gift' : 'ギフトでもらった'}</button>
     </div>` : '';
 
+  // キャンドル/星のキャンドルアイテムの場合のみ：課金で購入したキャンドルで入手したかを選べる
+  // （課金で買ったキャンドルで入手した場合、入力した実額も「実額」の集計に加算される。
+  //   候補金額はキャンドルパックの価格帯によって変わるため自動計算はせず、自己申告制にしている）
+  const showCandleMoneyToggle = owned && (item.cost.type === 'candle' || item.cost.type === 'starCandle');
+  const isPaidCandle = item.candleMoneyMode === 'paidCandle';
+  const candleMoneyToggleHtml = showCandleMoneyToggle ? `
+    <div class="acquire-toggle">
+      <button type="button" class="acquire-btn ${!isPaidCandle ? 'active' : ''}" onclick="setCandleMoneyMode('${item.id}', 'normal')">🕯️ ${CURRENT_LANG === 'en' ? 'Obtained with candles' : 'キャンドルで入手'}</button>
+      <button type="button" class="acquire-btn ${isPaidCandle ? 'active free' : ''}" onclick="setCandleMoneyMode('${item.id}', 'paidCandle')">💳 ${CURRENT_LANG === 'en' ? 'Obtained with paid candles' : '課金で買ったキャンドルで入手'}</button>
+    </div>
+    ${isPaidCandle ? `
+    <div class="candle-money-input-row">
+      <span>${CURRENT_LANG === 'en' ? 'Amount spent (added to real-money total):' : '実額に加算する金額：'}</span>
+      <span>¥</span><input type="number" min="0" class="candle-money-input" value="${item.candleMoneyYen || ''}" placeholder="0" onchange="setCandleMoneyYen('${item.id}', this.value)">
+    </div>` : ''}` : '';
+
   return `
     <div class="item-card ${owned ? 'owned' : ''}">
       <div class="item-head">
@@ -1191,6 +1249,7 @@ function renderItemCard(item, owned) {
       })()}
       ${acquireToggleHtml}
       ${moneyOriginToggleHtml}
+      ${candleMoneyToggleHtml}
     </div>`;
 }
 
@@ -1283,6 +1342,7 @@ function toggleRemainingCard() {
 function renderSummary(items) {
   let candleSum = 0, starCandleSum = 0, heartSum = 0, moneySum = 0, ownedCount = 0;
   let giftReceivedCount = 0, giftReceivedMoneySum = 0;
+  let paidCandleCount = 0, paidCandleMoneySum = 0;
   const countedSetIds = new Set();
 
   items.forEach(item => {
@@ -1294,7 +1354,13 @@ function renderSummary(items) {
     if (cost.type === 'candle' && typeof cost.value === 'number') candleSum += cost.value;
     else if (cost.type === 'starCandle' && typeof cost.value === 'number') starCandleSum += cost.value;
     else if (cost.type === 'heart' && typeof cost.value === 'number') heartSum += cost.value;
-    else if (cost.type === 'money' && typeof cost.value === 'number') {
+    // 課金で購入したキャンドルで入手したと申告されたアイテムは、キャンドル本数の集計は変えず、
+    // 申告された実額も別途「実額」の集計に加算する
+    if ((cost.type === 'candle' || cost.type === 'starCandle') && item.candleMoneyMode === 'paidCandle' && item.candleMoneyYen > 0) {
+      paidCandleCount++;
+      paidCandleMoneySum += item.candleMoneyYen;
+    }
+    if (cost.type === 'money' && typeof cost.value === 'number') {
       if (cost.setId) {
         if (countedSetIds.has(cost.setId)) return;
         countedSetIds.add(cost.setId);
@@ -1319,6 +1385,7 @@ function renderSummary(items) {
   });
   const giftDisplayMode = loadGiftDisplayMode(); // 'combined'（合計に含める） or 'separate'（別枠で表示）
   if (giftDisplayMode === 'combined') moneySum += giftGivenMoneySum;
+  moneySum += paidCandleMoneySum;
 
   const en = CURRENT_LANG === 'en';
   document.getElementById('sumCandle').textContent = `${candleSum.toLocaleString()}${en ? '' : '本'}`;
@@ -1350,6 +1417,11 @@ function renderSummary(items) {
       : (en
         ? ` ${giftHistory.length} gift purchase(s) (¥${giftGivenMoneySum.toLocaleString()}) from your Gift Purchase History are shown separately below, not included in the real-money total.`
         : `課金アイテムプレゼント履歴のうち ${giftHistory.length}件（¥${giftGivenMoneySum.toLocaleString()}）は実額の合計に含めず、別枠で表示しています。`);
+  }
+  if (paidCandleCount > 0) {
+    hint += en
+      ? ` ${paidCandleCount} item(s) marked "Obtained with paid candles" (¥${paidCandleMoneySum.toLocaleString()}) are also included in the real-money total.`
+      : `「課金で買ったキャンドルで入手」に設定した ${paidCandleCount}件（¥${paidCandleMoneySum.toLocaleString()}）も実額の合計に含めています。`;
   }
   document.getElementById('summaryHint').innerHTML = hint;
 }

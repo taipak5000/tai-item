@@ -993,6 +993,11 @@
     <span class="feature-label" data-i18n-en="Wishlist &amp; Unlock Calculator">ウィッシュリスト・必要コスト計算</span>
     <span class="feature-desc" data-i18n-en="Pick items you want (🛒 in Item Search) and see the total Candles/Hearts/price you still need">欲しいアイテムを🛒登録すると、必要なキャンドル・ハート・課金額の合計と不足数を自動計算します</span>
   </button>
+  <button class="feature-btn" onclick="openAcquireLog()">
+    <span class="feature-icon">📅</span>
+    <span class="feature-label" data-i18n-en="Acquisition Log">アイテム獲得ログ</span>
+    <span class="feature-desc" data-i18n-en="See a timeline of when you checked off each item as owned">所持チェックを入れた日時の一覧を確認できます</span>
+  </button>
 
   <!-- ▸ 達成率シェア -->
   <p class="sec-label" data-i18n-en="Share Your Completion Rate">達成率をシェア</p>
@@ -1189,6 +1194,23 @@
     </div>
 
     <div id="wishListBody"><!-- JS --></div>
+  </div>
+</div>
+
+<!-- ▸ Modal: アイテム獲得ログ -->
+<div class="modal-overlay" id="acquireLogModal" onclick="if(event.target===this)closeModal('acquireLogModal')">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title" data-i18n-en="📅 Acquisition Log">📅 アイテム獲得ログ</span>
+      <button class="modal-close" onclick="closeModal('acquireLogModal')">✕</button>
+    </div>
+
+    <div class="hint" style="margin-top:0;">
+      <span>💡</span>
+      <span data-i18n-en="Records the date/time you checked off each item as owned. Unchecking an item removes its record.">所持チェックを入れた日時を自動で記録します。チェックを外すと記録も消えます</span>
+    </div>
+
+    <div id="acquireLogBody"><!-- JS --></div>
   </div>
 </div>
 
@@ -1762,6 +1784,7 @@ function toggleOwnedFromSearch(catKey, itemId) {
   const ownedMap = saved.itemOwned || {};
   ownedMap[itemId] = !ownedMap[itemId];
   const nowOwned = ownedMap[itemId];
+  if (nowOwned) recordItemAcquire(catKey, itemId); else removeItemAcquireRecord(itemId);
 
   const catItems = allItemsCache.filter(it => it.catKey === catKey);
   const dataToSave = {
@@ -1990,6 +2013,80 @@ function renderWishList() {
       ${sumMoney > 0 ? `<div class="wish-total-row"><span>💴 ${en ? 'Real money total' : '課金合計'}</span><b>¥${sumMoney.toLocaleString()}</b></div>` : ''}
       ${unknownCount > 0 ? `<div class="wish-total-row"><span>❔ ${en ? 'No price data' : '価格不明・対象外'}</span><b>${unknownCount}${en ? '' : ' 件'}</b></div>` : ''}
       ${ownedCount > 0 ? `<div class="wish-total-row" style="color:var(--text-2);"><span>✓ ${en ? 'Already owned (excluded)' : '入手済み（合計から除外）'}</span><b>${ownedCount}${en ? '' : ' 件'}</b></div>` : ''}
+    </div>`;
+}
+
+/* ================================================================
+   📅 アイテム獲得ログ
+   所持チェックON時にprofiles.jsのrecordItemAcquireで自動記録される。
+   ================================================================ */
+async function openAcquireLog() {
+  openModal('acquireLogModal');
+  const body = document.getElementById('acquireLogBody');
+  if (!allItemsCache) {
+    body.innerHTML = CURRENT_LANG === 'en'
+      ? `<div class="empty-msg">Loading…</div>`
+      : `<div class="empty-msg">読み込み中…</div>`;
+    try { await loadAllItemsOnce(); } catch (e) {
+      console.error(e);
+      body.innerHTML = CURRENT_LANG === 'en'
+        ? `<div class="empty-msg">Failed to load. Please open this on the published site.</div>`
+        : `<div class="empty-msg">読み込みに失敗しました。GitHub Pages公開後のURLでお試しください。</div>`;
+      return;
+    }
+  }
+  renderAcquireLog();
+}
+
+function removeAcquireLogEntry(itemId) {
+  removeItemAcquireRecord(itemId);
+  renderAcquireLog();
+}
+
+function renderAcquireLog() {
+  const body = document.getElementById('acquireLogBody');
+  if (!body || !allItemsCache) return;
+
+  const log = getItemAcquireLog();
+  const entries = Object.keys(log).map(itemId => {
+    const rec = log[itemId];
+    const cat = CATS.find(c => c.key === rec.catKey);
+    const item = allItemsCache.find(it => it.catKey === rec.catKey && it.id === itemId);
+    return (item && cat) ? { itemId, cat, item, at: rec.at } : null;
+  }).filter(Boolean);
+
+  const en = CURRENT_LANG === 'en';
+  if (entries.length === 0) {
+    body.innerHTML = en
+      ? `<div class="empty-msg">No records yet.<br>Checking off an item as owned on a category page will add it here.</div>`
+      : `<div class="empty-msg">まだ記録がありません。<br>各カテゴリページで所持チェックを入れると、ここに記録されます。</div>`;
+    return;
+  }
+
+  entries.sort((a, b) => new Date(b.at) - new Date(a.at));
+
+  const fmtDate = iso => {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return en
+      ? d.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+      : `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  };
+
+  const listHtml = entries.map(e => `
+    <div class="wish-row">
+      <div class="wish-icon">${itemIconHtml(e.cat, e.item)}</div>
+      <div class="wish-info">
+        <div class="wish-name">${escapeHtml(trItem(e.item))}</div>
+        <div class="wish-meta">${escapeHtml(trCat(e.cat.name))} ・ ${fmtDate(e.at)}</div>
+      </div>
+      <button class="wish-remove" onclick="removeAcquireLogEntry('${e.itemId}')" aria-label="${en ? 'Delete record' : '記録を削除'}">✕</button>
+    </div>`).join('');
+
+  body.innerHTML = `
+    <div style="margin-top:10px;">${listHtml}</div>
+    <div class="wish-total-box">
+      <div class="wish-total-row"><span>📦 ${en ? 'Total recorded' : '記録件数'}</span><b>${entries.length}${en ? '' : ' 件'}</b></div>
     </div>`;
 }
 

@@ -165,6 +165,35 @@ function toggleWishItem(catKey, itemId) {
   return isAdding;
 }
 
+/* ================================================================
+   📅 アイテム獲得（所持登録）ログ
+   所持チェックをONにした日時を記録する。OFFに戻した場合は記録を削除する
+   （未所持なのに「獲得日」が残るのは不自然なため）。
+   localStorage キー: itemAcquireLog_v1 = { [itemId]: { catKey, at: ISO日時 } }
+   ================================================================ */
+function recordItemAcquire(catKey, itemId) {
+  const key = nsKey('itemAcquireLog_v1');
+  let log;
+  try { log = JSON.parse(localStorage.getItem(key)) || {}; } catch { log = {}; }
+  log[itemId] = { catKey, at: new Date().toISOString() };
+  localStorage.setItem(key, JSON.stringify(log));
+}
+
+function removeItemAcquireRecord(itemId) {
+  const key = nsKey('itemAcquireLog_v1');
+  let log;
+  try { log = JSON.parse(localStorage.getItem(key)) || {}; } catch { log = {}; }
+  if (log[itemId]) {
+    delete log[itemId];
+    localStorage.setItem(key, JSON.stringify(log));
+  }
+}
+
+function getItemAcquireLog() {
+  try { return JSON.parse(localStorage.getItem(nsKey('itemAcquireLog_v1'))) || {}; }
+  catch { return {}; }
+}
+
 function switchProfile(id) {
   if (id === getActiveProfileId()) return;
   localStorage.setItem(ACTIVE_PROFILE_KEY, id);
