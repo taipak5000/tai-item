@@ -655,6 +655,10 @@ function toggleFav(id, btn) {
 // ウィッシュリストの切り替え(profiles.js の toggleWishItem を利用する共通処理)
 function toggleWishBtn(id, btn) {
   const added = toggleWishItem(CAT_KEY, id);
+  if (added === null) {
+    showToast(CURRENT_LANG === 'en' ? 'Owned items cannot be added to the wishlist' : '所持済みのアイテムはウィッシュリストに追加できません');
+    return;
+  }
   btn.classList.toggle('is-wish', added);
 }
 

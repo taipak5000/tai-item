@@ -289,6 +289,10 @@
     .exp-cat-cell-icon { font-size: 20px; }
     .exp-cat-cell-pct { font-size: 17px; font-weight: 800; color: var(--orange-d); margin-top: 5px; }
     .exp-cat-cell-name { font-size: 10.5px; color: var(--text-2); margin-top: 3px; }
+    .exp-comment {
+      color: #fff; background: rgba(255,255,255,0.16); border-radius: 14px;
+      padding: 10px 14px; font-size: 13px; font-weight: 600; line-height: 1.6; text-align: center;
+    }
     .exp-date { color: rgba(255,255,255,0.75); font-size: 10.5px; text-align: right; margin-top: 10px; }
     .gift-include-toggle { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--text-2); white-space: nowrap; }
     .gift-remove-btn { color: var(--red); font-size: 16px; padding: 4px; flex-shrink: 0; }
@@ -528,21 +532,15 @@ function readOwnedMap(catKey) {
   } catch (_) { return {}; }
 }
 
-// localStorage キー: wish_<catKey>（index.htmlのウィッシュリストと共通）
-function getWishIds(catKey) {
-  try { return JSON.parse(localStorage.getItem(nsKey('wish_' + catKey))) || []; }
-  catch { return []; }
-}
-function isWishItem(catKey, itemId) {
-  return getWishIds(catKey).includes(String(itemId));
-}
+// getWishIds/isWishItem/toggleWishItem（所持済みアイテムの追加禁止を含む）は
+// カテゴリ一覧ページ・index.htmlと共通のため profiles.js 側に定義されている。
 function toggleWishFromCost(catKey, itemId, btnEl) {
-  const id = String(itemId);
-  const wishes = getWishIds(catKey);
-  const idx = wishes.indexOf(id);
-  if (idx === -1) wishes.push(id); else wishes.splice(idx, 1);
-  localStorage.setItem(nsKey('wish_' + catKey), JSON.stringify(wishes));
-  if (btnEl) btnEl.classList.toggle('is-wish', idx === -1);
+  const added = toggleWishItem(catKey, itemId);
+  if (added === null) {
+    showToast(CURRENT_LANG === 'en' ? 'Owned items cannot be added to the wishlist' : '所持済みのアイテムはウィッシュリストに追加できません');
+    return;
+  }
+  if (btnEl) btnEl.classList.toggle('is-wish', added);
 }
 // source文字列（例:「感謝の季節（季節精霊・過去）」）から季節/イベント名部分だけを取り出す
 function extractSource(source) {

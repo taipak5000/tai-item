@@ -1840,6 +1840,10 @@ function toggleFavFromSearch(catKey, itemId, btnEl) {
 
 function toggleWishFromSearch(catKey, itemId, btnEl) {
   const added = toggleWishItem(catKey, itemId);
+  if (added === null) {
+    showToast(CURRENT_LANG === 'en' ? 'Owned items cannot be added to the wishlist' : '所持済みのアイテムはウィッシュリストに追加できません');
+    return;
+  }
   if (btnEl) btnEl.classList.toggle('is-wish', added);
   showToast(added
     ? (CURRENT_LANG === 'en' ? 'Added to wishlist' : 'ウィッシュリストに追加しました')

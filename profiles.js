@@ -132,14 +132,37 @@ function isWishItem(catKey, itemId) {
   return getWishIds(catKey).includes(String(itemId));
 }
 
-// ウィッシュリストの追加/削除を切り替える。戻り値は切り替え後の状態（true=追加された/false=削除された）
+// カテゴリ一覧ページなど、独自の showToast を持たないページのための簡易トースト通知。
+// index.html/item_cost.html は自前の showToast を後から定義しており、
+// 同名のグローバル関数として上書きされるためそちらが優先される。
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'pf-toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.classList.add('show'), 10);
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2600);
+}
+
+// 各カテゴリページの所持チェック（gameItems_<catKey> の itemOwned）を参照する
+function isItemOwned(catKey, itemId) {
+  try {
+    const d = JSON.parse(localStorage.getItem(nsKey('gameItems_' + catKey)));
+    return !!(d && d.itemOwned && d.itemOwned[itemId]);
+  } catch { return false; }
+}
+
+// ウィッシュリストの追加/削除を切り替える。既に所持済みのアイテムは追加できない。
+// 戻り値: true=追加された / false=削除された / null=所持済みのため追加を拒否した
 function toggleWishItem(catKey, itemId) {
   const id = String(itemId);
   const wishes = getWishIds(catKey);
   const idx = wishes.indexOf(id);
-  if (idx === -1) wishes.push(id); else wishes.splice(idx, 1);
+  const isAdding = idx === -1;
+  if (isAdding && isItemOwned(catKey, id)) return null;
+  if (isAdding) wishes.push(id); else wishes.splice(idx, 1);
   localStorage.setItem(nsKey('wish_' + catKey), JSON.stringify(wishes));
-  return idx === -1;
+  return isAdding;
 }
 
 function switchProfile(id) {
@@ -262,6 +285,13 @@ function pfInjectStyle() {
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .srch-meta { font-size: 11px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .srch-arrow { color: var(--text-2); font-size: 13px; flex-shrink: 0; }
+
+    .pf-toast {
+      position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: rgba(0,0,0,0.75); color: #fff; font-size: 13px; font-weight: 500; padding: 10px 20px;
+      border-radius: 20px; z-index: 2000; opacity: 0; transition: all 0.25s ease; white-space: nowrap; pointer-events: none;
+    }
+    .pf-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   `;
   document.head.appendChild(style);
 }
