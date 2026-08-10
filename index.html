@@ -1038,11 +1038,6 @@
     <span class="feature-label" data-i18n-en="Currently Available Items">今ゲットできるアイテム</span>
     <span class="feature-desc" data-i18n-en="See all items from the currently running season/event across every category at a glance">現在開催中の季節・イベントで入手できるアイテムを、絞り込み不要で全カテゴリまとめて確認できます</span>
   </button>
-  <button class="feature-btn" onclick="completeAllRegularItems()">
-    <span class="feature-icon">🏛️</span>
-    <span class="feature-label" data-i18n-en="Regular Spirits Full Complete">恒常精霊フルコンプ</span>
-    <span class="feature-desc" data-i18n-en="Mark every item from the always-available Regular Spirits (Isle of Dawn – Vault of Knowledge) as owned in one click">孤島〜書庫の恒常精霊アイテムを一括で所持済みにできます</span>
-  </button>
 
   <!-- ▸ コスト管理 -->
   <p class="sec-label" data-i18n-en="Cost Management">コスト管理</p>
@@ -1235,12 +1230,27 @@
           <option value="fav" data-i18n-en="★ Favorites Only">★ お気に入り指定のみ</option>
         </select>
       </div>
+      <div class="gs-control-row" id="gsRegularAreaRow" style="display:none;">
+        <select class="cat-sel" id="gsRegularArea" onchange="renderGlobalSearch()">
+          <option value="all" data-i18n-en="All Areas">すべてのエリア</option>
+        </select>
+        <label class="gs-current-toggle">
+          <input type="checkbox" id="gsElderOnly" onchange="renderGlobalSearch()">
+          <span data-i18n-en="🏛️ Elders' items only">🏛️ 大精霊のアイテムのみ</span>
+        </label>
+      </div>
     </div>
 
     <div class="hint" style="margin-top:10px;">
       <span>💡</span>
       <span data-i18n-en="Tap to toggle ownership status, and use ★ to add favorites (also reflected on each category page)">タップで所持状態を切り替え、★でお気に入り登録ができます（各カテゴリページにも反映されます）</span>
     </div>
+
+    <button class="feature-btn" id="gsMarkAllOwnedBtn" style="display:none; margin-top:10px;" onclick="markFilteredItemsOwned()">
+      <span class="feature-icon">🎯</span>
+      <span class="feature-label" id="gsMarkAllOwnedLabel" data-i18n-en="Mark all filtered items as owned">絞り込み結果をすべて所持済みにする</span>
+      <span class="feature-desc" data-i18n-en="Marks every not-yet-owned item currently shown below as owned">下に表示中の未所持アイテムをすべて所持済みにします</span>
+    </button>
 
     <div style="display:flex; align-items:baseline; justify-content:space-between; padding:16px 4px 8px;">
       <p class="sec-label" id="gsResultLabel" style="padding:0;" data-i18n-en="Results">検索結果</p>
@@ -1691,6 +1701,11 @@ function loadAllItemsOnce() {
     }
   })).then(results => {
     allItemsCache = results.flat();
+    // 恒常精霊アイテムにエリア・大精霊フラグを付与（検索の絞り込み・フルコンプ機能で使用）
+    allItemsCache.forEach(it => {
+      const area = REGULAR_ITEM_AREA[it.id];
+      if (area) { it.regularArea = area; it.isElderItem = REGULAR_ELDER_IDS.has(it.id); }
+    });
     allItemsLoadingPromise = null;
     return allItemsCache;
   }).catch(err => {
@@ -1735,6 +1750,44 @@ const EVENT_ORDER = [
   '愛しみの日々'
 ];
 
+// 恒常精霊アイテム（cost-data.jsのsourceが「恒常」で始まるアイテム）専用のエリア絞り込み用データ。
+// spirit-catalogの精霊ツリーデータ（各精霊のarea・itemCatKey/itemCostId）を突き合わせて手動生成。
+// 大精霊（旧称:長老）アイテムはエリア名が名前に直接含まれるため、それを解析して割り当てている。
+// チャットテーブルのみ、特定の精霊のツリーではなくスペルショップでの購入品のため 'other' 扱い。
+const REGULAR_ITEM_AREA = {
+  large_placeable_002: 'other', // チャットテーブル
+  outfit_002: 'forest', outfit_003: 'forest', outfit_004: 'vault', outfit_005: 'isle',
+  outfit_006: 'valley', outfit_007: 'vault', outfit_008: 'isle', outfit_009: 'prairie',
+  hairstyle_004: 'isle', hairstyle_005: 'prairie', hairstyle_006: 'prairie', hairstyle_007: 'forest',
+  hairstyle_008: 'forest', hairstyle_009: 'prairie', hairstyle_010: 'wasteland', hairstyle_011: 'isle',
+  hairstyle_012: 'prairie', hairstyle_013: 'forest', hairstyle_014: 'forest', hairstyle_015: 'valley',
+  hairstyle_016: 'forest', hairstyle_017: 'forest', hairstyle_018: 'wasteland', hairstyle_019: 'isle',
+  hairstyle_020: 'forest', hairstyle_021: 'wasteland', hairstyle_022: 'wasteland', hairstyle_023: 'vault',
+  hairstyle_024: 'vault', hairstyle_025: 'vault', hairstyle_026: 'valley', hairstyle_027: 'valley',
+  hairstyle_028: 'valley', hairstyle_029: 'wasteland', hairstyle_030: 'prairie',
+  hairstyle_031: 'isle', hairstyle_032: 'prairie', hairstyle_033: 'forest', hairstyle_034: 'valley',
+  hairstyle_035: 'valley', hairstyle_036: 'wasteland', hairstyle_037: 'vault', hairstyle_183: 'vault',
+  face_accessory_001: 'isle', face_accessory_002: 'prairie', face_accessory_003: 'forest',
+  face_accessory_004: 'valley', face_accessory_005: 'valley', face_accessory_006: 'wasteland',
+  face_accessory_007: 'vault', face_accessory_008: 'isle', face_accessory_009: 'prairie',
+  face_accessory_010: 'forest', face_accessory_011: 'valley', face_accessory_012: 'valley',
+  portable_item_001: 'prairie', portable_item_003: 'wasteland', portable_item_004: 'valley',
+  portable_item_005: 'wasteland', portable_item_031: 'forest', portable_item_035: 'wasteland',
+  mask_002: 'forest', mask_003: 'prairie', mask_004: 'wasteland', mask_113: 'valley',
+  cape_005: 'prairie', cape_006: 'valley', cape_007: 'wasteland', cape_008: 'forest',
+  cape_009: 'vault', cape_010: 'forest', cape_011: 'valley', cape_012: 'wasteland', cape_013: 'vault',
+  cape_014: 'prairie', cape_015: 'valley', cape_016: 'wasteland', cape_017: 'forest',
+  cape_018: 'vault', cape_019: 'forest', cape_020: 'valley', cape_021: 'wasteland', cape_022: 'vault'
+};
+// 大精霊（旧称:長老）アイテム。エリアはすべて選ぶが、この中だけをさらに絞り込みたい場合に使う。
+const REGULAR_ELDER_IDS = new Set([
+  'hairstyle_031', 'hairstyle_032', 'hairstyle_033', 'hairstyle_034', 'hairstyle_035', 'hairstyle_036', 'hairstyle_037',
+  'face_accessory_008', 'face_accessory_009', 'face_accessory_010', 'face_accessory_011', 'face_accessory_012'
+]);
+const REGULAR_AREA_ORDER = ['isle', 'prairie', 'forest', 'valley', 'wasteland', 'vault', 'other'];
+const REGULAR_AREA_JA = { isle: '孤島', prairie: '草原', forest: '雨林', valley: '峡谷', wasteland: '捨てられた地', vault: '書庫', other: 'その他' };
+const REGULAR_AREA_EN = { isle: 'Isle of Dawn', prairie: 'Daylight Prairie', forest: 'Hidden Forest', valley: 'Valley of Triumph', wasteland: 'Golden Wasteland', vault: 'Vault of Knowledge', other: 'Other' };
+
 // イベント（季節・日々）絞り込みセレクトの中身を構築
 // 「○○の季節」「○○の日々」という命名規則を利用して optgroup で分けて表示する
 // items を渡すと、その配列に実際に含まれるイベントのみに絞って表示する（例: お気に入り共有ではお気に入りの季節・イベントのみ）
@@ -1772,67 +1825,6 @@ function readCatState(catKey) {
   } catch { return { owned: {}, fav: {} }; }
 }
 
-// 恒常精霊（cost-data.js の source が「恒常」で始まるアイテム）を一括で所持済みにする。
-// 恒常精霊は分岐の無い一直線のツリーのため、フルコンプ＝全アイテム所持という前提で成立する。
-async function completeAllRegularItems() {
-  try { await loadAllItemsOnce(); } catch (e) {
-    console.error(e);
-    showToast(CURRENT_LANG === 'en' ? 'Failed to load. Please open this on the published site.' : '読み込みに失敗しました。GitHub Pages公開後のURLでお試しください。');
-    return;
-  }
-  if (typeof ITEM_COST_DATA === 'undefined') return;
-
-  const targetIdsByCat = {};
-  let totalTargets = 0;
-  CATS.forEach(cat => {
-    const list = ITEM_COST_DATA[cat.key] || [];
-    const ids = list.filter(e => (e.source || '').startsWith('恒常')).map(e => e.id);
-    if (ids.length) { targetIdsByCat[cat.key] = ids; totalTargets += ids.length; }
-  });
-  if (totalTargets === 0) return;
-
-  const alreadyOwnedCount = Object.keys(targetIdsByCat).reduce((sum, catKey) => {
-    const state = readCatState(catKey);
-    return sum + targetIdsByCat[catKey].filter(id => state.owned[id]).length;
-  }, 0);
-  const newCount = totalTargets - alreadyOwnedCount;
-
-  if (newCount === 0) {
-    showToast(CURRENT_LANG === 'en' ? 'All Regular Spirit items are already owned' : '恒常精霊のアイテムはすべて所持済みです');
-    return;
-  }
-
-  const msg = CURRENT_LANG === 'en'
-    ? `Mark ${newCount} unowned Regular Spirit item(s) as owned? (Isle of Dawn – Vault of Knowledge, ${totalTargets} items total)`
-    : `恒常精霊（孤島〜書庫、全${totalTargets}件）のうち、未所持の${newCount}件を所持済みにします。よろしいですか？`;
-  if (!window.confirm(msg)) return;
-
-  Object.keys(targetIdsByCat).forEach(catKey => {
-    const key = nsKey('gameItems_' + catKey);
-    let saved = {};
-    try { saved = JSON.parse(localStorage.getItem(key)) || {}; } catch { saved = {}; }
-    const ownedMap = saved.itemOwned || {};
-    targetIdsByCat[catKey].forEach(id => {
-      if (!ownedMap[id]) {
-        ownedMap[id] = true;
-        recordItemAcquire(catKey, id);
-      }
-    });
-    const catItems = allItemsCache.filter(it => it.catKey === catKey);
-    const dataToSave = {
-      total: catItems.length,
-      owned: catItems.filter(it => ownedMap[it.id]).length,
-      itemOwned: ownedMap,
-      itemFav: saved.itemFav || {},
-      ownedItems: catItems.filter(it => ownedMap[it.id]).map(it => ({ id: it.id, name: it.name, nameEn: it.nameEn }))
-    };
-    localStorage.setItem(key, JSON.stringify(dataToSave));
-  });
-
-  loadAndRender();
-  showToast(CURRENT_LANG === 'en' ? `${newCount} item(s) marked as owned` : `${newCount}件を所持済みにしました`);
-}
-
 // 検索モーダルを開く（初回のみ全カテゴリのデータを取得する）
 async function openItemSearch() {
   openModal('itemSearchModal');
@@ -1868,21 +1860,43 @@ async function openCurrentItems() {
   if (cb) { cb.checked = true; renderGlobalSearch(); }
 }
 
-// 絞り込み条件を適用して検索結果を描画
-function renderGlobalSearch() {
-  if (!allItemsCache) return;
+// 恒常精霊（source/eventが「恒常」で始まる）が選択されている間だけ、
+// エリア・大精霊の絞り込み行を表示し、選択肢（そのイベントに実在するエリアのみ）を組み立てる
+function syncRegularAreaFilterUI(fEvent) {
+  const row = document.getElementById('gsRegularAreaRow');
+  const isRegular = fEvent !== 'all' && fEvent.startsWith('恒常');
+  row.style.display = isRegular ? '' : 'none';
+  if (!isRegular) return;
 
+  const select = document.getElementById('gsRegularArea');
+  const areasPresent = new Set(
+    allItemsCache.filter(it => it.event === fEvent && it.regularArea).map(it => it.regularArea)
+  );
+  const prevValue = select.value;
+  select.innerHTML = `<option value="all">${CURRENT_LANG === 'en' ? 'All Areas' : 'すべてのエリア'}</option>`
+    + REGULAR_AREA_ORDER.filter(a => areasPresent.has(a)).map(a =>
+        `<option value="${a}">${escapeHtml(CURRENT_LANG === 'en' ? REGULAR_AREA_EN[a] : REGULAR_AREA_JA[a])}</option>`
+      ).join('');
+  if ([...select.options].some(o => o.value === prevValue)) select.value = prevValue;
+}
+
+// 現在のフィルターUIの値をそのままallItemsCacheへ適用し、絞り込み結果の配列を返す
+// （検索結果の描画・「絞り込み結果をすべて所持済みにする」ボタンの両方から使う共通ロジック）
+function getFilteredSearchItems() {
   const fName  = document.getElementById('gsName').value.trim().toLowerCase();
   const fEvent = document.getElementById('gsEvent').value;
   const fCat   = document.getElementById('gsCat').value;
   const fOwned = document.getElementById('gsOwned').value;
   const fFav   = document.getElementById('gsFav').value;
   const fCurrentOnly = document.getElementById('gsCurrentOnly').checked;
+  const fRegularArea = document.getElementById('gsRegularArea').value;
+  const fElderOnly = document.getElementById('gsElderOnly').checked;
+  const isRegularEvent = fEvent !== 'all' && fEvent.startsWith('恒常');
 
   const stateCache = {};
   const getState = catKey => stateCache[catKey] || (stateCache[catKey] = readCatState(catKey));
 
-  const filtered = allItemsCache.filter(item => {
+  return allItemsCache.filter(item => {
     if (fName
       && !item.name.toLowerCase().includes(fName)
       && !(item.nameEn && item.nameEn.toLowerCase().includes(fName))
@@ -1890,6 +1904,8 @@ function renderGlobalSearch() {
       && !trEvent(item.event).toLowerCase().includes(fName)) return false;
     if (fEvent !== 'all' && item.event !== fEvent) return false;
     if (fCurrentOnly && !CURRENT_EVENTS.includes(item.event)) return false;
+    if (isRegularEvent && fRegularArea !== 'all' && item.regularArea !== fRegularArea) return false;
+    if (isRegularEvent && fElderOnly && !item.isElderItem) return false;
     if (fCat !== 'all' && item.catKey !== fCat) return false;
     if (fOwned !== 'all') {
       const isOwned = !!getState(item.catKey).owned[item.id];
@@ -1899,11 +1915,36 @@ function renderGlobalSearch() {
     if (fFav === 'fav' && !getState(item.catKey).fav[item.id]) return false;
     return true;
   });
+}
+
+// 絞り込み条件を適用して検索結果を描画
+function renderGlobalSearch() {
+  if (!allItemsCache) return;
+
+  const fEvent = document.getElementById('gsEvent').value;
+  syncRegularAreaFilterUI(fEvent);
+
+  const stateCache = {};
+  const getState = catKey => stateCache[catKey] || (stateCache[catKey] = readCatState(catKey));
+
+  const filtered = getFilteredSearchItems();
 
   const ownedCount = filtered.filter(item => !!getState(item.catKey).owned[item.id]).length;
+  const notOwnedCount = filtered.length - ownedCount;
   document.getElementById('gsResultCount').textContent = filtered.length > 0
     ? (CURRENT_LANG === 'en' ? `${filtered.length} items (${ownedCount} owned)` : `${filtered.length}件（所持 ${ownedCount}件）`)
     : '';
+
+  // 絞り込み条件（季節・イベント）が選択されている間だけ「一括で所持済みにする」ボタンを出す
+  const markBtn = document.getElementById('gsMarkAllOwnedBtn');
+  if (fEvent !== 'all' && notOwnedCount > 0) {
+    markBtn.style.display = '';
+    document.getElementById('gsMarkAllOwnedLabel').textContent = CURRENT_LANG === 'en'
+      ? `Mark ${notOwnedCount} filtered item(s) as owned`
+      : `絞り込み結果の未所持${notOwnedCount}件を所持済みにする`;
+  } else {
+    markBtn.style.display = 'none';
+  }
 
   const resultsEl = document.getElementById('gsResults');
   if (filtered.length === 0) {
@@ -1935,6 +1976,48 @@ function renderGlobalSearch() {
         <div class="gs-owned-dot ${isOwned ? 'owned' : ''}" onclick="toggleOwnedFromSearch('${cat.key}','${item.id}')" role="button" aria-label="${CURRENT_LANG === 'en' ? 'Toggle ownership status' : '所持状態を切り替える'}">${isOwned ? '✓' : ''}</div>
       </div>`;
   }).join('');
+}
+
+// 現在の絞り込み結果（季節・イベント・エリア・大精霊・カテゴリ・お気に入り等、すべての条件を反映）のうち
+// 未所持のアイテムをまとめて所持済みにする。恒常精霊フルコンプもこの仕組みに統合されている。
+function markFilteredItemsOwned() {
+  const filtered = getFilteredSearchItems();
+  const stateCache = {};
+  const getState = catKey => stateCache[catKey] || (stateCache[catKey] = readCatState(catKey));
+  const targets = filtered.filter(item => !getState(item.catKey).owned[item.id]);
+  if (targets.length === 0) return;
+
+  const msg = CURRENT_LANG === 'en'
+    ? `Mark ${targets.length} item(s) as owned?`
+    : `${targets.length}件のアイテムを所持済みにします。よろしいですか？`;
+  if (!window.confirm(msg)) return;
+
+  const targetsByCat = {};
+  targets.forEach(item => { (targetsByCat[item.catKey] ??= []).push(item.id); });
+
+  Object.keys(targetsByCat).forEach(catKey => {
+    const key = nsKey('gameItems_' + catKey);
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(key)) || {}; } catch { saved = {}; }
+    const ownedMap = saved.itemOwned || {};
+    targetsByCat[catKey].forEach(id => {
+      ownedMap[id] = true;
+      recordItemAcquire(catKey, id);
+    });
+    const catItems = allItemsCache.filter(it => it.catKey === catKey);
+    const dataToSave = {
+      total: catItems.length,
+      owned: catItems.filter(it => ownedMap[it.id]).length,
+      itemOwned: ownedMap,
+      itemFav: saved.itemFav || {},
+      ownedItems: catItems.filter(it => ownedMap[it.id]).map(it => ({ id: it.id, name: it.name, nameEn: it.nameEn }))
+    };
+    localStorage.setItem(key, JSON.stringify(dataToSave));
+  });
+
+  renderGlobalSearch();
+  loadAndRender();
+  showToast(CURRENT_LANG === 'en' ? `${targets.length} item(s) marked as owned` : `${targets.length}件を所持済みにしました`);
 }
 
 // 検索結果からその場で所持状態をトグルする（各カテゴリページのデータ形式と完全互換）
