@@ -132,6 +132,15 @@ function isWishItem(catKey, itemId) {
   return getWishIds(catKey).includes(String(itemId));
 }
 
+function removeWishItem(catKey, itemId) {
+  const id = String(itemId);
+  const wishes = getWishIds(catKey);
+  const idx = wishes.indexOf(id);
+  if (idx === -1) return;
+  wishes.splice(idx, 1);
+  localStorage.setItem(nsKey('wish_' + catKey), JSON.stringify(wishes));
+}
+
 // カテゴリ一覧ページなど、独自の showToast を持たないページのための簡易トースト通知。
 // index.html/item_cost.html は自前の showToast を後から定義しており、
 // 同名のグローバル関数として上書きされるためそちらが優先される。
@@ -177,6 +186,8 @@ function recordItemAcquire(catKey, itemId) {
   try { log = JSON.parse(localStorage.getItem(key)) || {}; } catch { log = {}; }
   log[itemId] = { catKey, at: new Date().toISOString() };
   localStorage.setItem(key, JSON.stringify(log));
+  // 入手済みになったアイテムはウィッシュリストに残っている意味が無いため自動で外す
+  removeWishItem(catKey, itemId);
 }
 
 function removeItemAcquireRecord(itemId) {

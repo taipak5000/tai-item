@@ -2369,21 +2369,46 @@ function getPickPool(catKey) {
 }
 
 function openRandomCoord() {
-  currentRandom = {};
   favOnlyMode = false;
   updateFavOnlyBtn();
   hideSaveRow();
   openModal('randomModal');
-  shuffleOutfit();
+  // 前回表示していたランダムコーデが残っていればそれを再表示し、開くたびに再抽選しないようにする。
+  // 保存が無い場合（初回・データ削除後など）のみ新規に抽選する。
+  if (loadLastRandomCoord()) {
+    renderCurrentRandom();
+  } else {
+    shuffleOutfit();
+  }
   syncCoordShareStyleUI();
   renderRandomCoordPhotoStatus();
 }
 
+// 直近の抽選結果（表示内容の再現に必要な分だけ）をプロフィール別に保存/復元する
+const LAST_RANDOM_COORD_KEY = 'lastRandomCoord_v1';
+let currentRandomFavOnly = false; // 直近の抽選時点での「お気に入りのみ」モード（再表示用）
+
+function saveLastRandomCoord() {
+  try {
+    localStorage.setItem(nsKey(LAST_RANDOM_COORD_KEY), JSON.stringify({ items: currentRandom, favOnly: currentRandomFavOnly }));
+  } catch { /* noop */ }
+}
+
+function loadLastRandomCoord() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(nsKey(LAST_RANDOM_COORD_KEY)));
+    if (raw && raw.items && typeof raw.items === 'object' && Object.keys(raw.items).length > 0) {
+      currentRandom = raw.items;
+      currentRandomFavOnly = !!raw.favOnly;
+      return true;
+    }
+  } catch { /* noop */ }
+  return false;
+}
+
 function shuffleOutfit() {
   currentRandom = {};
-  const el = document.getElementById('randomResult');
-  let html = '';
-  let hasAny = false;
+  currentRandomFavOnly = favOnlyMode;
 
   // お気に入りのみモード時: 排他グループはお気に入りがあるカテゴリを優先
   const exclusiveWithItems = EXCLUSIVE_KEYS.filter(key => getPickPool(key).length > 0);
@@ -2398,14 +2423,36 @@ function shuffleOutfit() {
     if (!anyFavExists) showToast(CURRENT_LANG === 'en' ? '⭐ No favorites set. Picking randomly from all items' : '⭐ お気に入りが未設定です。全アイテムからランダムします');
   }
 
-  if (favOnlyMode && anyFavExists) {
+  CATS.forEach(cat => {
+    const isExclusive = EXCLUSIVE_KEYS.includes(cat.key);
+    if (isExclusive && cat.key !== chosenExclusiveKey) return;
+
+    const pool = getPickPool(cat.key);
+    if (pool.length > 0) {
+      currentRandom[cat.key] = pool[Math.floor(Math.random() * pool.length)];
+    }
+  });
+
+  saveLastRandomCoord();
+  renderCurrentRandom();
+}
+
+// currentRandom（抽選済みの結果）から、再抽選せずに表示だけを組み立てる。
+// shuffleOutfit()での新規抽選後、およびopenRandomCoord()での前回結果の再表示、両方から呼ばれる。
+function renderCurrentRandom() {
+  const el = document.getElementById('randomResult');
+  let html = '';
+  const hasAny = Object.keys(currentRandom).length > 0;
+
+  if (currentRandomFavOnly && hasAny) {
     html += `<div class="fav-mode-bar">${CURRENT_LANG === 'en' ? '⭐ Picking randomly from favorite items only' : '⭐ お気に入りアイテムのみでランダム中'}</div>`;
   }
 
   CATS.forEach(cat => {
+    const picked = currentRandom[cat.key] || null;
     const isExclusive = EXCLUSIVE_KEYS.includes(cat.key);
 
-    if (isExclusive && cat.key !== chosenExclusiveKey) {
+    if (!picked && isExclusive) {
       html += `
         <div class="rand-row rand-row-muted">
           <div class="rand-icon">${catIconHtml(cat)}</div>
@@ -2415,14 +2462,6 @@ function shuffleOutfit() {
           </div>
         </div>`;
       return;
-    }
-
-    const pool = getPickPool(cat.key);
-    let picked = null;
-    if (pool.length > 0) {
-      picked = pool[Math.floor(Math.random() * pool.length)];
-      currentRandom[cat.key] = picked;
-      hasAny = true;
     }
 
     const favOn  = picked && isFav(cat.key, picked.id);

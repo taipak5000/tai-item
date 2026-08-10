@@ -1152,7 +1152,9 @@ function getAllItems() {
   const moneyAcquireMap = loadMoneyAcquireMap();
   const candleMoneyMap = loadCandleMoneyMap();
   all.forEach(item => {
-    item.seasonPendantOwned = pendantOwnedSeasons.has(extractSource(item.source)) && acquireEligibleTypes.includes(item.cost.type);
+    // revisitOnly（再訪で追加されたアイテム。元の季節開催中には入手不可）は
+    // 「季節中に入手」トグル自体が矛盾するため対象外にする
+    item.seasonPendantOwned = !item.revisitOnly && pendantOwnedSeasons.has(extractSource(item.source)) && acquireEligibleTypes.includes(item.cost.type);
     item.isTicketItem = item.cost.type === 'ticket';
     // ペンダント経由の季節中入手は「revisit」がデフォルト（従来通り）、
     // チケット交換アイテムは「ticket」（チケットで入手＝0扱い）がデフォルト
