@@ -1064,18 +1064,11 @@
 
   <!-- ▸ 達成率シェア -->
   <p class="sec-label" data-i18n-en="Share Your Completion Rate">達成率をシェア</p>
-  <div class="feature-row">
-    <button class="feature-btn" onclick="saveOverallAsImage()">
-      <span class="feature-icon">🖼️</span>
-      <span class="feature-label" data-i18n-en="Save as Image">画像で保存</span>
-      <span class="feature-desc" data-i18n-en="Save your completion rate and per-category rates as an image">達成率とカテゴリ別所持率を画像で保存</span>
-    </button>
-    <button class="feature-btn twitter" onclick="shareOverallOnTwitter()">
-      <span class="feature-icon">📤</span>
-      <span class="feature-label" data-i18n-en="Share on X">Xでシェア</span>
-      <span class="feature-desc" data-i18n-en="Post your completion rate on X and show it off">達成率をXに投稿してみんなに自慢しよう</span>
-    </button>
-  </div>
+  <button class="feature-btn twitter" onclick="shareOverallOnTwitter()">
+    <span class="feature-icon">📤🖼️</span>
+    <span class="feature-label" data-i18n-en="Share Image on X">Xで画像を共有</span>
+    <span class="feature-desc" data-i18n-en="Turn your completion rate into an image and post it on X (the image is also ready to save)">達成率を画像にしてXへ投稿できます（画像の保存も同時にできます）</span>
+  </button>
   <button class="feature-btn" style="margin-top:8px;" onclick="openCustomizeModal()">
     <span class="feature-icon">🎨</span>
     <span class="feature-label" data-i18n-en="Customize & Share">カスタマイズして共有</span>
@@ -1147,8 +1140,7 @@
       <span id="randomCoordPhotoClearBtn" style="display:none; color:var(--blue); font-weight:600; font-size:12px; cursor:pointer;" onclick="clearRandomCoordPhoto()" data-i18n-en="Remove">削除</span>
     </div>
     <div class="action-row">
-      <button class="action-btn secondary" onclick="saveRandomAsImage()" data-i18n-en="🖼️ Save as Image">🖼️ 画像で保存</button>
-      <button class="action-btn twitter"   onclick="shareRandomOnTwitter()" data-i18n-en="📤 Share on X">📤 Xでシェア</button>
+      <button class="action-btn twitter full" onclick="shareRandomOnTwitter()" data-i18n-en="📤🖼️ Share Image on X">📤🖼️ Xで画像を共有</button>
     </div>
     <div class="action-row">
       <button class="action-btn secondary full" onclick="shareRandomCoordLink()" data-i18n-en="🔗 Share as Link (this combo, what do you think?)">🔗 リンクで共有（この組み合わせどう？）</button>
@@ -1334,10 +1326,7 @@
     <textarea id="customizeComment" class="customize-comment-input" maxlength="120" data-i18n-en-placeholder="e.g. Player name: XX (default text is used if left blank)" placeholder="例）プレイヤーネーム：〇〇（未入力の場合は通常の文言になります）"></textarea>
 
     <div class="action-row" style="margin-top:16px;">
-      <button class="action-btn primary full" onclick="saveOverallAsImage(true)" data-i18n-en="🖼️ Save Image with These Settings">🖼️ この設定で画像保存</button>
-    </div>
-    <div class="action-row">
-      <button class="action-btn twitter full" onclick="shareOverallOnTwitter(true)" data-i18n-en="📤 Share on X with These Settings">📤 この設定でXへシェア</button>
+      <button class="action-btn twitter full" onclick="shareOverallOnTwitter(true)" data-i18n-en="📤🖼️ Share Image on X with These Settings">📤🖼️ この設定でXへ画像を共有</button>
     </div>
   </div>
 </div>
@@ -1395,10 +1384,7 @@
     <textarea id="favShareComment" class="customize-comment-input" maxlength="120" data-i18n-en-placeholder="e.g. Things I want, items I often use for XX style, etc." placeholder="例）今欲しいもの、〇〇系でよく使うアイテムなど"></textarea>
 
     <div class="action-row" style="margin-top:16px;">
-      <button class="action-btn primary full" onclick="saveFavAsImage()" data-i18n-en="🖼️ Save as Image">🖼️ 画像で保存</button>
-    </div>
-    <div class="action-row">
-      <button class="action-btn twitter full" onclick="shareFavOnTwitter()" data-i18n-en="📤 Share on X">📤 Xでシェア</button>
+      <button class="action-btn twitter full" onclick="shareFavOnTwitter()" data-i18n-en="📤🖼️ Share Image on X">📤🖼️ Xで画像を共有</button>
     </div>
   </div>
 </div>
@@ -2577,8 +2563,7 @@ function renderMyCoordList() {
           <div class="coord-actions">
             ${set.photoDataUrl ? `<img class="coord-photo-thumb" src="${set.photoDataUrl}" alt="" onclick="openCoordPhotoModal(${set.id})" title="${CURRENT_LANG === 'en' ? 'Change Photo' : '写真を変更'}">` : ''}
             <button class="coord-icon-btn" onclick="openCoordPhotoModal(${set.id})" title="${CURRENT_LANG === 'en' ? 'Attach a Photo' : '写真を添付'}">📷</button>
-            <button class="coord-icon-btn" onclick="saveMyCoordAsImage(${set.id})" title="${CURRENT_LANG === 'en' ? 'Save as Image' : '画像で保存'}">🖼️</button>
-            <button class="coord-icon-btn" onclick="shareMyCoordOnTwitter(${set.id})" title="${CURRENT_LANG === 'en' ? 'Share on X' : 'Xでシェア'}">📤</button>
+            <button class="coord-icon-btn" onclick="shareMyCoordOnTwitter(${set.id})" title="${CURRENT_LANG === 'en' ? 'Share Image on X' : 'Xで画像を共有'}">📤🖼️</button>
             <button class="coord-icon-btn" onclick="shareMyCoordLink(${set.id})" title="${CURRENT_LANG === 'en' ? 'Share as Link' : 'リンクで共有'}">🔗</button>
             <button class="coord-icon-btn coord-del" onclick="deleteCoord(${set.id})" title="${CURRENT_LANG === 'en' ? 'Delete' : '削除'}">🗑</button>
           </div>
@@ -3108,17 +3093,6 @@ function syncCoordShareStyleUI() {
   document.querySelectorAll('.coord-share-id-input').forEach(input => { input.value = shareUserId; });
 }
 
-function saveCoordAsImage(title, items, filenameBase, photoDataUrl) {
-  if (!items || Object.keys(items).length === 0) {
-    showToast(CURRENT_LANG === 'en' ? 'No coord selected' : 'コーデが選択されていません');
-    return;
-  }
-  const buildFn = coordShareStyle === 'grid'
-    ? () => buildIconGridExportCardEl(items, photoDataUrl, shareUserId)
-    : () => buildExportCardEl(title, items, photoDataUrl);
-  return exportElementAsImage(buildFn, filenameBase);
-}
-
 // コーデを「画像＋一言コメント」としてXへ共有する
 // アイテム名を文字で列挙するのではなく、画像共有（保存）と同じカード画像をそのまま添付する
 function shareCoordImageOnX(title, items, filenameBase, shareText, photoDataUrl) {
@@ -3148,11 +3122,7 @@ function buildMyCoordShareText(label) {
     : `👗「${label}」のコーデ\n\n${SITE_URL}\n${COORD_SHARE_HASHTAG}`;
 }
 
-// ── ランダムコーデ: 画像保存・Xシェア ──────────
-function saveRandomAsImage() {
-  return saveCoordAsImage(CURRENT_LANG === 'en' ? '🎲 Random Coord' : '🎲 ランダムコーデ', currentRandom, 'random-coord', randomCoordPhotoDataUrl);
-}
-
+// ── ランダムコーデ: Xシェア（画像を生成して共有） ──────────
 function shareRandomOnTwitter() {
   return shareCoordImageOnX(CURRENT_LANG === 'en' ? '🎲 Random Coord' : '🎲 ランダムコーデ', currentRandom, 'random-coord', buildRandomShareText(), randomCoordPhotoDataUrl);
 }
@@ -3185,13 +3155,7 @@ function renderRandomCoordPhotoStatus() {
   }
 }
 
-// ── マイコーデ: 画像保存・Xシェア ──────────────
-function saveMyCoordAsImage(id) {
-  const set = getSavedCoords().find(s => s.id === id);
-  if (!set) return;
-  return saveCoordAsImage(`👗 ${set.name}`, set.items, set.name, set.photoDataUrl);
-}
-
+// ── マイコーデ: Xシェア（画像を生成して共有） ──────────────
 function shareMyCoordOnTwitter(id) {
   const set = getSavedCoords().find(s => s.id === id);
   if (!set) return;
@@ -3487,16 +3451,6 @@ function buildOverallExportCardEl(opts = {}) {
   return card;
 }
 
-function saveOverallAsImage(fromCustomize) {
-  if (getOverallStats().tot === 0) {
-    showToast(CURRENT_LANG === 'en' ? 'Please register items on a category page first' : 'まずはカテゴリページでアイテムを登録してください');
-    return;
-  }
-  const opts = fromCustomize ? readShareCustomizeFromModal() : {};
-  if (fromCustomize) closeModal('customizeModal');
-  return exportElementAsImage(() => buildOverallExportCardEl(opts), CURRENT_LANG === 'en' ? 'Collection Completion Rate' : 'コレクション達成率');
-}
-
 // 達成率からツイート本文を作成（文末に必ずサイトURLを付与。コメント指定時はそちらを使う）
 function buildOverallTweetText(comment) {
   if (comment) return `${comment}\n\n${SITE_URL}\n${SHARE_HASHTAG}`;
@@ -3727,20 +3681,6 @@ function buildFavShareText(comment) {
   return CURRENT_LANG === 'en'
     ? `⭐ My favorite items\n\n${SITE_URL}\n${FAV_SHARE_HASHTAG}`
     : `⭐ お気に入りアイテムまとめ\n\n${SITE_URL}\n${FAV_SHARE_HASHTAG}`;
-}
-
-function saveFavAsImage() {
-  const selected = getSelectedFavItems();
-  if (selected.length === 0) {
-    showToast(CURRENT_LANG === 'en' ? 'Please select at least one item to share' : '共有するアイテムを1つ以上選択してください');
-    return;
-  }
-  const comment = document.getElementById('favShareComment').value.trim();
-  const style = favShareStyle;
-  const theme = favShareTheme;
-  const bgImageDataUrl = favShareBgImageDataUrl;
-  closeModal('favShareModal');
-  return exportElementAsImage(() => buildFavExportCardEl(selected, comment, style, theme, bgImageDataUrl), CURRENT_LANG === 'en' ? 'Favorite Items' : 'お気に入りアイテム');
 }
 
 function shareFavOnTwitter() {
