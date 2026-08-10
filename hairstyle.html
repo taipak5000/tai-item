@@ -714,6 +714,11 @@ function toggleOwned(id) {
   const card = document.getElementById(`card_${id}`);
   if (card) {
     card.classList.toggle('is-owned', userStates.owned[id]);
+    // 所持済みになった場合、自動でウィッシュリストから外れるためボタンの見た目も同期する
+    if (userStates.owned[id]) {
+      const wishBtn = card.querySelector('.tile-wish-btn, .wish-btn');
+      if (wishBtn) wishBtn.classList.remove('is-wish');
+    }
   }
 }
 

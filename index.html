@@ -2052,6 +2052,11 @@ function toggleOwnedFromSearch(catKey, itemId) {
       dot.classList.toggle('owned', nowOwned);
       dot.textContent = nowOwned ? '✓' : '';
     }
+    // 所持済みになった場合、自動でウィッシュリストから外れるためボタンの見た目も同期する
+    if (nowOwned) {
+      const wishBtn = row?.querySelector('.gs-wish-btn');
+      if (wishBtn) wishBtn.classList.remove('is-wish');
+    }
     const countEl = document.getElementById('gsResultCount');
     const m = CURRENT_LANG === 'en'
       ? countEl.textContent.match(/^(\d+) items \((\d+) owned\)$/)
