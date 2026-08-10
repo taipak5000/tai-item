@@ -1038,6 +1038,11 @@
     <span class="feature-label" data-i18n-en="Currently Available Items">今ゲットできるアイテム</span>
     <span class="feature-desc" data-i18n-en="See all items from the currently running season/event across every category at a glance">現在開催中の季節・イベントで入手できるアイテムを、絞り込み不要で全カテゴリまとめて確認できます</span>
   </button>
+  <button class="feature-btn" onclick="completeAllRegularItems()">
+    <span class="feature-icon">🏛️</span>
+    <span class="feature-label" data-i18n-en="Regular Spirits Full Complete">恒常精霊フルコンプ</span>
+    <span class="feature-desc" data-i18n-en="Mark every item from the always-available Regular Spirits (Isle of Dawn – Vault of Knowledge) as owned in one click">孤島〜書庫の恒常精霊アイテムを一括で所持済みにできます</span>
+  </button>
 
   <!-- ▸ コスト管理 -->
   <p class="sec-label" data-i18n-en="Cost Management">コスト管理</p>
@@ -1779,6 +1784,67 @@ function readCatState(catKey) {
     const d = JSON.parse(localStorage.getItem(nsKey('gameItems_' + catKey)));
     return { owned: d?.itemOwned || {}, fav: d?.itemFav || {} };
   } catch { return { owned: {}, fav: {} }; }
+}
+
+// 恒常精霊（cost-data.js の source が「恒常」で始まるアイテム）を一括で所持済みにする。
+// 恒常精霊は分岐の無い一直線のツリーのため、フルコンプ＝全アイテム所持という前提で成立する。
+async function completeAllRegularItems() {
+  try { await loadAllItemsOnce(); } catch (e) {
+    console.error(e);
+    showToast(CURRENT_LANG === 'en' ? 'Failed to load. Please open this on the published site.' : '読み込みに失敗しました。GitHub Pages公開後のURLでお試しください。');
+    return;
+  }
+  if (typeof ITEM_COST_DATA === 'undefined') return;
+
+  const targetIdsByCat = {};
+  let totalTargets = 0;
+  CATS.forEach(cat => {
+    const list = ITEM_COST_DATA[cat.key] || [];
+    const ids = list.filter(e => (e.source || '').startsWith('恒常')).map(e => e.id);
+    if (ids.length) { targetIdsByCat[cat.key] = ids; totalTargets += ids.length; }
+  });
+  if (totalTargets === 0) return;
+
+  const alreadyOwnedCount = Object.keys(targetIdsByCat).reduce((sum, catKey) => {
+    const state = readCatState(catKey);
+    return sum + targetIdsByCat[catKey].filter(id => state.owned[id]).length;
+  }, 0);
+  const newCount = totalTargets - alreadyOwnedCount;
+
+  if (newCount === 0) {
+    showToast(CURRENT_LANG === 'en' ? 'All Regular Spirit items are already owned' : '恒常精霊のアイテムはすべて所持済みです');
+    return;
+  }
+
+  const msg = CURRENT_LANG === 'en'
+    ? `Mark ${newCount} unowned Regular Spirit item(s) as owned? (Isle of Dawn – Vault of Knowledge, ${totalTargets} items total)`
+    : `恒常精霊（孤島〜書庫、全${totalTargets}件）のうち、未所持の${newCount}件を所持済みにします。よろしいですか？`;
+  if (!window.confirm(msg)) return;
+
+  Object.keys(targetIdsByCat).forEach(catKey => {
+    const key = nsKey('gameItems_' + catKey);
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(key)) || {}; } catch { saved = {}; }
+    const ownedMap = saved.itemOwned || {};
+    targetIdsByCat[catKey].forEach(id => {
+      if (!ownedMap[id]) {
+        ownedMap[id] = true;
+        recordItemAcquire(catKey, id);
+      }
+    });
+    const catItems = allItemsCache.filter(it => it.catKey === catKey);
+    const dataToSave = {
+      total: catItems.length,
+      owned: catItems.filter(it => ownedMap[it.id]).length,
+      itemOwned: ownedMap,
+      itemFav: saved.itemFav || {},
+      ownedItems: catItems.filter(it => ownedMap[it.id]).map(it => ({ id: it.id, name: it.name, nameEn: it.nameEn }))
+    };
+    localStorage.setItem(key, JSON.stringify(dataToSave));
+  });
+
+  loadAndRender();
+  showToast(CURRENT_LANG === 'en' ? `${newCount} item(s) marked as owned` : `${newCount}件を所持済みにしました`);
 }
 
 // 検索モーダルを開く（初回のみ全カテゴリのデータを取得する）
