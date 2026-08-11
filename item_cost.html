@@ -291,6 +291,7 @@
     .exp-brand { color: #fff; font-size: 12px; font-weight: 600; opacity: 0.85; letter-spacing: 0.3px; margin-bottom: 6px; }
     .exp-hero { text-align: center; padding: 6px 0 18px; }
     .exp-hero-label { color: rgba(255,255,255,0.9); font-size: 15px; font-weight: 700; letter-spacing: 0.3px; }
+    .exp-hero-count { color: rgba(255,255,255,0.75); font-size: 12.5px; margin-top: 4px; }
     .exp-cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; background: #fff; border-radius: 18px; padding: 16px; }
     .exp-cat-cell { background: var(--bg); border-radius: 12px; padding: 14px 8px; text-align: center; }
     .exp-cat-cell-icon { font-size: 20px; }
@@ -301,6 +302,20 @@
       padding: 10px 14px; font-size: 13px; font-weight: 600; line-height: 1.6; text-align: center;
     }
     .exp-date { color: rgba(255,255,255,0.75); font-size: 10.5px; text-align: right; margin-top: 10px; }
+    .exp-title { color: #fff; font-size: 18px; font-weight: 700; margin-bottom: 14px; text-align: center; }
+    .exp-body { background: #fff; border-radius: 18px; padding: 4px 18px; max-height: 640px; overflow: hidden; }
+    .exp-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 0.5px solid var(--sep); }
+    .exp-row:last-child { border-bottom: none; }
+    .exp-icon { width: 34px; height: 34px; background: var(--bg); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; overflow: hidden; }
+    .exp-icon img { width: 100%; height: 100%; object-fit: contain; }
+    .exp-info { flex: 1; min-width: 0; }
+    .exp-cat  { font-size: 10.5px; color: var(--text-2); }
+    .exp-name { font-size: 13.5px; font-weight: 600; color: var(--text); margin-top: 1px; }
+    .exp-cost { font-size: 12.5px; font-weight: 700; color: var(--orange-d); white-space: nowrap; flex-shrink: 0; }
+    .exp-empty-list { text-align: center; color: var(--text-2); font-size: 12.5px; padding: 20px 0; }
+    .exp-total-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 4px 0; margin-top: 4px; border-top: 1px solid rgba(255,255,255,0.3); }
+    .exp-total-label { color: rgba(255,255,255,0.9); font-size: 12.5px; }
+    .exp-total-value { color: #fff; font-size: 16px; font-weight: 800; }
     .gift-include-toggle { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--text-2); white-space: nowrap; }
     .gift-remove-btn { color: var(--red); font-size: 16px; padding: 4px; flex-shrink: 0; }
     .gift-empty { text-align: center; color: var(--text-2); font-size: 12.5px; padding: 14px 0; }
@@ -396,6 +411,10 @@
         <span>𝕏</span>
         <span data-i18n-en="Share on X">Xで共有</span>
       </button>
+      <button type="button" class="share-btn" onclick="shareReceivedGiftsOnTwitter()">
+        <span>🎁</span>
+        <span data-i18n-en="Share Gifts I Received">もらったギフトを共有</span>
+      </button>
     </div>
 
     <div class="gift-card">
@@ -434,6 +453,12 @@
           <button type="button" class="gift-add-btn" onclick="addGiftRecord()" data-i18n-en="Add">追加する</button>
         </div>
         <div class="gift-list" id="giftHistoryList"><!-- JS --></div>
+        <div class="share-row" style="margin-top:14px;">
+          <button type="button" class="share-btn" onclick="shareGiftHistoryOnTwitter()">
+            <span>𝕏</span>
+            <span data-i18n-en="Share Gift History">プレゼント履歴を共有</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -1022,6 +1047,7 @@ function buildCostExportCardEl() {
     <div class="exp-brand">${en ? '💴 Item Cost Tracker' : '💴 アイテム別コスト管理'}</div>
     <div class="exp-hero">
       <div class="exp-hero-label">${en ? 'Cost of owned items (all categories)' : '所持済みアイテムにかかったコスト（全カテゴリ）'}</div>
+      <div class="exp-hero-count">${en ? `${lastOwnedCount} / ${lastTotalItemCount} items owned` : `所持済み ${lastOwnedCount} / ${lastTotalItemCount} 件`}</div>
     </div>
     <div class="exp-cat-grid">
       <div class="exp-cat-cell">
@@ -1064,6 +1090,132 @@ function buildCostTweetText() {
 function shareCostOnTwitter() {
   return exportElementAsImage(buildCostExportCardEl, CURRENT_LANG === 'en' ? 'Item Cost' : 'アイテム別コスト', {
     shareText: buildCostTweetText(),
+    successToast: CURRENT_LANG === 'en' ? 'Shared!' : '共有しました！'
+  });
+}
+
+/* ================================================================
+   🎁 もらったギフト一覧の画像共有
+   （実額アイテムのうち「ギフトでもらった」に設定した所持済みアイテムの一覧）
+   ================================================================ */
+function getReceivedGiftItems() {
+  return getAllItems().filter(item => item.owned && item.cost.type === 'money' && item.moneyAcquireMode === 'gift');
+}
+
+function buildReceivedGiftExportCardEl() {
+  const en = CURRENT_LANG === 'en';
+  const items = getReceivedGiftItems();
+  const total = items.reduce((sum, it) => sum + (it.cost.value || 0), 0);
+
+  const rows = items.length === 0
+    ? `<div class="exp-empty-list">${en ? 'No items marked "Received as a gift" yet.' : 'まだ「ギフトでもらった」に設定したアイテムがありません。'}</div>`
+    : items.map(item => `
+      <div class="exp-row">
+        <div class="exp-icon">${item.img ? `<img src="${item.img}" alt="" referrerpolicy="no-referrer">` : '🎁'}</div>
+        <div class="exp-info">
+          <div class="exp-cat">${escapeHtml(trCat(CAT_LABELS[item.catKey] || item.catKey))}</div>
+          <div class="exp-name">${escapeHtml(item.name)}</div>
+        </div>
+        <div class="exp-cost">¥${item.cost.value.toLocaleString()}</div>
+      </div>`).join('');
+
+  const today = new Date();
+  const dateTxt = en
+    ? `Created ${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`
+    : `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日作成`;
+
+  const card = document.createElement('div');
+  card.className = 'export-card';
+  card.innerHTML = `
+    <div class="exp-brand">${en ? '💴 Item Cost Tracker' : '💴 アイテム別コスト管理'}</div>
+    <div class="exp-title">${en ? '🎁 Items Received as Gifts' : '🎁 ギフトでもらったアイテム'}</div>
+    <div class="exp-body">${rows}</div>
+    ${items.length > 0 ? `
+    <div class="exp-total-row">
+      <span class="exp-total-label">${en ? `${items.length} item(s)` : `${items.length}件`}</span>
+      <span class="exp-total-value">¥${total.toLocaleString()}</span>
+    </div>` : ''}
+    <div class="exp-date">${dateTxt}</div>
+  `;
+  document.body.appendChild(card);
+  return card;
+}
+
+function buildReceivedGiftTweetText() {
+  const en = CURRENT_LANG === 'en';
+  return en
+    ? `Here are the items I've received as gifts! 🎁\n\n${COST_SITE_URL}\n${COST_SHARE_HASHTAG}`
+    : `ギフトでもらったアイテムはこちら！🎁\n\n${COST_SITE_URL}\n${COST_SHARE_HASHTAG}`;
+}
+
+function shareReceivedGiftsOnTwitter() {
+  return exportElementAsImage(buildReceivedGiftExportCardEl, CURRENT_LANG === 'en' ? 'Gifts Received' : 'もらったギフト', {
+    shareText: buildReceivedGiftTweetText(),
+    successToast: CURRENT_LANG === 'en' ? 'Shared!' : '共有しました！'
+  });
+}
+
+/* ================================================================
+   🎁 プレゼント履歴の画像共有
+   （課金アイテムプレゼント履歴＝自分が相手に贈った履歴の一覧）
+   ================================================================ */
+function buildGiftHistoryExportCardEl() {
+  const en = CURRENT_LANG === 'en';
+  const list = loadGiftHistory();
+  let total = 0;
+
+  const rows = list.length === 0
+    ? `<div class="exp-empty-list">${en ? 'No gift purchases recorded yet.' : 'まだ記録がありません。'}</div>`
+    : list.slice().reverse().map(g => {
+        const it = getGiftPickableItem(g.catKey, g.itemId);
+        const itemName = it ? it.name : g.itemId;
+        const cost = (it && it.cost && it.cost.type === 'money') ? it.cost.value : null;
+        if (typeof cost === 'number') total += cost;
+        const img = itemImgMap && itemImgMap[g.itemId];
+        const sub = [g.recipient, g.date].filter(Boolean).join(' ・ ');
+        return `
+          <div class="exp-row">
+            <div class="exp-icon">${img ? `<img src="${img}" alt="" referrerpolicy="no-referrer">` : ((it && it.icon) || '🎁')}</div>
+            <div class="exp-info">
+              <div class="exp-cat">${escapeHtml(sub || (en ? 'No recipient/date recorded' : '相手・日付未記入'))}</div>
+              <div class="exp-name">${escapeHtml(itemName)}</div>
+            </div>
+            <div class="exp-cost">${typeof cost === 'number' ? `¥${cost.toLocaleString()}` : (en ? 'No data' : 'データなし')}</div>
+          </div>`;
+      }).join('');
+
+  const today = new Date();
+  const dateTxt = en
+    ? `Created ${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`
+    : `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日作成`;
+
+  const card = document.createElement('div');
+  card.className = 'export-card';
+  card.innerHTML = `
+    <div class="exp-brand">${en ? '💴 Item Cost Tracker' : '💴 アイテム別コスト管理'}</div>
+    <div class="exp-title">${en ? '🎁 Gift Purchase History' : '🎁 課金アイテムプレゼント履歴'}</div>
+    <div class="exp-body">${rows}</div>
+    ${list.length > 0 ? `
+    <div class="exp-total-row">
+      <span class="exp-total-label">${en ? `${list.length} gift(s)` : `${list.length}件`}</span>
+      <span class="exp-total-value">¥${total.toLocaleString()}</span>
+    </div>` : ''}
+    <div class="exp-date">${dateTxt}</div>
+  `;
+  document.body.appendChild(card);
+  return card;
+}
+
+function buildGiftHistoryTweetText() {
+  const en = CURRENT_LANG === 'en';
+  return en
+    ? `Here's my history of gift items I've sent! 🎁\n\n${COST_SITE_URL}\n${COST_SHARE_HASHTAG}`
+    : `プレゼントしたアイテムの履歴はこちら！🎁\n\n${COST_SITE_URL}\n${COST_SHARE_HASHTAG}`;
+}
+
+function shareGiftHistoryOnTwitter() {
+  return exportElementAsImage(buildGiftHistoryExportCardEl, CURRENT_LANG === 'en' ? 'Gift History' : 'プレゼント履歴', {
+    shareText: buildGiftHistoryTweetText(),
     successToast: CURRENT_LANG === 'en' ? 'Shared!' : '共有しました！'
   });
 }
@@ -1358,6 +1510,10 @@ function toggleRemainingCard() {
   icon.textContent = expanded ? '▶' : '▼';
 }
 
+// 「アイテム別コストを共有」画像に所持済み件数を載せるため、直近のrenderSummary()の
+// 集計結果を保持しておく
+let lastOwnedCount = 0, lastTotalItemCount = 0;
+
 function renderSummary(items) {
   let candleSum = 0, starCandleSum = 0, heartSum = 0, moneySum = 0, ownedCount = 0;
   let giftReceivedCount = 0, giftReceivedMoneySum = 0;
@@ -1443,6 +1599,9 @@ function renderSummary(items) {
       : `「課金で買ったキャンドルで入手」に設定した ${paidCandleCount}件（¥${paidCandleMoneySum.toLocaleString()}）も実額の合計に含めています。`;
   }
   document.getElementById('summaryHint').innerHTML = hint;
+
+  lastOwnedCount = ownedCount;
+  lastTotalItemCount = items.length;
 }
 
 function renderRemainingSummary(items) {
