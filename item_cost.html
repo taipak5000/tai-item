@@ -251,6 +251,22 @@
     .gift-item-picker-empty { text-align: center; color: var(--text-2); font-size: 12.5px; padding: 12px 0; }
     .gift-record-thumb { width: 36px; height: 36px; flex-shrink: 0; }
 
+    /* ── キャンドル課金（常時ショップのパック購入ログ） ── */
+    .candle-pack-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px; }
+    .candle-pack-btn {
+      background: var(--bg); border-radius: var(--r-sm); padding: 12px 10px;
+      display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center;
+    }
+    .candle-pack-btn:active { opacity: 0.8; }
+    .candle-pack-price { font-size: 15px; font-weight: 800; color: var(--orange-d); }
+    .candle-pack-amount { font-size: 12px; color: var(--text-2); }
+    .candle-pack-add { font-size: 11px; color: var(--blue); font-weight: 700; margin-top: 4px; }
+    .candle-summary-row {
+      display: flex; justify-content: space-between; align-items: center; margin-top: 12px;
+      padding: 10px 12px; background: var(--orange-bg); border-radius: var(--r-sm);
+      font-size: 12.5px; color: var(--orange-d); font-weight: 700;
+    }
+
     /* ── 画像共有（Xで共有）── */
     .modal-overlay {
       display: none; position: fixed; inset: 0;
@@ -459,6 +475,19 @@
             <span data-i18n-en="Share Gift History">プレゼント履歴を共有</span>
           </button>
         </div>
+      </div>
+    </div>
+
+    <div class="gift-card">
+      <div class="summary-title-row" onclick="toggleCandlePurchaseCard()">
+        <span class="summary-title" style="margin-bottom:0;" data-i18n-en="🕯️ Candle Purchases">🕯️ キャンドル課金</span>
+        <span class="summary-toggle-icon" id="candleToggleIcon">▶</span>
+      </div>
+      <div id="candlePurchaseBody" style="display:none;">
+        <p class="item-note" style="margin:8px 0 0;" data-i18n-en="Record how many times you bought the candle packs that are always available in the shop. This is tracked separately and is not included in the real-money total above.">常時ショップで購入できるキャンドルパックの購入回数を記録できます。上の実額の合計には含まれず、別枠で集計されます。</p>
+        <div class="candle-pack-grid" id="candlePackGrid"><!-- JS --></div>
+        <div class="candle-summary-row" id="candlePurchaseSummary" style="display:none;"></div>
+        <div class="gift-list" id="candlePurchaseList"><!-- JS --></div>
       </div>
     </div>
 
@@ -896,6 +925,125 @@ function renderGiftHistoryList() {
           ${en ? 'Include in total' : '実額に含める'}
         </label>
         <button type="button" class="gift-remove-btn" onclick="removeGiftRecord('${g.id}')" aria-label="${en ? 'Remove' : '削除'}">✕</button>
+      </div>`;
+  }).join('');
+}
+
+/* ================================================================
+   🕯️ キャンドル課金（常時ショップのパック購入ログ）
+   アイテムの実額コストとは別枠で、常時ショップで購入できるキャンドル
+   パック（650円/15本・1300円/35本・2600円/72本・6600円/190本）の
+   購入回数と日付だけを記録する。上の実額の合計には含めない。
+   ================================================================ */
+const CANDLE_PACKS = [
+  { key: 'p650',  price: 650,  candles: 15  },
+  { key: 'p1300', price: 1300, candles: 35  },
+  { key: 'p2600', price: 2600, candles: 72  },
+  { key: 'p6600', price: 6600, candles: 190 },
+];
+function candlePackByKey(key) {
+  return CANDLE_PACKS.find(p => p.key === key);
+}
+
+const CANDLE_PURCHASE_KEY = nsKey('candlePurchaseLog_v1');
+function loadCandlePurchases() {
+  try { return JSON.parse(localStorage.getItem(CANDLE_PURCHASE_KEY)) || []; }
+  catch (_) { return []; }
+}
+function saveCandlePurchases(list) {
+  localStorage.setItem(CANDLE_PURCHASE_KEY, JSON.stringify(list));
+}
+
+function toggleCandlePurchaseCard() {
+  const body = document.getElementById('candlePurchaseBody');
+  const icon = document.getElementById('candleToggleIcon');
+  const expanded = body.style.display !== 'none';
+  body.style.display = expanded ? 'none' : 'block';
+  icon.textContent = expanded ? '▶' : '▼';
+}
+
+function renderCandlePackGrid() {
+  const el = document.getElementById('candlePackGrid');
+  if (!el) return;
+  const en = CURRENT_LANG === 'en';
+  el.innerHTML = CANDLE_PACKS.map(p => `
+    <button type="button" class="candle-pack-btn" onclick="addCandlePurchase('${p.key}')">
+      <span class="candle-pack-price">¥${p.price.toLocaleString()}</span>
+      <span class="candle-pack-amount">🕯️${p.candles}${en ? '' : '本'}</span>
+      <span class="candle-pack-add">${en ? '+ Record purchase' : '+ 購入を記録'}</span>
+    </button>`).join('');
+}
+
+// タップした瞬間に「今日」の日付で1件記録する（日付を後から直したい場合は下の一覧から編集できる）
+function addCandlePurchase(packKey) {
+  const pack = candlePackByKey(packKey);
+  if (!pack) return;
+  const list = loadCandlePurchases();
+  list.push({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    packKey,
+    date: new Date().toISOString().slice(0, 10),
+    createdAt: new Date().toISOString(),
+  });
+  saveCandlePurchases(list);
+  showToast(CURRENT_LANG === 'en' ? 'Recorded' : '記録しました');
+  renderCandlePurchaseList();
+}
+
+function updateCandlePurchaseDate(id, value) {
+  const list = loadCandlePurchases();
+  const rec = list.find(p => p.id === id);
+  if (!rec) return;
+  rec.date = value;
+  saveCandlePurchases(list);
+  showToast(CURRENT_LANG === 'en' ? 'Updated' : '更新しました');
+}
+
+function removeCandlePurchase(id) {
+  saveCandlePurchases(loadCandlePurchases().filter(p => p.id !== id));
+  renderCandlePurchaseList();
+}
+
+function renderCandlePurchaseList() {
+  const el = document.getElementById('candlePurchaseList');
+  if (!el) return;
+  const list = loadCandlePurchases();
+  const en = CURRENT_LANG === 'en';
+
+  const summaryEl = document.getElementById('candlePurchaseSummary');
+  if (summaryEl) {
+    if (list.length === 0) {
+      summaryEl.style.display = 'none';
+    } else {
+      const totalYen = list.reduce((sum, p) => sum + ((candlePackByKey(p.packKey) || {}).price || 0), 0);
+      const totalCandles = list.reduce((sum, p) => sum + ((candlePackByKey(p.packKey) || {}).candles || 0), 0);
+      summaryEl.style.display = 'flex';
+      summaryEl.innerHTML = en
+        ? `<span>${list.length} purchases</span><span>¥${totalYen.toLocaleString()} → 🕯️${totalCandles.toLocaleString()}</span>`
+        : `<span>${list.length}回購入</span><span>¥${totalYen.toLocaleString()} → 🕯️${totalCandles.toLocaleString()}本</span>`;
+    }
+  }
+
+  if (list.length === 0) {
+    el.innerHTML = `<div class="gift-empty">${en ? 'No candle purchases recorded yet.' : 'まだ記録がありません。'}</div>`;
+    return;
+  }
+
+  el.innerHTML = list.slice().reverse().map(p => {
+    const pack = candlePackByKey(p.packKey);
+    if (!pack) return '';
+    return `
+      <div class="gift-record">
+        <div class="item-thumb gift-record-thumb img-fallback">
+          <span class="item-thumb-fallback">🕯️</span>
+        </div>
+        <div class="gift-record-info">
+          <b>¥${pack.price.toLocaleString()}</b>（🕯️${pack.candles}${en ? '' : '本'}）
+          <div class="gift-record-edit-row">
+            <input type="date" class="gift-record-edit-input" value="${p.date || ''}" onchange="updateCandlePurchaseDate('${p.id}', this.value)">
+          </div>
+        </div>
+        <button type="button" class="gift-remove-btn" onclick="removeCandlePurchase('${p.id}')" aria-label="${en ? 'Remove' : '削除'}">✕</button>
       </div>`;
   }).join('');
 }
@@ -1651,6 +1799,8 @@ document.addEventListener('DOMContentLoaded', () => {
   populateGiftCatSelect();
   renderGiftHistoryList();
   renderGiftDisplayModeToggle();
+  renderCandlePackGrid();
+  renderCandlePurchaseList();
 });
 </script>
 
