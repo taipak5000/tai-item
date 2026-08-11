@@ -14,7 +14,7 @@
   <script src="profiles.js"></script>
   <script src="cost-data.js"></script>
   <script>if (CURRENT_LANG === 'en') document.title = 'Item Collection Tracker';</script>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&family=Yomogi&display=swap" rel="stylesheet">
   <style>
     /* ── Design tokens ─────────────────────────── */
     :root {
@@ -568,6 +568,81 @@
     }
     .coord-pick-empty { font-size: 12px; color: var(--text-3); padding: 6px 2px; }
 
+    /* ── クローゼットコラージュ ─────────────────── */
+    .closet-mini-board {
+      display: grid; gap: 3px; padding: 8px; border-radius: 10px; margin-top: 2px;
+    }
+    .closet-mini-board .closet-cell { border-radius: 5px; box-shadow: none; cursor: default; }
+    .closet-mini-board .closet-cell-empty { font-size: 13px; }
+
+    .closet-size-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+    .closet-stepper { display: flex; align-items: center; gap: 10px; background: var(--bg); border-radius: var(--r-sm); padding: 6px 12px; }
+    .closet-stepper-label { font-size: 12.5px; color: var(--text-2); }
+    .closet-stepper-btn {
+      width: 26px; height: 26px; border-radius: 50%; background: var(--card); color: var(--text);
+      font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1); flex-shrink: 0;
+    }
+    .closet-stepper-btn:active { transform: scale(0.9); }
+    .closet-stepper-val { min-width: 14px; text-align: center; font-weight: 700; font-size: 14px; }
+
+    .closet-bg-row { display: flex; gap: 9px; overflow-x: auto; padding: 2px 2px 6px; -webkit-overflow-scrolling: touch; }
+    .closet-bg-swatch {
+      flex-shrink: 0; width: 42px; height: 42px; border-radius: 12px;
+      border: 2px solid transparent; position: relative; cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+    .closet-bg-swatch.selected { border-color: var(--blue); }
+    .closet-bg-swatch.selected::after {
+      content: '✓'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 16px; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+
+    .closet-board { display: grid; gap: 6px; padding: 14px; border-radius: var(--r); margin: 4px 0 14px; }
+    .closet-cell {
+      aspect-ratio: 1; background: rgba(255,255,255,0.55); border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; overflow: hidden;
+      cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.1); transition: transform 0.12s ease;
+    }
+    .closet-cell:active { transform: scale(0.95); }
+    .closet-cell-empty { color: rgba(0,0,0,0.3); font-size: 22px; font-weight: 300; }
+    .closet-cell-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .closet-cell-item img { width: 78%; height: 78%; object-fit: contain; display: block; }
+
+    .closet-caption-hint { font-size: 11px; color: var(--text-3); margin: -8px 0 14px; line-height: 1.5; }
+
+    /* エクスポート用カード（画面外で生成→html2canvasで書き出す） */
+    .cls-export-card {
+      position: fixed; left: -9999px; top: 0; width: 640px; padding: 32px 28px 26px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+      box-sizing: border-box; border-radius: 22px; overflow: hidden;
+    }
+    .cls-exp-accent { position: absolute; font-size: 90px; opacity: 0.16; pointer-events: none; line-height: 1; }
+    .cls-exp-accent-tl { top: -18px; left: -14px; }
+    .cls-exp-accent-br { bottom: -18px; right: -14px; }
+    .cls-exp-brand { font-size: 13px; font-weight: 700; color: rgba(28,28,30,0.55); margin-bottom: 6px; position: relative; }
+    .cls-exp-title { font-size: 22px; font-weight: 800; color: #1C1C1E; margin-bottom: 16px; position: relative; }
+    .cls-exp-board { display: grid; gap: 10px; position: relative; }
+    .cls-exp-cell {
+      aspect-ratio: 1; background: rgba(255,255,255,0.65); border-radius: 14px;
+      display: flex; align-items: center; justify-content: center; overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+    }
+    .cls-exp-cell-empty { background: rgba(255,255,255,0.28); box-shadow: none; }
+    .cls-exp-cell-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .cls-exp-cell-item img  { width: 76%; height: 76%; object-fit: contain; display: block; }
+    .cls-exp-caption {
+      font-family: 'Yomogi', 'Noto Sans JP', sans-serif; font-size: 20px; font-weight: 400;
+      color: #1C1C1E; text-align: center; margin-top: 18px; line-height: 1.6; position: relative;
+    }
+    .cls-exp-date { font-size: 10.5px; color: rgba(28,28,30,0.45); text-align: right; margin-top: 14px; position: relative; }
+    .cls-export-card.cls-dark .cls-exp-brand  { color: rgba(255,255,255,0.65); }
+    .cls-export-card.cls-dark .cls-exp-title  { color: #fff; }
+    .cls-export-card.cls-dark .cls-exp-caption { color: #fff; }
+    .cls-export-card.cls-dark .cls-exp-date   { color: rgba(255,255,255,0.55); }
+    .cls-export-card.cls-dark .cls-exp-cell   { background: rgba(255,255,255,0.14); }
+    .cls-export-card.cls-dark .cls-exp-cell-empty { background: rgba(255,255,255,0.06); }
+
     /* ── アイテム横断検索（季節・イベント検索） ─── */
     .gs-control-panel { display: flex; flex-direction: column; gap: 8px; margin-top: 2px; }
     .gs-control-row { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -1093,6 +1168,14 @@
     </button>
   </div>
 
+  <!-- ▸ クローゼットコラージュ -->
+  <p class="sec-label" data-i18n-en="Closet">クローゼット</p>
+  <button class="feature-btn" onclick="openCloset()">
+    <span class="feature-icon">🖼️</span>
+    <span class="feature-label" data-i18n-en="Closet Collage">クローゼットコラージュ</span>
+    <span class="feature-desc" data-i18n-en="Arrange owned items and your own photos on a grid to create a cute shareable collage">所持アイテムや自分の写真をマス目に並べて、かわいいコラージュ画像を作成・共有できます</span>
+  </button>
+
 </div><!-- /wrap -->
 
 </div><!-- /.app-layout -->
@@ -1176,6 +1259,87 @@
       <button class="action-btn primary full" style="margin-top:12px;" onclick="saveCreatedCoord()" data-i18n-en="Save This Coord">このコーデを保存</button>
     </div>
 
+  </div>
+</div>
+
+<!-- ▸ Modal: クローゼットコラージュ -->
+<div class="modal-overlay" id="closetModal" onclick="if(event.target===this)closeModal('closetModal')">
+  <div class="modal-card">
+
+    <!-- リスト表示 -->
+    <div id="closetListView">
+      <div class="modal-header">
+        <span class="modal-title" data-i18n-en="🖼️ Closet Collage">🖼️ クローゼットコラージュ</span>
+        <button class="modal-close" onclick="closeModal('closetModal')">✕</button>
+      </div>
+      <div id="closetList"><!-- JS --></div>
+      <button class="action-btn primary full" style="margin-top:12px;" onclick="newClosetCollage()" data-i18n-en="+ Create New Collage">＋ 新しいコラージュを作成</button>
+    </div>
+
+    <!-- 編集画面 -->
+    <div id="closetEditView" style="display:none;">
+      <div class="modal-header">
+        <button class="modal-back" onclick="showClosetListView()" data-i18n-en="◀ Back">◀ 戻る</button>
+        <span class="modal-title" style="font-size:15px;" data-i18n-en="Edit Collage">コラージュを編集</span>
+        <button class="modal-close" onclick="closeModal('closetModal')">✕</button>
+      </div>
+
+      <div class="form-field">
+        <label class="form-label" data-i18n-en="Collage Name">コラージュ名</label>
+        <input type="text" class="form-input" id="closetNameInput" data-i18n-en-placeholder="e.g. My Favorites Closet" placeholder="例: お気に入りクローゼット" />
+      </div>
+
+      <div class="closet-size-row">
+        <div class="closet-stepper">
+          <span class="closet-stepper-label" data-i18n-en="Rows">縦</span>
+          <button type="button" class="closet-stepper-btn" onclick="adjustClosetGrid('rows', -1)">−</button>
+          <span class="closet-stepper-val" id="closetRowsVal">3</span>
+          <button type="button" class="closet-stepper-btn" onclick="adjustClosetGrid('rows', 1)">＋</button>
+        </div>
+        <div class="closet-stepper">
+          <span class="closet-stepper-label" data-i18n-en="Cols">横</span>
+          <button type="button" class="closet-stepper-btn" onclick="adjustClosetGrid('cols', -1)">−</button>
+          <span class="closet-stepper-val" id="closetColsVal">3</span>
+          <button type="button" class="closet-stepper-btn" onclick="adjustClosetGrid('cols', 1)">＋</button>
+        </div>
+      </div>
+
+      <label class="form-label" data-i18n-en="Background">背景</label>
+      <div class="closet-bg-row" id="closetBgRow"><!-- JS --></div>
+
+      <label class="form-label" style="margin-top:14px;" data-i18n-en="Tap a cell to add an item or photo">マスをタップしてアイテムや写真を追加</label>
+      <div class="closet-board" id="closetBoard"><!-- JS --></div>
+
+      <div class="form-field">
+        <label class="form-label" data-i18n-en="Caption (optional)">コメント（任意）</label>
+        <input type="text" class="form-input" id="closetCaptionInput" maxlength="60" data-i18n-en-placeholder="e.g. My favorite coords this season 🌸" placeholder="例: 今季のお気に入りまとめ🌸" />
+      </div>
+
+      <button class="action-btn primary full" onclick="saveClosetCollage()" data-i18n-en="Save This Collage">このコラージュを保存</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ▸ Modal: クローゼットコラージュ - マス目の中身を選ぶ -->
+<div class="modal-overlay" id="closetCellModal" onclick="if(event.target===this)closeModal('closetCellModal')">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title" data-i18n-en="🧩 Choose Cell Content">🧩 マスの内容を選ぶ</span>
+      <button class="modal-close" onclick="closeModal('closetCellModal')">✕</button>
+    </div>
+
+    <div class="action-row">
+      <label class="action-btn secondary full" style="display:flex; align-items:center; justify-content:center;">
+        <span data-i18n-en="📷 Add a Photo">📷 写真を追加</span>
+        <input type="file" accept="image/*" style="display:none;" onchange="onClosetPhotoSelected(event)">
+      </label>
+    </div>
+
+    <label class="form-label" style="margin-top:16px;" data-i18n-en="Choose from Owned Items">🧥 所持アイテムから選ぶ</label>
+    <div id="closetItemPicks"><!-- JS --></div>
+
+    <button class="action-btn full" id="closetClearCellBtn" style="margin-top:14px; color:var(--red);" onclick="clearClosetCell()" data-i18n-en="🗑 Clear This Cell">🗑 このマスを空にする</button>
   </div>
 </div>
 
@@ -2688,7 +2852,7 @@ function getCoordPhotoAspectRatio() {
   return coordShareStyle === 'grid' ? 1 : (452 / 300);
 }
 
-function openPhotoCropModal(file, onConfirm) {
+function openPhotoCropModal(file, onConfirm, aspectRatio) {
   if (!file.type.startsWith('image/')) {
     showToast(CURRENT_LANG === 'en' ? 'Please select an image file' : '画像ファイルを選択してください');
     return;
@@ -2698,7 +2862,7 @@ function openPhotoCropModal(file, onConfirm) {
   img.onload = () => {
     openModal('photoCropModal');
     const viewport = document.getElementById('cropViewport');
-    const ratio = getCoordPhotoAspectRatio();
+    const ratio = aspectRatio || getCoordPhotoAspectRatio();
     const vw = viewport.clientWidth;
     const vh = vw / ratio;
     viewport.style.aspectRatio = String(ratio);
@@ -2709,7 +2873,7 @@ function openPhotoCropModal(file, onConfirm) {
       viewportW: vw, viewportH: vh, scale: minScale, minScale,
       offsetX: (vw - img.naturalWidth * minScale) / 2,
       offsetY: (vh - img.naturalHeight * minScale) / 2,
-      objectUrl, onConfirm,
+      objectUrl, onConfirm, ratio,
     };
     document.getElementById('cropZoomSlider').value = 100;
     document.getElementById('cropImg').src = objectUrl;
@@ -2781,7 +2945,7 @@ function cancelPhotoCrop() {
 
 function confirmPhotoCrop() {
   if (!cropCtx) return;
-  const ratio = getCoordPhotoAspectRatio();
+  const ratio = cropCtx.ratio || getCoordPhotoAspectRatio();
   const outSize = 900;
   const outW = ratio >= 1 ? outSize : Math.round(outSize * ratio);
   const outH = ratio >= 1 ? Math.round(outSize / ratio) : outSize;
@@ -2936,6 +3100,287 @@ function saveCreatedCoord() {
 }
 
 /* ================================================================
+   🖼️ クローゼットコラージュ
+   所持アイテムのアイコンや自分の写真をマス目に自由に並べて、
+   かわいい背景と組み合わせた1枚の画像として保存・共有できる機能。
+   ================================================================ */
+const CLOSET_MIN_GRID = 2;
+const CLOSET_MAX_GRID = 5;
+const CLOSET_BG_PRESETS = [
+  { key: 'sakura', label: '🌸', css: 'linear-gradient(160deg, #FFE4EC 0%, #FFC1D9 50%, #FFE9C7 100%)', accent: '🌸', dark: false },
+  { key: 'sky',    label: '☁️', css: 'linear-gradient(160deg, #CDEBFF 0%, #A6D8FF 55%, #E8F6FF 100%)', accent: '☁️', dark: false },
+  { key: 'night',  label: '🌙', css: 'linear-gradient(160deg, #241B4E 0%, #3F2E7A 55%, #6A4FB0 100%)', accent: '⭐', dark: true  },
+  { key: 'peach',  label: '🍑', css: 'linear-gradient(160deg, #FFE0D6 0%, #FFC9B3 55%, #FFD9A0 100%)', accent: '🍑', dark: false },
+  { key: 'forest', label: '🌿', css: 'linear-gradient(160deg, #DCF2E3 0%, #B7E4C7 55%, #EFF7D8 100%)', accent: '🍃', dark: false },
+  { key: 'gold',   label: '✨', css: 'linear-gradient(160deg, #FFF6DA 0%, #FFE18C 55%, #FFCB6B 100%)', accent: '✨', dark: false },
+  { key: 'white',  label: '🤍', css: '#FAFAFC',                                                        accent: '',   dark: false },
+  { key: 'black',  label: '🖤', css: 'linear-gradient(160deg, #2E2E33 0%, #17171A 100%)',              accent: '',   dark: true  },
+];
+function closetBgPreset(key) {
+  return CLOSET_BG_PRESETS.find(p => p.key === key) || CLOSET_BG_PRESETS[0];
+}
+
+function getClosetCollages() {
+  try { return JSON.parse(localStorage.getItem(nsKey('closetCollages_v1'))) || []; } catch { return []; }
+}
+function saveClosetCollages(list) {
+  localStorage.setItem(nsKey('closetCollages_v1'), JSON.stringify(list));
+}
+
+let closetEditing = null;      // 編集中のコラージュ { id, name, rows, cols, cells, bg, caption }
+let closetPickingIndex = null; // マス目ピッカーで選択対象になっているマスのindex
+
+async function openCloset() {
+  try { await loadAllItemsOnce(); } catch (e) {}
+  showClosetListView();
+  openModal('closetModal');
+}
+
+function showClosetListView() {
+  document.getElementById('closetListView').style.display = 'block';
+  document.getElementById('closetEditView').style.display = 'none';
+  renderClosetList();
+}
+
+// 保存済みコラージュ一覧・エクスポート画像で共通して使うマスのプレビューHTML（表示専用・タップ不可）
+function closetCellPreviewHtml(cell) {
+  if (!cell) return `<div class="closet-cell closet-cell-empty"></div>`;
+  if (cell.type === 'photo') return `<div class="closet-cell closet-cell-photo"><img src="${cell.dataUrl}" alt=""></div>`;
+  const cat = CATS.find(c => c.key === cell.catKey);
+  const item = cat && allItemsCache ? allItemsCache.find(it => it.catKey === cell.catKey && it.id === cell.itemId) : null;
+  return `<div class="closet-cell closet-cell-item">${item && cat ? itemIconHtml(cat, item) : (cat ? catIconHtml(cat) : '')}</div>`;
+}
+
+function renderClosetList() {
+  const sets = getClosetCollages();
+  const el = document.getElementById('closetList');
+
+  if (sets.length === 0) {
+    el.innerHTML = CURRENT_LANG === 'en'
+      ? `<div class="empty-msg">No collages yet.<br>Create one from the button below!</div>`
+      : `<div class="empty-msg">まだコラージュがありません。<br>下のボタンから作成してみましょう！</div>`;
+    return;
+  }
+
+  el.innerHTML = sets.map(set => {
+    const preset = closetBgPreset(set.bg);
+    const cellsHtml = set.cells.map(closetCellPreviewHtml).join('');
+    return `
+      <div class="coord-card">
+        <div class="coord-header">
+          <div class="coord-title">🖼️ ${escapeHtml(set.name)}</div>
+          <div class="coord-actions">
+            <button class="coord-icon-btn" onclick="editClosetCollage(${set.id})" title="${CURRENT_LANG === 'en' ? 'Edit' : '編集'}">✏️</button>
+            <button class="coord-icon-btn" onclick="shareClosetOnTwitter(${set.id})" title="${CURRENT_LANG === 'en' ? 'Share Image on X' : 'Xで画像を共有'}">📤🖼️</button>
+            <button class="coord-icon-btn coord-del" onclick="deleteClosetCollage(${set.id})" title="${CURRENT_LANG === 'en' ? 'Delete' : '削除'}">🗑</button>
+          </div>
+        </div>
+        <div class="closet-mini-board" style="grid-template-columns:repeat(${set.cols}, 1fr); background:${preset.css};">${cellsHtml}</div>
+      </div>`;
+  }).join('');
+}
+
+function deleteClosetCollage(id) {
+  if (!confirm(CURRENT_LANG === 'en' ? 'Delete this collage?' : 'このコラージュを削除しますか？')) return;
+  saveClosetCollages(getClosetCollages().filter(s => s.id !== id));
+  renderClosetList();
+}
+
+function newClosetCollage() {
+  closetEditing = {
+    id: null, name: '', rows: 3, cols: 3,
+    cells: Array(9).fill(null), bg: CLOSET_BG_PRESETS[0].key, caption: '',
+  };
+  showClosetEditView();
+}
+
+function editClosetCollage(id) {
+  const set = getClosetCollages().find(s => s.id === id);
+  if (!set) return;
+  closetEditing = JSON.parse(JSON.stringify(set)); // 保存前のキャンセルで元データを壊さないよう複製
+  showClosetEditView();
+}
+
+function showClosetEditView() {
+  document.getElementById('closetListView').style.display = 'none';
+  document.getElementById('closetEditView').style.display = 'block';
+  document.getElementById('closetNameInput').value = closetEditing.name || '';
+  document.getElementById('closetCaptionInput').value = closetEditing.caption || '';
+  renderClosetBgPicker();
+  renderClosetGridSteppers();
+  renderClosetBoard();
+}
+
+function renderClosetGridSteppers() {
+  document.getElementById('closetRowsVal').textContent = closetEditing.rows;
+  document.getElementById('closetColsVal').textContent = closetEditing.cols;
+}
+
+// 行/列の増減。既存マスの中身は、新しいグリッドでも同じ行・列位置にあたるものだけ引き継ぐ
+function adjustClosetGrid(axis, delta) {
+  const cur = closetEditing[axis];
+  const next = Math.min(CLOSET_MAX_GRID, Math.max(CLOSET_MIN_GRID, cur + delta));
+  if (next === cur) return;
+
+  const newRows = axis === 'rows' ? next : closetEditing.rows;
+  const newCols = axis === 'cols' ? next : closetEditing.cols;
+  const newCells = [];
+  for (let r = 0; r < newRows; r++) {
+    for (let c = 0; c < newCols; c++) {
+      const fits = r < closetEditing.rows && c < closetEditing.cols;
+      newCells.push(fits ? closetEditing.cells[r * closetEditing.cols + c] : null);
+    }
+  }
+  closetEditing.rows = newRows;
+  closetEditing.cols = newCols;
+  closetEditing.cells = newCells;
+
+  renderClosetGridSteppers();
+  renderClosetBoard();
+}
+
+function renderClosetBgPicker() {
+  const el = document.getElementById('closetBgRow');
+  el.innerHTML = CLOSET_BG_PRESETS.map(p => `
+    <div class="closet-bg-swatch ${closetEditing.bg === p.key ? 'selected' : ''}" style="background:${p.css};"
+      onclick="selectClosetBg('${p.key}')" title="${escapeHtml(p.label)}"></div>
+  `).join('');
+}
+
+function selectClosetBg(key) {
+  closetEditing.bg = key;
+  renderClosetBgPicker();
+  renderClosetBoard();
+}
+
+function renderClosetBoard() {
+  const board = document.getElementById('closetBoard');
+  const preset = closetBgPreset(closetEditing.bg);
+  board.style.gridTemplateColumns = `repeat(${closetEditing.cols}, 1fr)`;
+  board.style.background = preset.css;
+  board.innerHTML = closetEditing.cells.map((cell, i) => closetCellEditHtml(cell, i)).join('');
+}
+
+function closetCellEditHtml(cell, i) {
+  if (!cell) return `<div class="closet-cell closet-cell-empty" onclick="openClosetCellPicker(${i})">＋</div>`;
+  if (cell.type === 'photo') return `<div class="closet-cell closet-cell-photo" onclick="openClosetCellPicker(${i})"><img src="${cell.dataUrl}" alt=""></div>`;
+  const cat = CATS.find(c => c.key === cell.catKey);
+  const item = cat && allItemsCache ? allItemsCache.find(it => it.catKey === cell.catKey && it.id === cell.itemId) : null;
+  return `<div class="closet-cell closet-cell-item" onclick="openClosetCellPicker(${i})">${item && cat ? itemIconHtml(cat, item) : (cat ? catIconHtml(cat) : '？')}</div>`;
+}
+
+function openClosetCellPicker(index) {
+  closetPickingIndex = index;
+  renderClosetItemPicks();
+  document.getElementById('closetClearCellBtn').style.display = closetEditing.cells[index] ? '' : 'none';
+  openModal('closetCellModal');
+}
+
+function renderClosetItemPicks() {
+  const el = document.getElementById('closetItemPicks');
+  const rows = CATS.map(cat => {
+    const owned = getOwnedItemsForCat(cat.key);
+    if (owned.length === 0) return '';
+    const itemBtns = owned.map(i => `<div class="coord-pick-item" onclick="selectClosetCellItem('${cat.key}','${i.id}')" title="${escapeHtml(trItem(i))}">${itemIconHtml(cat, i)}</div>`).join('');
+    return `<div class="coord-pick-row">
+        <div class="coord-pick-label">${catIconHtml(cat)} ${trCat(cat.name)}</div>
+        <div class="coord-pick-strip">${itemBtns}</div>
+      </div>`;
+  }).join('');
+  el.innerHTML = rows || `<div class="empty-msg">${CURRENT_LANG === 'en' ? 'No owned items yet' : 'まだ所持アイテムがありません'}</div>`;
+}
+
+function selectClosetCellItem(catKey, itemId) {
+  closetEditing.cells[closetPickingIndex] = { type: 'item', catKey, itemId };
+  closeModal('closetCellModal');
+  renderClosetBoard();
+}
+
+function clearClosetCell() {
+  closetEditing.cells[closetPickingIndex] = null;
+  closeModal('closetCellModal');
+  renderClosetBoard();
+}
+
+function onClosetPhotoSelected(event) {
+  const file = event.target.files && event.target.files[0];
+  event.target.value = '';
+  if (!file) return;
+  const index = closetPickingIndex;
+  closeModal('closetCellModal');
+  openPhotoCropModal(file, (dataUrl) => {
+    closetEditing.cells[index] = { type: 'photo', dataUrl };
+    renderClosetBoard();
+  }, 1); // 正方形マスに合わせて1:1でクロップ
+}
+
+function saveClosetCollage() {
+  const name = document.getElementById('closetNameInput').value.trim();
+  if (!name) { showToast(CURRENT_LANG === 'en' ? 'Please enter a collage name' : 'コラージュ名を入力してください'); document.getElementById('closetNameInput').focus(); return; }
+  if (closetEditing.cells.every(c => !c)) { showToast(CURRENT_LANG === 'en' ? 'Please fill in at least one cell' : '最低1マスは埋めてください'); return; }
+
+  closetEditing.name = name;
+  closetEditing.caption = document.getElementById('closetCaptionInput').value.trim();
+
+  const sets = getClosetCollages();
+  if (closetEditing.id) {
+    const idx = sets.findIndex(s => s.id === closetEditing.id);
+    if (idx >= 0) sets[idx] = closetEditing; else sets.push(closetEditing);
+  } else {
+    closetEditing.id = Date.now();
+    closetEditing.createdAt = new Date().toISOString();
+    sets.push(closetEditing);
+  }
+  saveClosetCollages(sets);
+  showToast(CURRENT_LANG === 'en' ? `Saved "${name}"!` : `「${name}」を保存しました！`);
+  showClosetListView();
+}
+
+// コラージュ画像（画面外カード）を生成
+function buildClosetExportCardEl(set) {
+  const preset = closetBgPreset(set.bg);
+  const cellsHtml = set.cells.map(cell => {
+    if (!cell) return `<div class="cls-exp-cell cls-exp-cell-empty"></div>`;
+    if (cell.type === 'photo') return `<div class="cls-exp-cell cls-exp-cell-photo"><img src="${cell.dataUrl}" alt=""></div>`;
+    const cat = CATS.find(c => c.key === cell.catKey);
+    const item = cat && allItemsCache ? allItemsCache.find(it => it.catKey === cell.catKey && it.id === cell.itemId) : null;
+    if (!item || !cat) return `<div class="cls-exp-cell cls-exp-cell-empty"></div>`;
+    return `<div class="cls-exp-cell cls-exp-cell-item">${itemIconHtml(cat, item)}</div>`;
+  }).join('');
+
+  const today = new Date();
+  const dateTxt = CURRENT_LANG === 'en'
+    ? `Created ${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`
+    : `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日作成`;
+
+  const card = document.createElement('div');
+  card.className = 'cls-export-card' + (preset.dark ? ' cls-dark' : '');
+  card.style.background = preset.css;
+  card.innerHTML = `
+    ${preset.accent ? `<div class="cls-exp-accent cls-exp-accent-tl">${preset.accent}</div><div class="cls-exp-accent cls-exp-accent-br">${preset.accent}</div>` : ''}
+    <div class="cls-exp-brand">${CURRENT_LANG === 'en' ? '🗂️ Item Collection Tracker' : '🗂️ アイテム所持率管理'}</div>
+    <div class="cls-exp-title">${escapeHtml(set.name)}</div>
+    <div class="cls-exp-board" style="grid-template-columns:repeat(${set.cols}, 1fr);">${cellsHtml}</div>
+    ${set.caption ? `<div class="cls-exp-caption">${escapeHtml(set.caption)}</div>` : ''}
+    <div class="cls-exp-date">${dateTxt}</div>
+  `;
+  document.body.appendChild(card);
+  return card;
+}
+
+function shareClosetOnTwitter(id) {
+  const set = getClosetCollages().find(s => s.id === id);
+  if (!set) return;
+  const shareText = CURRENT_LANG === 'en'
+    ? `🖼️ My "${set.name}" closet collage!\n\n${SITE_URL}\n${CLOSET_SHARE_HASHTAG}`
+    : `🖼️「${set.name}」のクローゼットコラージュ！\n\n${SITE_URL}\n${CLOSET_SHARE_HASHTAG}`;
+  return exportElementAsImage(() => buildClosetExportCardEl(set), set.name, {
+    shareText,
+    successToast: CURRENT_LANG === 'en' ? 'Shared!' : '共有しました！'
+  });
+}
+
+/* ================================================================
    画像保存・Xシェア機能
    ================================================================ */
 
@@ -2948,6 +3393,8 @@ const COORD_SHARE_HASHTAG = '#Sky所持率管理コーデ';
 const RANDOM_SHARE_HASHTAG = '#Sky所持率管理今日のコーデ';
 // お気に入りアイテム紹介の共有専用タグ
 const FAV_SHARE_HASHTAG = '#Sky所持率管理お気に入り';
+// クローゼットコラージュの共有専用タグ
+const CLOSET_SHARE_HASHTAG = '#Sky所持率管理コラージュ';
 
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, c => ({
