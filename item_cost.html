@@ -247,6 +247,10 @@
     .gift-item-picker-row.selected { background: var(--orange-bg); }
     .gift-item-picker-row .item-thumb { width: 32px; height: 32px; flex-shrink: 0; }
     .gift-item-picker-name { flex: 1; min-width: 0; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .gift-item-picker-cat {
+      font-size: 10px; color: var(--text-2); background: var(--card); border-radius: 999px;
+      padding: 2px 7px; flex-shrink: 0; white-space: nowrap;
+    }
     .gift-item-picker-cost { font-size: 12px; color: var(--text-2); flex-shrink: 0; }
     .gift-item-picker-empty { text-align: center; color: var(--text-2); font-size: 12.5px; padding: 12px 0; }
     .gift-record-thumb { width: 36px; height: 36px; flex-shrink: 0; }
@@ -457,8 +461,8 @@
               <option value="" data-i18n-en="Select a category">カテゴリを選択</option>
             </select>
           </div>
-          <input type="text" id="giftItemFilterInput" class="gift-item-filter" style="display:none;" data-i18n-en-placeholder="Filter by item name" placeholder="アイテム名で絞り込み" oninput="renderGiftItemPicker()">
-          <div class="gift-item-picker" id="giftItemPicker" style="display:none;"></div>
+          <input type="text" id="giftItemFilterInput" class="gift-item-filter" data-i18n-en-placeholder="🔍 Search by item name (across all categories)" placeholder="🔍 アイテム名で検索（全カテゴリ横断）" oninput="renderGiftItemPicker()">
+          <div class="gift-item-picker" id="giftItemPicker"></div>
           <div class="gift-item-preview" id="giftItemPreview">
             <div class="item-thumb" id="giftItemPreviewThumb">
               <img id="giftItemPreviewImg" src="" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('img-fallback')">
@@ -725,6 +729,15 @@ function getGiftPickableItem(catKey, itemId) {
   return (ITEM_COST_DATA[catKey] || []).find(i => i.id === itemId);
 }
 
+// 全カテゴリ横断でのアイテム名検索用：{ catKey, item } の平坦なリストを返す（ギフトパスを含む）
+function getAllGiftPickableEntries() {
+  const entries = [{ catKey: GIFT_PASS_CAT_KEY, item: GIFT_PASS_ITEM }];
+  Object.keys(CAT_LABELS).forEach(ck => {
+    getGiftPickableItems(ck).forEach(it => entries.push({ catKey: ck, item: it }));
+  });
+  return entries;
+}
+
 const GIFT_HISTORY_KEY = nsKey('giftHistory_v1');
 function loadGiftHistory() {
   try { return JSON.parse(localStorage.getItem(GIFT_HISTORY_KEY)) || []; }
@@ -776,50 +789,51 @@ function populateGiftCatSelect() {
 let giftSelectedItem = null; // { catKey, itemId }
 
 // カテゴリ変更時：アイコン付きアイテム一覧を作り直し、選択状態をリセットする
+// （入力中の検索語はそのまま残し、選んだカテゴリでさらに絞り込めるようにする）
 function onGiftCatChange() {
   giftSelectedItem = null;
-  document.getElementById('giftItemFilterInput').value = '';
   renderGiftItemPicker();
   updateGiftItemPreview();
 }
 
-// 選択中カテゴリの「実額（money）」アイテムだけをアイコン付きの一覧として表示する
-// （名前だけでは見つけにくいため、アイテム選択時にも画像を出す）
+// アイテム一覧をアイコン付きで表示する（名前だけでは見つけにくいため、選択時にも画像を出す）
+// カテゴリを選んでいればそのカテゴリ内、選んでいなければ全カテゴリ横断でアイテム名を検索できる
 function renderGiftItemPicker() {
   const catKey = document.getElementById('giftCatSelect').value;
-  const filterInput = document.getElementById('giftItemFilterInput');
   const picker = document.getElementById('giftItemPicker');
   const en = CURRENT_LANG === 'en';
+  const q = document.getElementById('giftItemFilterInput').value.trim().toLowerCase();
 
-  if (!catKey) {
-    filterInput.style.display = 'none';
-    picker.style.display = 'none';
-    picker.innerHTML = '';
+  let entries; // [{ catKey, item }]
+  if (catKey) {
+    entries = getGiftPickableItems(catKey)
+      .filter(it => !q || it.name.toLowerCase().includes(q))
+      .map(it => ({ catKey, item: it }));
+  } else if (!q) {
+    picker.innerHTML = `<div class="gift-item-picker-empty">${en ? 'Select a category above, or type an item name to search across all categories.' : 'カテゴリを選ぶか、アイテム名を入力すると全カテゴリから検索できます。'}</div>`;
     return;
+  } else {
+    entries = getAllGiftPickableEntries().filter(({ item }) => item.name.toLowerCase().includes(q));
   }
 
-  filterInput.style.display = '';
-  picker.style.display = 'flex';
-
-  const q = filterInput.value.trim().toLowerCase();
-  const moneyItems = getGiftPickableItems(catKey)
-    .filter(it => !q || it.name.toLowerCase().includes(q));
-
-  if (moneyItems.length === 0) {
+  if (entries.length === 0) {
     picker.innerHTML = `<div class="gift-item-picker-empty">${en ? 'No matching items' : '該当するアイテムがありません'}</div>`;
     return;
   }
 
-  picker.innerHTML = moneyItems.map(it => {
+  picker.innerHTML = entries.map(({ catKey: ck, item: it }) => {
     const img = itemImgMap && itemImgMap[it.id];
-    const selected = giftSelectedItem && giftSelectedItem.catKey === catKey && giftSelectedItem.itemId === it.id;
+    const selected = giftSelectedItem && giftSelectedItem.catKey === ck && giftSelectedItem.itemId === it.id;
+    const catLabel = ck === GIFT_PASS_CAT_KEY ? (en ? 'Gift Pass' : 'ギフトパス') : trCat(CAT_LABELS[ck]);
+    const catTag = catKey ? '' : `<span class="gift-item-picker-cat">${escapeHtml(catLabel)}</span>`;
     return `
-      <div class="gift-item-picker-row ${selected ? 'selected' : ''}" onclick="selectGiftItem('${catKey}','${it.id}')">
+      <div class="gift-item-picker-row ${selected ? 'selected' : ''}" onclick="selectGiftItem('${ck}','${it.id}')">
         <div class="item-thumb ${img ? '' : 'img-fallback'}">
           ${img ? `<img src="${img}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('img-fallback')">` : ''}
           <span class="item-thumb-fallback">${it.icon || '🏷️'}</span>
         </div>
         <span class="gift-item-picker-name">${escapeHtml(it.name)}</span>
+        ${catTag}
         <span class="gift-item-picker-cost">¥${it.cost.value.toLocaleString()}</span>
       </div>`;
   }).join('');
@@ -827,6 +841,7 @@ function renderGiftItemPicker() {
 
 function selectGiftItem(catKey, itemId) {
   giftSelectedItem = { catKey, itemId };
+  document.getElementById('giftCatSelect').value = catKey; // 横断検索で選んだ場合もカテゴリ選択と見た目を同期させる
   renderGiftItemPicker();
   updateGiftItemPreview();
 }
@@ -1871,6 +1886,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateGiftItemPreview();
   });
   populateGiftCatSelect();
+  renderGiftItemPicker();
   renderGiftHistoryList();
   renderGiftDisplayModeToggle();
   renderCandlePackGrid();
