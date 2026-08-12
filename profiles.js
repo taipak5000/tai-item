@@ -947,3 +947,72 @@ function srchOpen() {
 function srchClose() {
   document.getElementById('srchModalOverlay').classList.remove('open');
 }
+
+/* ================================================================
+   🔀 カテゴリ修正の一度きりの引き継ぎ（Wiki準拠→ゲーム内準拠に合わせる）
+   2026-08-13: 「Skyボール・トーナメントセット」を small_placeable（小さい設置
+   アイテム）→ large_placeable（大きい設置アイテム）へ移動し、idも
+   small_placeable_059 → large_placeable_120 に変更した。
+   既に所持/お気に入り/ウィッシュリスト/獲得ログに記録していた人のデータが
+   消えないよう、旧キーが見つかった場合だけ新キーへ一度だけコピーする
+   （新キー側に既にデータがあれば何もしない＝実質1回しか動かない）。
+   ================================================================ */
+(function migrateSkyballTournamentSetCategory() {
+  const OLD_CAT = 'small_placeable', OLD_ID = 'small_placeable_059';
+  const NEW_CAT = 'large_placeable', NEW_ID = 'large_placeable_120';
+
+  // 所持・お気に入り・保存済みアイテム名リスト
+  try {
+    const oldKey = nsKey('gameItems_' + OLD_CAT);
+    const oldData = JSON.parse(localStorage.getItem(oldKey));
+    if (oldData && oldData.itemOwned && Object.prototype.hasOwnProperty.call(oldData.itemOwned, OLD_ID)) {
+      const newKey = nsKey('gameItems_' + NEW_CAT);
+      let newData;
+      try { newData = JSON.parse(localStorage.getItem(newKey)) || {}; } catch { newData = {}; }
+      newData.itemOwned = newData.itemOwned || {};
+      newData.itemFav = newData.itemFav || {};
+      newData.ownedItems = Array.isArray(newData.ownedItems) ? newData.ownedItems : [];
+
+      if (!Object.prototype.hasOwnProperty.call(newData.itemOwned, NEW_ID)) {
+        newData.itemOwned[NEW_ID] = oldData.itemOwned[OLD_ID];
+        if (oldData.itemFav && oldData.itemFav[OLD_ID]) newData.itemFav[NEW_ID] = true;
+        if (newData.itemOwned[NEW_ID] && !newData.ownedItems.some(i => i.id === NEW_ID)) {
+          newData.ownedItems.push({
+            id: NEW_ID, name: 'Skyボール・トーナメントセット', nameEn: 'Tournament Skyball Set',
+            img: 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/f/f7/Days-of-Feast-Sky-Ball-Goal-Prop-icon-Morybel-0146.png/revision/latest/scale-to-width-down/51',
+          });
+        }
+        localStorage.setItem(newKey, JSON.stringify(newData));
+      }
+
+      delete oldData.itemOwned[OLD_ID];
+      if (oldData.itemFav) delete oldData.itemFav[OLD_ID];
+      if (Array.isArray(oldData.ownedItems)) oldData.ownedItems = oldData.ownedItems.filter(i => i.id !== OLD_ID);
+      localStorage.setItem(oldKey, JSON.stringify(oldData));
+    }
+  } catch { /* 壊れたデータはそのまま放置（他の処理と同様、無視して次に進む） */ }
+
+  // ウィッシュリスト
+  try {
+    const oldWishes = getWishIds(OLD_CAT);
+    if (oldWishes.includes(OLD_ID)) {
+      const newWishes = getWishIds(NEW_CAT);
+      if (!newWishes.includes(NEW_ID)) {
+        newWishes.push(NEW_ID);
+        localStorage.setItem(nsKey('wish_' + NEW_CAT), JSON.stringify(newWishes));
+      }
+      localStorage.setItem(nsKey('wish_' + OLD_CAT), JSON.stringify(oldWishes.filter(id => id !== OLD_ID)));
+    }
+  } catch { /* ignore */ }
+
+  // 獲得ログ
+  try {
+    const logKey = nsKey('itemAcquireLog_v1');
+    const log = JSON.parse(localStorage.getItem(logKey)) || {};
+    if (log[OLD_ID]) {
+      if (!log[NEW_ID]) log[NEW_ID] = { catKey: NEW_CAT, at: log[OLD_ID].at };
+      delete log[OLD_ID];
+      localStorage.setItem(logKey, JSON.stringify(log));
+    }
+  } catch { /* ignore */ }
+})();
