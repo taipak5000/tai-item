@@ -925,7 +925,7 @@ const ITEM_COST_DATA = {
     { id: 'small_placeable_058', name: '陽光キャンプファイヤーおやつキット', source: '陽光の日々（デイズ限定）', cost: { type: 'money', value: 2600, note: '$19.99（Apple JP App Store価格帯換算）' }, dye: false },
     { id: 'small_placeable_060', name: '花笑む蝶の泉', source: '花笑む日々（デイズ限定）', cost: { type: 'candle', value: 80 }, dye: false },
     { id: 'small_placeable_061', name: '自然の海鳴く巻き貝', source: '自然の日々（デイズ限定）', cost: { type: 'money', value: 650, note: '$4.99（Apple JP App Store価格帯換算）' }, dye: false },
-    { id: 'small_placeable_062', name: 'アニバーサリーミュージック巻き貝', source: 'Skyアニバーサリー（デイズ限定）', cost: { type: 'ticket', note: 'イベント限定の通貨「チケット」での交換アイテムです（キャンドル等の通常価格はありません）。' }, revisitCost: { type: 'starCandle', value: 33, note: '星のキャンドル' }, dye: false },
+    { id: 'small_placeable_062', name: 'アニバーサリーミュージック巻き貝', source: 'Skyアニバーサリー（デイズ限定）', cost: { type: 'ticket', note: 'イベント限定の通貨「チケット」での交換アイテムです（キャンドル等の通常価格はありません）。' }, revisitCost: { type: 'candle', value: 33 }, dye: false },
     { id: 'small_placeable_063', name: '音楽プレイヤー', source: '巣づくりの季節（常設）', cost: { type: 'starCandle', value: 66, note: '星のキャンドル' }, dye: false },
     { id: 'small_placeable_064', name: 'アニバーサリーぬいぐるみ', source: 'Skyアニバーサリー（デイズ限定）', cost: { type: 'money', value: 1300, note: '$9.99（Apple JP App Store価格帯換算）' }, dye: false },
     { id: 'small_placeable_065', name: 'リトルオレオぬいぐるみ', source: 'That Sky Shop（STARフィーチャー購入／Wiki脚注[2]）', cost: { type: 'money', value: 6100, note: '$42（実店舗グッズ価格。概算換算）' }, dye: false },
