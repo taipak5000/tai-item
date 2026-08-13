@@ -659,6 +659,11 @@
       color: var(--text); font-weight: 600;
       background: rgba(255,204,0,0.12); border: 1px solid rgba(255,204,0,0.35);
     }
+    .gs-event-sel {
+      font-weight: 700; font-size: 14px;
+      background: var(--orange-bg); border: 1.5px solid var(--orange);
+      color: var(--orange-d); padding: 10px 12px;
+    }
     .gs-advanced-toggle-btn {
       display: flex; align-items: center; justify-content: space-between;
       width: 100%; background: var(--bg); border-radius: var(--r-sm);
@@ -1379,11 +1384,6 @@
         <input type="text" class="form-input" id="gsName" data-i18n-en-placeholder="🔍 Search by item name, season, or day..." placeholder="🔍 アイテム名・季節/日々で検索..." oninput="renderGlobalSearch()">
       </div>
       <div class="gs-control-row">
-        <select class="cat-sel" id="gsEvent" onchange="renderGlobalSearch()">
-          <option value="all" data-i18n-en="All Seasons/Events">すべての季節・イベント</option>
-        </select>
-      </div>
-      <div class="gs-control-row">
         <label class="gs-current-toggle">
           <input type="checkbox" id="gsCurrentOnly" onchange="renderGlobalSearch()">
           <span data-i18n-en="🌟 Currently available only">🌟 現在開催中の季節・イベントのみ</span>
@@ -1392,6 +1392,11 @@
       <div class="gs-control-row" id="gsCurrentTypeRow" style="display:none;">
         <select class="cat-sel gs-current-type-sel" id="gsCurrentType" onchange="renderGlobalSearch()">
           <option value="all" data-i18n-en="All (Season/Day/Revisit)">すべて（季節・日々・再訪）</option>
+        </select>
+      </div>
+      <div class="gs-control-row">
+        <select class="cat-sel gs-event-sel" id="gsEvent" onchange="renderGlobalSearch()">
+          <option value="all" data-i18n-en="All Seasons/Events">すべての季節・イベント</option>
         </select>
       </div>
       <div class="gs-control-row">
