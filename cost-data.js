@@ -332,7 +332,7 @@ const ITEM_COST_DATA = {
     { id: 'outfit_099', name: '光修繕する優勝者　服', source: '光の修繕者の季節（季節精霊・過去）', cost: { type: 'unknown' }, dye: true },
     { id: 'outfit_100', name: '光修繕する光学者　服', source: '光の修繕者の季節（季節精霊・過去）', cost: { type: 'unknown' }, dye: true },
     { id: 'outfit_101', name: 'カーニバルの旋舞家　服', source: 'カーニバルの季節（季節精霊・過去）', cost: { type: 'unknown' }, dye: true },
-    { id: 'outfit_102', name: 'カーニバルの旅役者　服', source: 'カーニバルの季節（季節精霊・過去）', cost: { type: 'na', note: 'シーズンパス購入者向けの特典アイテムのため、個別のキャンドル/実額価格は設定されていません。' }, dye: true },
+    { id: 'outfit_102', name: 'カーニバルの旅役者　服', source: 'カーニバルの季節（季節精霊・過去）', cost: { type: 'unknown' }, dye: true },
     { id: 'outfit_103', name: '来福の壁絵師スモック', source: '来福の日々', cost: { type: 'money', value: 1300 }, dye: true },
     { id: 'outfit_104', name: '来福竜の式服', source: '来福の日々', cost: { type: 'money', value: 1300 }, dye: true },
     { id: 'outfit_105', name: '花笑む園丁チュニック', source: '花笑む日々', cost: { type: 'money', value: 1300 }, dye: true },
