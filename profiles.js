@@ -313,6 +313,8 @@ function pfInjectStyle() {
     .dash-row { display: flex; align-items: flex-start; gap: 8px; padding: 9px 11px; background: var(--bg);
       border-radius: var(--r-sm); margin-bottom: 6px; font-size: 13px; color: var(--text); line-height: 1.5; }
     .dash-row:last-child { margin-bottom: 0; }
+    .dash-row-icon { flex-shrink: 0; }
+    .dash-row-text { flex: 1; min-width: 0; }
     .dash-row b { color: var(--blue); }
     .dash-empty { font-size: 12.5px; color: var(--text-2); padding: 2px 2px 4px; }
 
@@ -417,28 +419,32 @@ async function pfDashLoadData() {
   };
 }
 
+function pfDashRow(icon, html) {
+  return `<div class="dash-row"><span class="dash-row-icon">${icon}</span><span class="dash-row-text">${html}</span></div>`;
+}
+
 function pfDashBuildHtml(data) {
   const todayRows = [];
   data.events.forEach(name => {
-    todayRows.push(`<div class="dash-row">🌟 <b>${escapeHtmlPf(name)}</b> ${pfT('が開催中', 'is currently active')}</div>`);
+    todayRows.push(pfDashRow('🌟', `<b>${escapeHtmlPf(name)}</b> ${pfT('が開催中', 'is currently active')}`));
   });
   const rv = pfDashRevisitStatus(data.revisit);
   if (rv && data.revisit) {
-    todayRows.push(rv.active
-      ? `<div class="dash-row">🕊️ ${pfT('旅の精霊', 'Traveling Spirit')} 「<b>${escapeHtmlPf(data.revisit.name)}</b>」${pfT(`が来訪中（あと${rv.daysLeft}日）`, ` is here now (${rv.daysLeft}d left)`)}</div>`
-      : `<div class="dash-row">🕊️ ${pfT('旅の精霊', 'Traveling Spirit')} 「<b>${escapeHtmlPf(data.revisit.name)}</b>」${pfT(`の次回来訪まであと${rv.daysUntil}日`, ` returns in ${rv.daysUntil}d`)}</div>`);
+    todayRows.push(pfDashRow('🕊️', rv.active
+      ? `${pfT('旅の精霊', 'Traveling Spirit')} 「<b>${escapeHtmlPf(data.revisit.name)}</b>」${pfT(`が来訪中（あと${rv.daysLeft}日）`, ` is here now (${rv.daysLeft}d left)`)}`
+      : `${pfT('旅の精霊', 'Traveling Spirit')} 「<b>${escapeHtmlPf(data.revisit.name)}</b>」${pfT(`の次回来訪まであと${rv.daysUntil}日`, ` returns in ${rv.daysUntil}d`)}`));
   }
   const todayHtml = todayRows.length ? todayRows.join('') : `<div class="dash-empty">${pfT('現在開催中の季節・イベントはありません', 'No current seasons or events')}</div>`;
 
   const edenDays = pfDashNextEdenResetDays();
   const edenText = edenDays === 0 ? pfT('本日リセット', 'resets today') : pfT(`あと${edenDays}日でリセット`, `resets in ${edenDays}d`);
-  const weekHtml = `<div class="dash-row">🌩️ ${pfT('エデンの目', 'Eye of Eden')}：${pfT('羽ばたく光の週間上限が', "Weekly Winged Light cap ")}${edenText}<br><span style="font-size:11.5px; color:var(--text-2);">${pfT('毎週日曜0時・太平洋時間', 'Every Sunday 00:00 Pacific Time')}</span></div>`;
+  const weekHtml = pfDashRow('🌩️', `${pfT('原罪', 'Eye of Eden')}：${pfT('羽ばたく光の週間上限が', "Weekly Winged Light cap ")}${edenText}<br><span style="font-size:11.5px; color:var(--text-2);">${pfT('毎週日曜0時・太平洋時間', 'Every Sunday 00:00 Pacific Time')}</span>`);
 
   let monthHtml;
   if (data.season && data.season.endDate) {
     const end = new Date(data.season.endDate);
     const daysLeft = Math.max(0, Math.ceil((end - new Date()) / 86400000));
-    monthHtml = `<div class="dash-row">🎨 「<b>${escapeHtmlPf(data.season.name)}</b>」${pfT(`終了まであと${daysLeft}日`, ` ends in ${daysLeft}d`)}</div>`;
+    monthHtml = pfDashRow('🎨', `「<b>${escapeHtmlPf(data.season.name)}</b>」${pfT(`終了まであと${daysLeft}日`, ` ends in ${daysLeft}d`)}`);
   } else {
     monthHtml = `<div class="dash-empty">${pfT('シーズン情報が取得できませんでした', 'Could not load season info')}</div>`;
   }
