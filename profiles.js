@@ -950,58 +950,51 @@ function srchClose() {
 
 /* ================================================================
    🔀 カテゴリ修正の一度きりの引き継ぎ（Wiki準拠→ゲーム内準拠に合わせる）
-   2026-08-13: 「Skyボール・トーナメントセット」を small_placeable（小さい設置
-   アイテム）→ large_placeable（大きい設置アイテム）へ移動し、idも
-   small_placeable_059 → large_placeable_120 に変更した。
-   既に所持/お気に入り/ウィッシュリスト/獲得ログに記録していた人のデータが
-   消えないよう、旧キーが見つかった場合だけ新キーへ一度だけコピーする
-   （新キー側に既にデータがあれば何もしない＝実質1回しか動かない）。
+   Wikiの分類が実際のゲーム内カテゴリと異なっていたアイテムをカテゴリ間で
+   移動する際に呼ぶ。既に所持/お気に入り/ウィッシュリスト/獲得ログに
+   記録していた人のデータが消えないよう、旧キーが見つかった場合だけ
+   新キーへ一度だけコピーする（新キー側に既にデータがあれば何もしない
+   ＝実質1回しか動かない）。
    ================================================================ */
-(function migrateSkyballTournamentSetCategory() {
-  const OLD_CAT = 'small_placeable', OLD_ID = 'small_placeable_059';
-  const NEW_CAT = 'large_placeable', NEW_ID = 'large_placeable_120';
-
+function migrateItemCategoryMove(oldCat, oldId, newCat, newId, itemMeta) {
   // 所持・お気に入り・保存済みアイテム名リスト
   try {
-    const oldKey = nsKey('gameItems_' + OLD_CAT);
+    const oldKey = nsKey('gameItems_' + oldCat);
     const oldData = JSON.parse(localStorage.getItem(oldKey));
-    if (oldData && oldData.itemOwned && Object.prototype.hasOwnProperty.call(oldData.itemOwned, OLD_ID)) {
-      const newKey = nsKey('gameItems_' + NEW_CAT);
+    if (oldData && oldData.itemOwned && Object.prototype.hasOwnProperty.call(oldData.itemOwned, oldId)) {
+      const newKey = nsKey('gameItems_' + newCat);
       let newData;
       try { newData = JSON.parse(localStorage.getItem(newKey)) || {}; } catch { newData = {}; }
       newData.itemOwned = newData.itemOwned || {};
       newData.itemFav = newData.itemFav || {};
       newData.ownedItems = Array.isArray(newData.ownedItems) ? newData.ownedItems : [];
 
-      if (!Object.prototype.hasOwnProperty.call(newData.itemOwned, NEW_ID)) {
-        newData.itemOwned[NEW_ID] = oldData.itemOwned[OLD_ID];
-        if (oldData.itemFav && oldData.itemFav[OLD_ID]) newData.itemFav[NEW_ID] = true;
-        if (newData.itemOwned[NEW_ID] && !newData.ownedItems.some(i => i.id === NEW_ID)) {
-          newData.ownedItems.push({
-            id: NEW_ID, name: 'Skyボール・トーナメントセット', nameEn: 'Tournament Skyball Set',
-            img: 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/f/f7/Days-of-Feast-Sky-Ball-Goal-Prop-icon-Morybel-0146.png/revision/latest/scale-to-width-down/51',
-          });
+      if (!Object.prototype.hasOwnProperty.call(newData.itemOwned, newId)) {
+        newData.itemOwned[newId] = oldData.itemOwned[oldId];
+        if (oldData.itemFav && oldData.itemFav[oldId]) newData.itemFav[newId] = true;
+        if (newData.itemOwned[newId] && !newData.ownedItems.some(i => i.id === newId)) {
+          newData.ownedItems.push({ id: newId, ...itemMeta });
         }
         localStorage.setItem(newKey, JSON.stringify(newData));
       }
 
-      delete oldData.itemOwned[OLD_ID];
-      if (oldData.itemFav) delete oldData.itemFav[OLD_ID];
-      if (Array.isArray(oldData.ownedItems)) oldData.ownedItems = oldData.ownedItems.filter(i => i.id !== OLD_ID);
+      delete oldData.itemOwned[oldId];
+      if (oldData.itemFav) delete oldData.itemFav[oldId];
+      if (Array.isArray(oldData.ownedItems)) oldData.ownedItems = oldData.ownedItems.filter(i => i.id !== oldId);
       localStorage.setItem(oldKey, JSON.stringify(oldData));
     }
   } catch { /* 壊れたデータはそのまま放置（他の処理と同様、無視して次に進む） */ }
 
   // ウィッシュリスト
   try {
-    const oldWishes = getWishIds(OLD_CAT);
-    if (oldWishes.includes(OLD_ID)) {
-      const newWishes = getWishIds(NEW_CAT);
-      if (!newWishes.includes(NEW_ID)) {
-        newWishes.push(NEW_ID);
-        localStorage.setItem(nsKey('wish_' + NEW_CAT), JSON.stringify(newWishes));
+    const oldWishes = getWishIds(oldCat);
+    if (oldWishes.includes(oldId)) {
+      const newWishes = getWishIds(newCat);
+      if (!newWishes.includes(newId)) {
+        newWishes.push(newId);
+        localStorage.setItem(nsKey('wish_' + newCat), JSON.stringify(newWishes));
       }
-      localStorage.setItem(nsKey('wish_' + OLD_CAT), JSON.stringify(oldWishes.filter(id => id !== OLD_ID)));
+      localStorage.setItem(nsKey('wish_' + oldCat), JSON.stringify(oldWishes.filter(id => id !== oldId)));
     }
   } catch { /* ignore */ }
 
@@ -1009,10 +1002,22 @@ function srchClose() {
   try {
     const logKey = nsKey('itemAcquireLog_v1');
     const log = JSON.parse(localStorage.getItem(logKey)) || {};
-    if (log[OLD_ID]) {
-      if (!log[NEW_ID]) log[NEW_ID] = { catKey: NEW_CAT, at: log[OLD_ID].at };
-      delete log[OLD_ID];
+    if (log[oldId]) {
+      if (!log[newId]) log[newId] = { catKey: newCat, at: log[oldId].at };
+      delete log[oldId];
       localStorage.setItem(logKey, JSON.stringify(log));
     }
   } catch { /* ignore */ }
-})();
+}
+
+// 2026-08-13: 「Skyボール・トーナメントセット」を小さい設置アイテム→大きい設置アイテムへ移動
+migrateItemCategoryMove('small_placeable', 'small_placeable_059', 'large_placeable', 'large_placeable_120', {
+  name: 'Skyボール・トーナメントセット', nameEn: 'Tournament Skyball Set',
+  img: 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/f/f7/Days-of-Feast-Sky-Ball-Goal-Prop-icon-Morybel-0146.png/revision/latest/scale-to-width-down/51',
+});
+
+// 2026-08-13: 「巣立ちアップライトピアノ」を小さい設置アイテム→大きい設置アイテムへ移動
+migrateItemCategoryMove('small_placeable', 'small_placeable_120', 'large_placeable', 'large_placeable_123', {
+  name: '巣立ちアップライトピアノ', nameEn: 'Fledgling Upright Piano',
+  img: 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/b/b2/Fledgling-upright-Piano-instrument-icon.png/revision/latest/scale-to-width-down/51',
+});
