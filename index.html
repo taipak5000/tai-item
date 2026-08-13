@@ -1901,6 +1901,44 @@ const CURRENT_EVENTS = [
 ];
 // ▲▲▲ 現在開催中の季節・イベント（手動更新） ▲▲▲
 
+// ▼▼▼ 再訪する精霊たち（2週間おきに4日間だけ来る旅の精霊）の周期スケジュール（手動更新） ▼▼▼
+// 「🌟 今ゲットできるアイテム」機能で、来訪期間中だけその精霊のアイテムも表示されるようにする。
+// profile（自己紹介ページ）のrecurringVisitと同じ周期・考え方なので、直近1回分の開始・終了さえ
+// 合わせておけば、以降の来訪期間は自動で計算される（毎回手動で切り替える必要はない）。
+// 別の精霊の再訪に切り替わったら、name・items・anchorStart/anchorEndをその回に合わせて
+// 更新してください（profile側のrecurringVisitも同じタイミングで更新すること）。
+const REVISIT_SPIRIT_SCHEDULE = {
+  name: '旋舞の師匠',
+  items: [
+    { catKey: 'cape', id: 'cape_047' },
+    { catKey: 'mask', id: 'mask_038' },
+    { catKey: 'hairstyle', id: 'hairstyle_070' },
+  ],
+  anchorStart: '2026-07-30T16:00:00+09:00',
+  anchorEnd: '2026-08-03T15:59:59+09:00',
+  intervalDays: 14,
+};
+
+// 今この瞬間がREVISIT_SPIRIT_SCHEDULEの来訪期間（4日間）内かどうかを、
+// 2週間周期で自動計算して判定する
+function isRevisitSpiritCurrentlyActive() {
+  const { anchorStart, anchorEnd, intervalDays } = REVISIT_SPIRIT_SCHEDULE;
+  const start0 = new Date(anchorStart);
+  const end0 = new Date(anchorEnd);
+  const intervalMs = intervalDays * 86400000;
+  const now = new Date();
+  const k = Math.floor((now - start0) / intervalMs);
+  const start = new Date(start0.getTime() + k * intervalMs);
+  const end = new Date(start.getTime() + (end0 - start0));
+  return start <= now && now <= end;
+}
+
+// itemが現在設定中の再訪精霊のアイテムに該当するかどうか
+function isRevisitSpiritItem(item) {
+  return REVISIT_SPIRIT_SCHEDULE.items.some(i => i.catKey === item.catKey && i.id === item.id);
+}
+// ▲▲▲ 再訪する精霊たちの周期スケジュール（手動更新） ▲▲▲
+
 // 季節は実装順（登場した順）、日々は来福の日々を起点とした年間の開催順。
 // リストに無いイベント名（コラボ・単発イベント等）は、元の登場順のまま末尾に続く。
 const EVENT_ORDER = [
@@ -2068,7 +2106,7 @@ function getFilteredSearchItems() {
       && !item.event.toLowerCase().includes(fName)
       && !trEvent(item.event).toLowerCase().includes(fName)) return false;
     if (fEvent !== 'all' && item.event !== fEvent) return false;
-    if (fCurrentOnly && !CURRENT_EVENTS.includes(item.event)) return false;
+    if (fCurrentOnly && !CURRENT_EVENTS.includes(item.event) && !(isRevisitSpiritItem(item) && isRevisitSpiritCurrentlyActive())) return false;
     if (isRegularEvent && fRegularArea !== 'all' && item.regularArea !== fRegularArea) return false;
     if (isRegularEvent && fElderOnly && !item.isElderItem) return false;
     if (fCat !== 'all' && item.catKey !== fCat) return false;
