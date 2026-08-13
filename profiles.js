@@ -306,6 +306,16 @@ function pfInjectStyle() {
       padding: 6px 8px; font-size: 14px; color: var(--text); font-family: inherit; outline: none; box-sizing: border-box; text-align: right; }
     .pf-currency-input:focus { border-color: var(--blue); }
 
+    .dash-section { margin-top: 16px; }
+    .dash-section:first-child { margin-top: 0; }
+    .dash-section-label { font-size: 12px; font-weight: 700; color: var(--text-2); margin: 0 0 8px;
+      text-transform: uppercase; letter-spacing: 0.4px; }
+    .dash-row { display: flex; align-items: flex-start; gap: 8px; padding: 9px 11px; background: var(--bg);
+      border-radius: var(--r-sm); margin-bottom: 6px; font-size: 13px; color: var(--text); line-height: 1.5; }
+    .dash-row:last-child { margin-bottom: 0; }
+    .dash-row b { color: var(--blue); }
+    .dash-empty { font-size: 12.5px; color: var(--text-2); padding: 2px 2px 4px; }
+
     .srch-modal-card { max-width: 420px; }
     .srch-input { width: 100%; box-sizing: border-box; background: var(--bg); border: 1px solid var(--sep);
       border-radius: var(--r-sm); padding: 10px 12px; font-size: 15px; font-family: inherit; color: var(--text); outline: none; }
@@ -346,11 +356,127 @@ function pfRenderBar() {
   const profile = getActiveProfile();
   bar.innerHTML = `
     <span class="pf-bar-text" onclick="pfOpenModal()">🗂️ <b>${escapeHtmlPf(profile.name)}</b> ${pfT('に切替中（タップで切替）', 'active (tap to switch)')}</span>
+    <button type="button" class="pf-search-btn" onclick="pfDashOpen()" title="${pfT('今日・今週・今月ダッシュボード', 'Today / this week / this month')}">🗓️</button>
     <button type="button" class="pf-search-btn" onclick="srchOpen()" title="${pfT('横断検索（アイテム・エモート・精霊・季節）', 'Cross-site search')}">🔍</button>`;
 }
 
 function escapeHtmlPf(str) {
   return String(str).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+
+/* ================================================================
+   🗓️ ダッシュボード（今日・今週・今月）
+   全サイト共通のボタン。データの本家はitem（アイテム所持管理）のindex.html
+   （CURRENT_EVENTS・REVISIT_SPIRIT_SCHEDULE・CURRENT_SEASON）。二重管理を
+   避けるため、item自身のページも含めて常にitem/index.htmlをfetchして読む
+   （横断検索機能と同じ考え方）。
+   ================================================================ */
+function pfDashPacificNow() {
+  // 太平洋時間（Sky公式のリセット基準時刻）での「現在」を、ブラウザのローカル
+  // タイムゾーンのDateオブジェクトの見た目で表現する（DSTも自動考慮される）
+  return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+}
+
+// 次回のエデンの目・羽ばたく光の週間上限リセット（毎週日曜0時・太平洋時間）までの日数
+function pfDashNextEdenResetDays() {
+  const now = pfDashPacificNow();
+  const todayMidnight = new Date(now);
+  todayMidnight.setHours(0, 0, 0, 0);
+  let addDays = (7 - todayMidnight.getDay()) % 7;
+  if (addDays === 0 && now.getTime() > todayMidnight.getTime()) addDays = 7;
+  const target = new Date(todayMidnight);
+  target.setDate(target.getDate() + addDays);
+  return Math.max(0, Math.ceil((target - now) / 86400000));
+}
+
+// REVISIT_SPIRIT_SCHEDULE（2週間おきに4日間だけ来る旅の精霊）の現在の状態を求める。
+// item/index.htmlのisRevisitSpiritCurrentlyActive()と同じロジック（データはfetch経由のため再実装）。
+function pfDashRevisitStatus(schedule) {
+  if (!schedule || !schedule.anchorStart || !schedule.anchorEnd) return null;
+  const start0 = new Date(schedule.anchorStart);
+  const end0 = new Date(schedule.anchorEnd);
+  const intervalMs = schedule.intervalDays * 86400000;
+  const now = new Date();
+  const k = Math.floor((now - start0) / intervalMs);
+  const start = new Date(start0.getTime() + k * intervalMs);
+  const end = new Date(start.getTime() + (end0 - start0));
+  if (start <= now && now <= end) {
+    return { active: true, daysLeft: Math.ceil((end - now) / 86400000) };
+  }
+  const nextStart = now < start ? start : new Date(start.getTime() + intervalMs);
+  return { active: false, daysUntil: Math.ceil((nextStart - now) / 86400000) };
+}
+
+async function pfDashLoadData() {
+  const res = await fetch(`${SITE_ROOT}/tai-item/index.html`);
+  const html = await res.text();
+  return {
+    events: srchExtractArray(html, 'CURRENT_EVENTS') || [],
+    revisit: srchExtractArray(html, 'REVISIT_SPIRIT_SCHEDULE') || null,
+    season: srchExtractArray(html, 'CURRENT_SEASON') || null,
+  };
+}
+
+function pfDashBuildHtml(data) {
+  const todayRows = [];
+  data.events.forEach(name => {
+    todayRows.push(`<div class="dash-row">🌟 <b>${escapeHtmlPf(name)}</b> ${pfT('が開催中', 'is currently active')}</div>`);
+  });
+  const rv = pfDashRevisitStatus(data.revisit);
+  if (rv && data.revisit) {
+    todayRows.push(rv.active
+      ? `<div class="dash-row">🕊️ ${pfT('旅の精霊', 'Traveling Spirit')} 「<b>${escapeHtmlPf(data.revisit.name)}</b>」${pfT(`が来訪中（あと${rv.daysLeft}日）`, ` is here now (${rv.daysLeft}d left)`)}</div>`
+      : `<div class="dash-row">🕊️ ${pfT('旅の精霊', 'Traveling Spirit')} 「<b>${escapeHtmlPf(data.revisit.name)}</b>」${pfT(`の次回来訪まであと${rv.daysUntil}日`, ` returns in ${rv.daysUntil}d`)}</div>`);
+  }
+  const todayHtml = todayRows.length ? todayRows.join('') : `<div class="dash-empty">${pfT('現在開催中の季節・イベントはありません', 'No current seasons or events')}</div>`;
+
+  const edenDays = pfDashNextEdenResetDays();
+  const edenText = edenDays === 0 ? pfT('本日リセット', 'resets today') : pfT(`あと${edenDays}日でリセット`, `resets in ${edenDays}d`);
+  const weekHtml = `<div class="dash-row">🌩️ ${pfT('エデンの目', 'Eye of Eden')}：${pfT('羽ばたく光の週間上限が', "Weekly Winged Light cap ")}${edenText}<br><span style="font-size:11.5px; color:var(--text-2);">${pfT('毎週日曜0時・太平洋時間', 'Every Sunday 00:00 Pacific Time')}</span></div>`;
+
+  let monthHtml;
+  if (data.season && data.season.endDate) {
+    const end = new Date(data.season.endDate);
+    const daysLeft = Math.max(0, Math.ceil((end - new Date()) / 86400000));
+    monthHtml = `<div class="dash-row">🎨 「<b>${escapeHtmlPf(data.season.name)}</b>」${pfT(`終了まであと${daysLeft}日`, ` ends in ${daysLeft}d`)}</div>`;
+  } else {
+    monthHtml = `<div class="dash-empty">${pfT('シーズン情報が取得できませんでした', 'Could not load season info')}</div>`;
+  }
+
+  return `
+    <div class="dash-section">
+      <p class="dash-section-label">${pfT('今日', 'Today')}</p>
+      ${todayHtml}
+    </div>
+    <div class="dash-section">
+      <p class="dash-section-label">${pfT('今週', 'This Week')}</p>
+      ${weekHtml}
+    </div>
+    <div class="dash-section">
+      <p class="dash-section-label">${pfT('今月', 'This Month')}</p>
+      ${monthHtml}
+    </div>`;
+}
+
+let pfDashCache = null;
+let pfDashLoading = null;
+async function pfDashOpen() {
+  document.getElementById('dashModalOverlay').classList.add('open');
+  const body = document.getElementById('dashBody');
+  if (pfDashCache) { body.innerHTML = pfDashBuildHtml(pfDashCache); return; }
+  body.innerHTML = `<div class="pf-hint">${pfT('読み込み中…', 'Loading…')}</div>`;
+  try {
+    if (!pfDashLoading) pfDashLoading = pfDashLoadData();
+    const data = await pfDashLoading;
+    pfDashCache = data;
+    body.innerHTML = pfDashBuildHtml(data);
+  } catch (e) {
+    console.error('pfDashOpen', e);
+    body.innerHTML = `<div class="dash-empty">${pfT('読み込みに失敗しました', 'Failed to load')}</div>`;
+  }
+}
+function pfDashClose() {
+  document.getElementById('dashModalOverlay').classList.remove('open');
 }
 
 // 名前変更中・削除確認中のプロフィールID（ポップアップブロックの影響を受ける
@@ -645,6 +771,18 @@ function pfInit() {
       <button type="button" class="pf-close-btn" onclick="dmCloseModal()">${pfT('閉じる', 'Close')}</button>
     </div>`;
   document.body.appendChild(dmOverlay);
+
+  const dashOverlay = document.createElement('div');
+  dashOverlay.className = 'pf-modal-overlay';
+  dashOverlay.id = 'dashModalOverlay';
+  dashOverlay.onclick = (e) => { if (e.target === dashOverlay) pfDashClose(); };
+  dashOverlay.innerHTML = `
+    <div class="pf-modal-card">
+      <h3>🗓️ ${pfT('今日・今週・今月', 'Today / This Week / This Month')}</h3>
+      <div id="dashBody"><div class="pf-hint">${pfT('読み込み中…', 'Loading…')}</div></div>
+      <button type="button" class="pf-close-btn" onclick="pfDashClose()">${pfT('閉じる', 'Close')}</button>
+    </div>`;
+  document.body.appendChild(dashOverlay);
 }
 
 /* ================================================================
@@ -792,7 +930,8 @@ let srchLoading = null;
 
 // HTMLに埋め込まれた `const 変数名 = [...]` 配列を安全に取り出す
 function srchExtractArray(html, varName) {
-  const m = html.match(new RegExp('const ' + varName + '\\s*=\\s*(\\[[\\s\\S]*?\\n\\]);'));
+  // 配列（[...]）だけでなくオブジェクト（{...}）にも対応（ダッシュボード機能のCURRENT_SEASON等で使用）
+  const m = html.match(new RegExp('const ' + varName + '\\s*=\\s*([\\[{][\\s\\S]*?\\n[\\]}]);'));
   if (!m) return null;
   try { return new Function('return ' + m[1] + ';')(); } catch (e) { console.error(varName, e); return null; }
 }
