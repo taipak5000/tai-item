@@ -655,6 +655,10 @@
       border-radius: var(--r-sm); padding: 7px 12px; cursor: pointer; user-select: none;
     }
     .gs-current-toggle input { accent-color: var(--orange); width: 16px; height: 16px; flex-shrink: 0; }
+    .gs-current-type-sel {
+      color: var(--text); font-weight: 600;
+      background: rgba(255,204,0,0.12); border: 1px solid rgba(255,204,0,0.35);
+    }
     .gs-advanced-toggle-btn {
       display: flex; align-items: center; justify-content: space-between;
       width: 100%; background: var(--bg); border-radius: var(--r-sm);
@@ -1386,7 +1390,7 @@
         </label>
       </div>
       <div class="gs-control-row" id="gsCurrentTypeRow" style="display:none;">
-        <select class="cat-sel" id="gsCurrentType" onchange="renderGlobalSearch()">
+        <select class="cat-sel gs-current-type-sel" id="gsCurrentType" onchange="renderGlobalSearch()">
           <option value="all" data-i18n-en="All (Season/Day/Revisit)">すべて（季節・日々・再訪）</option>
         </select>
       </div>
