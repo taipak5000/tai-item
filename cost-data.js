@@ -222,6 +222,8 @@ const ITEM_COST_DATA = {
     { id: 'large_placeable_114', name: '鯨カイト', source: '彩なす日々（常設アイテム）', cost: { type: 'candle', value: 19, note: '単価19キャンドル×4個で合計76キャンドル' }, dye: true },
     { id: 'large_placeable_115', name: 'ライトホーンカイト', source: '彩なす日々（常設アイテム）', cost: { type: 'candle', value: 19, note: '単価19キャンドル×4個で合計76キャンドル' }, dye: true },
     { id: 'large_placeable_116', name: 'チャレンジ跳躍パッド 設置アイテム', source: 'カーニバルの季節（ガイドアイテム）', cost: { type: 'candle', value: 0, note: 'ガイドのクエストツリー報酬で無料入手（Wiki表記「free」）' }, dye: false },
+    { id: 'large_placeable_121', name: '跳躍パッド（中）', source: 'カーニバルの季節（ガイドアイテム）', cost: { type: 'candle', value: 6 }, dye: false },
+    { id: 'large_placeable_122', name: '跳躍パッド（高）', source: 'カーニバルの季節（ガイドアイテム）', cost: { type: 'candle', value: 8 }, dye: false },
     { id: 'large_placeable_117', name: 'チャレンジの台座', source: 'カーニバルの季節（ガイドアイテム）', cost: { type: 'candle', value: 0, note: '最初の5個はガイドのクエストツリーで無料。追加10個は1個あたり4キャンドルで購入可（追加分合計40キャンドル）' }, dye: false },
     { id: 'large_placeable_118', name: '宝探しの旗', source: '宝探しの日々（デイズ限定・過去開催）', cost: { type: 'candle', value: 19, note: '1個目19キャンドル、追加3個は1個あたり13キャンドル（4個フルコンプで合計58キャンドル）' }, dye: true },
   ],
