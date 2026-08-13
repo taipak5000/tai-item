@@ -13,6 +13,7 @@
   <script src="i18n.js"></script>
   <script src="profiles.js"></script>
   <script src="cost-data.js"></script>
+  <script src="yomi-data.js"></script>
   <script>if (CURRENT_LANG === 'en') document.title = 'Item Collection Tracker';</script>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&family=Yomogi&display=swap" rel="stylesheet">
   <style>
@@ -2187,7 +2188,8 @@ function getFilteredSearchItems() {
       && !normalizeSearchText(item.name).includes(fName)
       && !(item.nameEn && normalizeSearchText(item.nameEn).includes(fName))
       && !normalizeSearchText(item.event).includes(fName)
-      && !normalizeSearchText(trEvent(item.event)).includes(fName)) return false;
+      && !normalizeSearchText(trEvent(item.event)).includes(fName)
+      && !(ITEM_YOMI[item.id] && normalizeSearchText(ITEM_YOMI[item.id]).includes(fName))) return false;
     if (fEvent !== 'all' && item.event !== fEvent) return false;
     if (fCurrentOnly && !CURRENT_EVENTS.includes(item.event) && !(isRevisitSpiritItem(item) && isRevisitSpiritCurrentlyActive())) return false;
     if (isRegularEvent && fRegularArea !== 'all' && item.regularArea !== fRegularArea) return false;
