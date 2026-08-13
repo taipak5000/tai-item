@@ -391,6 +391,51 @@ function pfDashNextEdenResetDays() {
   return Math.max(0, Math.ceil((target - now) / 86400000));
 }
 
+// 闇の破片（赤闇・黒闇）の出現予測。コミュニティ製の予測ツール
+// https://github.com/PlutoyDev/sky-shards （src/data/shard.ts）のアルゴリズムを
+// 忠実に移植したもの（"100%の精度"を謳う定番の解析ロジック）。
+// 月の日付・曜日だけから決定論的に計算できるため、手動更新データは不要。
+const SHARD_REALM_JA = { prairie: '草原', forest: '雨林', valley: '峡谷', wasteland: '荒野', vault: '書庫' };
+const SHARD_REALM_EN = { prairie: 'Prairie', forest: 'Forest', valley: 'Valley', wasteland: 'Wasteland', vault: 'Vault' };
+const SHARD_REALMS = ['prairie', 'forest', 'valley', 'wasteland', 'vault'];
+const SHARD_GROUPS = [
+  // noShardWkDay: JSのgetDay()基準（0=日,1=月,...,6=土）で出現しない曜日
+  { noShardWkDay: [6, 0], intervalH: 8, offsetH: 1, offsetM: 50 },  // 黒闇A（土日は出現しない）
+  { noShardWkDay: [0, 1], intervalH: 8, offsetH: 2, offsetM: 10 },  // 黒闇B（日月は出現しない）
+  { noShardWkDay: [1, 2], intervalH: 6, offsetH: 7, offsetM: 40 },  // 赤闇A（月火は出現しない）
+  { noShardWkDay: [2, 3], intervalH: 6, offsetH: 2, offsetM: 20 },  // 赤闇B（火水は出現しない）
+  { noShardWkDay: [3, 4], intervalH: 6, offsetH: 3, offsetM: 30 },  // 赤闇C（水木は出現しない）
+];
+function pfDashShardInfo() {
+  const pacNow = pfDashPacificNow();
+  const today = new Date(pacNow);
+  today.setHours(0, 0, 0, 0);
+  const dayOfMth = today.getDate();
+  const dayOfWk = today.getDay();
+  const isRed = dayOfMth % 2 === 1;
+  const realmIdx = (dayOfMth - 1) % 5;
+  const groupIdx = isRed ? (Math.floor((dayOfMth - 1) / 2) % 3) + 2 : Math.floor(dayOfMth / 2) % 2;
+  const group = SHARD_GROUPS[groupIdx];
+  const hasShard = !group.noShardWkDay.includes(dayOfWk);
+  const realm = SHARD_REALMS[realmIdx];
+
+  // pfDashPacificNow()は「太平洋時間の見た目をブラウザのローカルタイムゾーンで表現した」
+  // Dateなので、実際の現在時刻とのズレ幅を測り、同じ幅で補正すれば実時刻に戻せる
+  // （当日中の計算であればDST切替をまたがないため、この補正幅は一定として扱える）
+  const realOffsetMs = Date.now() - pacNow.getTime();
+  const firstStartFake = new Date(today);
+  firstStartFake.setHours(group.offsetH, group.offsetM, 0, 0);
+  const intervalMs = group.intervalH * 3600000;
+  const occurrences = [0, 1, 2].map(i => new Date(firstStartFake.getTime() + intervalMs * i + realOffsetMs));
+
+  return { isRed, hasShard, realm, occurrences };
+}
+function pfDashFormatShardTime(d) {
+  const mm = d.getMonth() + 1, dd = d.getDate();
+  const hh = String(d.getHours()).padStart(2, '0'), mi = String(d.getMinutes()).padStart(2, '0');
+  return `${mm}/${dd} ${hh}:${mi}`;
+}
+
 // REVISIT_SPIRIT_SCHEDULE（2週間おきに4日間だけ来る旅の精霊）の現在の状態を求める。
 // item/index.htmlのisRevisitSpiritCurrentlyActive()と同じロジック（データはfetch経由のため再実装）。
 function pfDashRevisitStatus(schedule) {
@@ -433,6 +478,16 @@ function pfDashBuildHtml(data) {
     todayRows.push(pfDashRow('🕊️', rv.active
       ? `${pfT('旅の精霊', 'Traveling Spirit')} 「<b>${escapeHtmlPf(data.revisit.name)}</b>」${pfT(`が来訪中（あと${rv.daysLeft}日）`, ` is here now (${rv.daysLeft}d left)`)}`
       : `${pfT('旅の精霊', 'Traveling Spirit')} 「<b>${escapeHtmlPf(data.revisit.name)}</b>」${pfT(`の次回来訪まであと${rv.daysUntil}日`, ` returns in ${rv.daysUntil}d`)}`));
+  }
+  const shard = pfDashShardInfo();
+  if (shard.hasShard) {
+    const icon = shard.isRed ? '🔴' : '⚫';
+    const colorLabel = shard.isRed ? pfT('赤闇', 'Red Shard') : pfT('黒闇', 'Black Shard');
+    const realmLabel = pfT(SHARD_REALM_JA[shard.realm], SHARD_REALM_EN[shard.realm]);
+    const times = shard.occurrences.map(pfDashFormatShardTime).join(' / ');
+    todayRows.push(pfDashRow(icon, `${colorLabel}（<b>${realmLabel}</b>）${pfT('が出現', ' erupts')}：${times}`));
+  } else {
+    todayRows.push(pfDashRow('🌑', pfT('本日は闇の破片の出現はありません', 'No shard eruptions today')));
   }
   const todayHtml = todayRows.length ? todayRows.join('') : `<div class="dash-empty">${pfT('現在開催中の季節・イベントはありません', 'No current seasons or events')}</div>`;
 
