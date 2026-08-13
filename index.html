@@ -1385,6 +1385,11 @@
           <span data-i18n-en="🌟 Currently available only">🌟 現在開催中の季節・イベントのみ</span>
         </label>
       </div>
+      <div class="gs-control-row" id="gsCurrentTypeRow" style="display:none;">
+        <select class="cat-sel" id="gsCurrentType" onchange="renderGlobalSearch()">
+          <option value="all" data-i18n-en="All (Season/Day/Revisit)">すべて（季節・日々・再訪）</option>
+        </select>
+      </div>
       <div class="gs-control-row">
         <select class="cat-sel" id="gsCat" onchange="renderGlobalSearch()">
           <option value="all" data-i18n-en="All Categories">すべてのカテゴリ</option>
@@ -2030,6 +2035,17 @@ const REGULAR_AREA_EN = { isle: 'Isle of Dawn', prairie: 'Daylight Prairie', for
 // イベント（季節・日々）絞り込みセレクトの中身を構築
 // 「○○の季節」「○○の日々」という命名規則を利用して optgroup で分けて表示する
 // items を渡すと、その配列に実際に含まれるイベントのみに絞って表示する（例: お気に入り共有ではお気に入りの季節・イベントのみ）
+// イベント名から「季節」系か「日々」系かを判定する（イベント選択欄のグループ分け、
+// アイテム検索の「現在開催中のみ」内での季節/日々/再訪の絞り込みで共通利用する）
+// Skyアニバーサリーは名前に「日々」を含まないが、年1回の日々系イベントとして扱う
+// 親愛なるファン・ゴッホへは名前に「季節」を含まないが、実質的には季節イベントとして扱う
+function isSeasonLikeEvent(e) {
+  return e.includes('季節') || e === '親愛なるファン・ゴッホへ';
+}
+function isDayLikeEvent(e) {
+  return !isSeasonLikeEvent(e) && (e.includes('日々') || e === 'Skyアニバーサリー');
+}
+
 function buildEventFilterOptions(selectId = 'gsEvent', items = allItemsCache) {
   const select = document.getElementById(selectId);
   if (!select || !items) return;
@@ -2042,12 +2058,9 @@ function buildEventFilterOptions(selectId = 'gsEvent', items = allItemsCache) {
     if (ib === -1) return -1;
     return ia - ib;
   });
-  // Skyアニバーサリーは名前に「日々」を含まないが、年1回の日々系イベントとして扱う
-  // 親愛なるファン・ゴッホへは名前に「季節」を含まないが、実質的には季節イベントとして扱う
-  const isSeasonLike = e => e.includes('季節') || e === '親愛なるファン・ゴッホへ';
-  const seasonEvents = events.filter(isSeasonLike);
-  const dayEvents    = events.filter(e => !isSeasonLike(e) && (e.includes('日々') || e === 'Skyアニバーサリー'));
-  const otherEvents  = events.filter(e => !isSeasonLike(e) && !e.includes('日々') && e !== 'Skyアニバーサリー');
+  const seasonEvents = events.filter(isSeasonLikeEvent);
+  const dayEvents    = events.filter(isDayLikeEvent);
+  const otherEvents  = events.filter(e => !isSeasonLikeEvent(e) && !isDayLikeEvent(e));
   const opts = list => list.map(ev => `<option value="${escapeHtml(ev)}">${escapeHtml(trEvent(ev))}</option>`).join('');
 
   select.innerHTML = `<option value="all">${CURRENT_LANG === 'en' ? 'All Seasons/Events' : 'すべての季節・イベント'}</option>`
@@ -2112,6 +2125,31 @@ function syncRegularAreaFilterUI(fEvent) {
   if ([...select.options].some(o => o.value === prevValue)) select.value = prevValue;
 }
 
+// 「🌟 現在開催中の季節・イベントのみ」がオンの間だけ、その中でも季節・日々・再訪で
+// さらに絞り込める行を表示する。選択肢は実際に今現在存在するものだけを組み立てる
+function syncCurrentTypeFilterUI() {
+  const row = document.getElementById('gsCurrentTypeRow');
+  const isCurrentOnly = document.getElementById('gsCurrentOnly').checked;
+  row.style.display = isCurrentOnly ? '' : 'none';
+  if (!isCurrentOnly) {
+    document.getElementById('gsCurrentType').value = 'all';
+    return;
+  }
+
+  const hasSeason = CURRENT_EVENTS.some(isSeasonLikeEvent);
+  const hasDay = CURRENT_EVENTS.some(isDayLikeEvent);
+  const hasRevisit = isRevisitSpiritCurrentlyActive();
+  const en = CURRENT_LANG === 'en';
+
+  const select = document.getElementById('gsCurrentType');
+  const prevValue = select.value;
+  select.innerHTML = `<option value="all">${en ? 'All (Season/Day/Revisit)' : 'すべて（季節・日々・再訪）'}</option>`
+    + (hasSeason  ? `<option value="season">${en ? '🍁 Season Only' : '🍁 季節のみ'}</option>` : '')
+    + (hasDay     ? `<option value="day">${en ? '☀️ Day Event Only' : '☀️ 日々のみ'}</option>` : '')
+    + (hasRevisit ? `<option value="revisit">${en ? '🔁 Revisit Spirit Only' : '🔁 再訪のみ'}</option>` : '');
+  if ([...select.options].some(o => o.value === prevValue)) select.value = prevValue;
+}
+
 // 検索用にひらがなをカタカナへ正規化する（ひらがな入力でもカタカナ表記のアイテム名にヒットさせるため）
 // 半角/全角・大文字/小文字はtoLowerCase側で吸収しており、ひらがな/カタカナの表記ゆれのみこちらで吸収する
 function normalizeSearchText(str) {
@@ -2160,6 +2198,7 @@ function getFilteredSearchItems() {
   const fOwned = document.getElementById('gsOwned').value;
   const fFav   = document.getElementById('gsFav').value;
   const fCurrentOnly = document.getElementById('gsCurrentOnly').checked;
+  const fCurrentType = document.getElementById('gsCurrentType').value;
   const fRegularArea = document.getElementById('gsRegularArea').value;
   const fElderOnly = document.getElementById('gsElderOnly').checked;
   const fSort = document.getElementById('gsSort').value;
@@ -2179,7 +2218,14 @@ function getFilteredSearchItems() {
       && !normalizeSearchText(trEvent(item.event)).includes(fName)
       && !(ITEM_YOMI[item.id] && normalizeSearchText(ITEM_YOMI[item.id]).includes(fName))) return false;
     if (fEvent !== 'all' && item.event !== fEvent) return false;
-    if (fCurrentOnly && !CURRENT_EVENTS.includes(item.event) && !(isRevisitSpiritItem(item) && isRevisitSpiritCurrentlyActive())) return false;
+    if (fCurrentOnly) {
+      const isRevisitItem = isRevisitSpiritItem(item) && isRevisitSpiritCurrentlyActive();
+      const isCurrentEventItem = CURRENT_EVENTS.includes(item.event);
+      if (!isCurrentEventItem && !isRevisitItem) return false;
+      if (fCurrentType === 'revisit' && !isRevisitItem) return false;
+      if (fCurrentType === 'season' && !(isCurrentEventItem && isSeasonLikeEvent(item.event))) return false;
+      if (fCurrentType === 'day' && !(isCurrentEventItem && isDayLikeEvent(item.event))) return false;
+    }
     if (isRegularEvent && fRegularArea !== 'all' && item.regularArea !== fRegularArea) return false;
     if (isRegularEvent && fElderOnly && !item.isElderItem) return false;
     if (fCat !== 'all' && item.catKey !== fCat) return false;
@@ -2206,6 +2252,7 @@ function renderGlobalSearch() {
 
   const fEvent = document.getElementById('gsEvent').value;
   syncRegularAreaFilterUI(fEvent);
+  syncCurrentTypeFilterUI();
 
   const stateCache = {};
   const getState = catKey => stateCache[catKey] || (stateCache[catKey] = readCatState(catKey));
