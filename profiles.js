@@ -585,19 +585,6 @@ function pfDashRow(icon, html) {
 
 function pfDashBuildHtml(data) {
   const todayRows = [];
-  if (data.season && data.season.name && data.season.endDate && new Date() < new Date(data.season.endDate)) {
-    todayRows.push(pfDashRow('🌟', `<b>${escapeHtmlPf(data.season.name)}</b> ${pfT('が開催中', 'is currently active')}`));
-  }
-  pfDashActiveScheduledEvents(data.eventSchedule).forEach(ev => {
-    todayRows.push(pfDashRow('🌟', `<b>${escapeHtmlPf(ev.name)}</b> ${pfT('が開催中', 'is currently active')}<span class="dash-countdown">${pfT('終了まで', 'Ends in')} ${pfDashCountdown(new Date(ev.end))}</span>`));
-  });
-  const rv = pfDashRevisitStatus(data.revisit);
-  if (rv && data.revisit) {
-    const revisitLabel = rv.active
-      ? `${pfT('再訪精霊', 'Revisit Spirit')} 「<b>${escapeHtmlPf(data.revisit.name)}</b>」${pfT('が来訪中', ' is here now')}`
-      : `${pfT('再訪精霊', 'Revisit Spirit')} 「<b>${escapeHtmlPf(data.revisit.name)}</b>」${pfT('の次回来訪まで', ' returns in')}`;
-    todayRows.push(pfDashRow('🕊️', `${revisitLabel}<span class="dash-countdown">${pfDashCountdown(rv.target)}</span>`));
-  }
   const shard = pfDashShardInfo();
   if (shard.hasShard) {
     const icon = shard.isRed ? '🔴' : '⚫';
@@ -623,6 +610,19 @@ function pfDashBuildHtml(data) {
   todayRows.push(pfDashRow('🌋', `${pfT('ウニ焼き', 'Geyser')}<span class="dash-countdown">${pfT('次回まで', 'Next in')} ${pfDashCountdown(pfDashNextEvenHourEvent(5))}</span>`));
   todayRows.push(pfDashRow('🍞', `${pfT('パン焼き', 'Bread Baking')}<span class="dash-countdown">${pfT('次回まで', 'Next in')} ${pfDashCountdown(pfDashNextEvenHourEvent(35))}</span>`));
   todayRows.push(pfDashRow('🐢', `${pfT('亀闇', 'Turtle Darkness')}<span class="dash-countdown">${pfT('次回まで', 'Next in')} ${pfDashCountdown(pfDashNextEvenHourEvent(50))}</span>`));
+  if (data.season && data.season.name && data.season.endDate && new Date() < new Date(data.season.endDate)) {
+    todayRows.push(pfDashRow('🌟', `<b>${escapeHtmlPf(data.season.name)}</b> ${pfT('が開催中', 'is currently active')}`));
+  }
+  pfDashActiveScheduledEvents(data.eventSchedule).forEach(ev => {
+    todayRows.push(pfDashRow('🌟', `<b>${escapeHtmlPf(ev.name)}</b> ${pfT('が開催中', 'is currently active')}<span class="dash-countdown">${pfT('終了まで', 'Ends in')} ${pfDashCountdown(new Date(ev.end))}</span>`));
+  });
+  const rv = pfDashRevisitStatus(data.revisit);
+  if (rv && data.revisit) {
+    const revisitLabel = rv.active
+      ? `${pfT('再訪精霊', 'Revisit Spirit')} 「<b>${escapeHtmlPf(data.revisit.name)}</b>」${pfT('が来訪中', ' is here now')}`
+      : `${pfT('再訪精霊', 'Revisit Spirit')} 「<b>${escapeHtmlPf(data.revisit.name)}</b>」${pfT('の次回来訪まで', ' returns in')}`;
+    todayRows.push(pfDashRow('🕊️', `${revisitLabel}<span class="dash-countdown">${pfDashCountdown(rv.target)}</span>`));
+  }
   const todayHtml = todayRows.length ? todayRows.join('') : `<div class="dash-empty">${pfT('現在開催中の季節・イベントはありません', 'No current seasons or events')}</div>`;
 
   let weekHtml = pfDashRow('🌩️', `${pfT('原罪', 'Eye of Eden')}：${pfT('週間リセットまで', "Weekly reset in")}<span class="dash-countdown">${pfDashCountdown(pfDashNextEdenResetTarget())}</span><span class="dash-note">${pfT('毎週日曜0時・太平洋時間', 'Every Sunday 00:00 Pacific Time')}</span>`);
