@@ -318,6 +318,7 @@ function pfInjectStyle() {
     .dash-row b { color: var(--blue); }
     .dash-countdown { display: block; margin-top: 3px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--blue); }
     .dash-note { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 400; color: var(--text-2); }
+    .dash-shard-times { display: block; margin-top: 3px; }
     .dash-shard-time { color: var(--blue); font-weight: 600; font-variant-numeric: tabular-nums; }
     .dash-shard-time.past { color: var(--text-2); font-weight: 400; text-decoration: line-through; }
     .dash-empty { font-size: 12.5px; color: var(--text-2); padding: 2px 2px 4px; }
@@ -595,7 +596,7 @@ function pfDashBuildHtml(data) {
     }).join(' / ');
     const soon = pfDashSoonestFuture(shard.occurrences) || pfDashNextShardTime();
     const countdownHtml = soon ? `<span class="dash-countdown">${pfT('次まで', 'Next in')} ${pfDashCountdown(soon)}</span>` : '';
-    todayRows.push(pfDashRow(icon, `${colorLabel}（<b>${realmLabel}・${locationLabel}</b>）${pfT('が出現', ' erupts')}：${times}${countdownHtml}`));
+    todayRows.push(pfDashRow(icon, `${colorLabel}（<b>${realmLabel}・${locationLabel}</b>）${pfT('が出現', ' erupts')}：<span class="dash-shard-times">${times}</span>${countdownHtml}`));
   } else {
     const nextShard = pfDashNextShardTime();
     const nextHtml = nextShard ? `<span class="dash-countdown">${pfT('次まで', 'Next in')} ${pfDashCountdown(nextShard)}</span>` : '';
