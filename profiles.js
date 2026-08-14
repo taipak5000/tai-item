@@ -316,6 +316,8 @@ function pfInjectStyle() {
     .dash-row-icon { flex-shrink: 0; }
     .dash-row-text { flex: 1; min-width: 0; }
     .dash-row b { color: var(--blue); }
+    .dash-countdown { display: block; margin-top: 3px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--blue); }
+    .dash-note { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 400; color: var(--text-2); }
     .dash-empty { font-size: 12.5px; color: var(--text-2); padding: 2px 2px 4px; }
 
     .srch-modal-card { max-width: 420px; }
@@ -537,9 +539,10 @@ function pfDashBuildHtml(data) {
   });
   const rv = pfDashRevisitStatus(data.revisit);
   if (rv && data.revisit) {
-    todayRows.push(pfDashRow('🕊️', rv.active
-      ? `${pfT('再訪精霊', 'Revisit Spirit')} 「<b>${escapeHtmlPf(data.revisit.name)}</b>」${pfT('が来訪中', ' is here now')}（<b>${pfDashCountdown(rv.target)}</b>）`
-      : `${pfT('再訪精霊', 'Revisit Spirit')} 「<b>${escapeHtmlPf(data.revisit.name)}</b>」${pfT('の次回来訪まで', ' returns in')}（<b>${pfDashCountdown(rv.target)}</b>）`));
+    const revisitLabel = rv.active
+      ? `${pfT('再訪精霊', 'Revisit Spirit')} 「<b>${escapeHtmlPf(data.revisit.name)}</b>」${pfT('が来訪中', ' is here now')}`
+      : `${pfT('再訪精霊', 'Revisit Spirit')} 「<b>${escapeHtmlPf(data.revisit.name)}</b>」${pfT('の次回来訪まで', ' returns in')}`;
+    todayRows.push(pfDashRow('🕊️', `${revisitLabel}<span class="dash-countdown">${pfDashCountdown(rv.target)}</span>`));
   }
   const shard = pfDashShardInfo();
   if (shard.hasShard) {
@@ -548,25 +551,25 @@ function pfDashBuildHtml(data) {
     const realmLabel = pfT(SHARD_REALM_JA[shard.realm], SHARD_REALM_EN[shard.realm]);
     const times = shard.occurrences.map(pfDashFormatShardTime).join(' / ');
     const soon = pfDashSoonestFuture(shard.occurrences);
-    const countdownHtml = soon ? `<br>${pfT('次まで', 'Next in')}：<b>${pfDashCountdown(soon)}</b>` : '';
+    const countdownHtml = soon ? `<span class="dash-countdown">${pfT('次まで', 'Next in')} ${pfDashCountdown(soon)}</span>` : '';
     todayRows.push(pfDashRow(icon, `${colorLabel}（<b>${realmLabel}</b>）${pfT('が出現', ' erupts')}：${times}${countdownHtml}`));
   } else {
     todayRows.push(pfDashRow('🌑', pfT('本日は闇の破片の出現はありません', 'No shard eruptions today')));
   }
   const candleRealm = pfDashGrandCandleRealm();
   const candleRealmLabel = pfT(SHARD_REALM_JA[candleRealm], SHARD_REALM_EN[candleRealm]);
-  todayRows.push(pfDashRow('🕯️', `${pfT('大キャンドル', 'Grand Candle')}：<b>${candleRealmLabel}</b>（${pfT('次の変更まで', 'changes in')} <b>${pfDashCountdown(pfDashNextPacificMidnight())}</b>）`));
-  todayRows.push(pfDashRow('🌋', `${pfT('ウニ焼き', 'Geyser')}：${pfT('次回まで', 'next in')} <b>${pfDashCountdown(pfDashNextEvenHourEvent(5))}</b>`));
-  todayRows.push(pfDashRow('🍞', `${pfT('パン焼き', 'Bread Baking')}：${pfT('次回まで', 'next in')} <b>${pfDashCountdown(pfDashNextEvenHourEvent(35))}</b>`));
-  todayRows.push(pfDashRow('🐢', `${pfT('亀闇', 'Turtle Darkness')}：${pfT('次回まで', 'next in')} <b>${pfDashCountdown(pfDashNextEvenHourEvent(50))}</b>`));
+  todayRows.push(pfDashRow('🕯️', `${pfT('大キャンドル', 'Grand Candle')}：<b>${candleRealmLabel}</b><span class="dash-countdown">${pfT('次の変更まで', 'Changes in')} ${pfDashCountdown(pfDashNextPacificMidnight())}</span>`));
+  todayRows.push(pfDashRow('🌋', `${pfT('ウニ焼き', 'Geyser')}<span class="dash-countdown">${pfT('次回まで', 'Next in')} ${pfDashCountdown(pfDashNextEvenHourEvent(5))}</span>`));
+  todayRows.push(pfDashRow('🍞', `${pfT('パン焼き', 'Bread Baking')}<span class="dash-countdown">${pfT('次回まで', 'Next in')} ${pfDashCountdown(pfDashNextEvenHourEvent(35))}</span>`));
+  todayRows.push(pfDashRow('🐢', `${pfT('亀闇', 'Turtle Darkness')}<span class="dash-countdown">${pfT('次回まで', 'Next in')} ${pfDashCountdown(pfDashNextEvenHourEvent(50))}</span>`));
   const todayHtml = todayRows.length ? todayRows.join('') : `<div class="dash-empty">${pfT('現在開催中の季節・イベントはありません', 'No current seasons or events')}</div>`;
 
-  const weekHtml = pfDashRow('🌩️', `${pfT('原罪', 'Eye of Eden')}：${pfT('羽ばたく光の週間上限のリセットまで', "Weekly Winged Light cap resets in")} <b>${pfDashCountdown(pfDashNextEdenResetTarget())}</b><br><span style="font-size:11.5px; color:var(--text-2);">${pfT('毎週日曜0時・太平洋時間', 'Every Sunday 00:00 Pacific Time')}</span>`);
+  const weekHtml = pfDashRow('🌩️', `${pfT('原罪', 'Eye of Eden')}：${pfT('羽ばたく光の週間上限のリセットまで', "Weekly Winged Light cap resets in")}<span class="dash-countdown">${pfDashCountdown(pfDashNextEdenResetTarget())}</span><span class="dash-note">${pfT('毎週日曜0時・太平洋時間', 'Every Sunday 00:00 Pacific Time')}</span>`);
 
   let monthHtml;
   if (data.season && data.season.endDate) {
     const end = new Date(data.season.endDate);
-    monthHtml = pfDashRow('🎨', `「<b>${escapeHtmlPf(data.season.name)}</b>」${pfT('終了まで', ' ends in')} <b>${pfDashCountdown(end)}</b>`);
+    monthHtml = pfDashRow('🎨', `「<b>${escapeHtmlPf(data.season.name)}</b>」${pfT('終了まで', ' ends in')}<span class="dash-countdown">${pfDashCountdown(end)}</span>`);
   } else {
     monthHtml = `<div class="dash-empty">${pfT('シーズン情報が取得できませんでした', 'Could not load season info')}</div>`;
   }
