@@ -584,7 +584,7 @@ function pfDashRow(icon, html) {
 }
 
 function pfDashBuildHtml(data) {
-  const todayRows = [];
+  const dailyRows = [];
   const shard = pfDashShardInfo();
   if (shard.hasShard) {
     const icon = shard.isRed ? '🔴' : '⚫';
@@ -598,18 +598,21 @@ function pfDashBuildHtml(data) {
     }).join(' / ');
     const soon = pfDashSoonestFuture(shard.occurrences) || pfDashNextShardTime();
     const countdownHtml = soon ? `<span class="dash-countdown">${pfT('次まで', 'Next in')} ${pfDashCountdown(soon)}</span>` : '';
-    todayRows.push(pfDashRow(icon, `${colorLabel}（<b>${realmLabel}・${locationLabel}</b>）${pfT('が出現', ' erupts')}：<span class="dash-shard-times">${times}</span>${countdownHtml}`));
+    dailyRows.push(pfDashRow(icon, `${colorLabel}（<b>${realmLabel}・${locationLabel}</b>）${pfT('が出現', ' erupts')}：<span class="dash-shard-times">${times}</span>${countdownHtml}`));
   } else {
     const nextShard = pfDashNextShardTime();
     const nextHtml = nextShard ? `<span class="dash-countdown">${pfT('次まで', 'Next in')} ${pfDashCountdown(nextShard)}</span>` : '';
-    todayRows.push(pfDashRow('🌑', `${pfT('本日は闇の破片の出現はありません', 'No shard eruptions today')}${nextHtml}`));
+    dailyRows.push(pfDashRow('🌑', `${pfT('本日は闇の破片の出現はありません', 'No shard eruptions today')}${nextHtml}`));
   }
   const candleRealm = pfDashGrandCandleRealm();
   const candleRealmLabel = pfT(SHARD_REALM_JA[candleRealm], SHARD_REALM_EN[candleRealm]);
-  todayRows.push(pfDashRow('🕯️', `${pfT('大キャンドル', 'Grand Candle')}：<b>${candleRealmLabel}</b><span class="dash-countdown">${pfT('次の変更まで', 'Changes in')} ${pfDashCountdown(pfDashNextPacificMidnight())}</span>`));
-  todayRows.push(pfDashRow('🌋', `${pfT('ウニ焼き', 'Geyser')}<span class="dash-countdown">${pfT('次回まで', 'Next in')} ${pfDashCountdown(pfDashNextEvenHourEvent(5))}</span>`));
-  todayRows.push(pfDashRow('🍞', `${pfT('パン焼き', 'Bread Baking')}<span class="dash-countdown">${pfT('次回まで', 'Next in')} ${pfDashCountdown(pfDashNextEvenHourEvent(35))}</span>`));
-  todayRows.push(pfDashRow('🐢', `${pfT('亀闇', 'Turtle Darkness')}<span class="dash-countdown">${pfT('次回まで', 'Next in')} ${pfDashCountdown(pfDashNextEvenHourEvent(50))}</span>`));
+  dailyRows.push(pfDashRow('🕯️', `${pfT('大キャンドル', 'Grand Candle')}：<b>${candleRealmLabel}</b><span class="dash-countdown">${pfT('次の変更まで', 'Changes in')} ${pfDashCountdown(pfDashNextPacificMidnight())}</span>`));
+  dailyRows.push(pfDashRow('🌋', `${pfT('ウニ焼き', 'Geyser')}<span class="dash-countdown">${pfT('次回まで', 'Next in')} ${pfDashCountdown(pfDashNextEvenHourEvent(5))}</span>`));
+  dailyRows.push(pfDashRow('🍞', `${pfT('パン焼き', 'Bread Baking')}<span class="dash-countdown">${pfT('次回まで', 'Next in')} ${pfDashCountdown(pfDashNextEvenHourEvent(35))}</span>`));
+  dailyRows.push(pfDashRow('🐢', `${pfT('亀闇', 'Turtle Darkness')}<span class="dash-countdown">${pfT('次回まで', 'Next in')} ${pfDashCountdown(pfDashNextEvenHourEvent(50))}</span>`));
+  const dailyHtml = dailyRows.join('');
+
+  const todayRows = [];
   if (data.season && data.season.name && data.season.endDate && new Date() < new Date(data.season.endDate)) {
     todayRows.push(pfDashRow('🌟', `<b>${escapeHtmlPf(data.season.name)}</b> ${pfT('が開催中', 'is currently active')}`));
   }
@@ -642,6 +645,10 @@ function pfDashBuildHtml(data) {
   }
 
   return `
+    <div class="dash-section">
+      <p class="dash-section-label">${pfT('デイリー', 'Daily')}</p>
+      ${dailyHtml}
+    </div>
     <div class="dash-section">
       <p class="dash-section-label">${pfT('今日', 'Today')}</p>
       ${todayHtml}
