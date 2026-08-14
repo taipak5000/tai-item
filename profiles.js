@@ -436,6 +436,23 @@ function pfDashFormatShardTime(d) {
   return `${mm}/${dd} ${hh}:${mi}`;
 }
 
+// 日替わり大キャンドル（キャンドルのかたまり）の出現エリア予測。
+// 太平洋時間0時に、草原→雨林→峡谷→荒野→書庫の順で毎日切り替わる固定ローテーション
+// （Sky公式Xアカウント@thatskygameJPが「太平洋標準時の0時に更新」と明言済み）。
+// 2026-08-13（太平洋時間の日付）が荒野だったことを起点に計算する。
+const GRAND_CANDLE_ANCHOR_DATE = new Date(2026, 7, 13); // 月は0始まりなので7=8月
+const GRAND_CANDLE_ANCHOR_REALM_IDX = 3; // 荒野
+function pfDashGrandCandleRealm() {
+  const pacNow = pfDashPacificNow();
+  const today = new Date(pacNow);
+  today.setHours(0, 0, 0, 0);
+  const anchor = new Date(GRAND_CANDLE_ANCHOR_DATE);
+  anchor.setHours(0, 0, 0, 0);
+  const daysSince = Math.round((today - anchor) / 86400000);
+  const idx = (((GRAND_CANDLE_ANCHOR_REALM_IDX + daysSince) % 5) + 5) % 5;
+  return SHARD_REALMS[idx];
+}
+
 // REVISIT_SPIRIT_SCHEDULE（2週間おきに4日間だけ来る旅の精霊）の現在の状態を求める。
 // item/index.htmlのisRevisitSpiritCurrentlyActive()と同じロジック（データはfetch経由のため再実装）。
 function pfDashRevisitStatus(schedule) {
@@ -489,6 +506,9 @@ function pfDashBuildHtml(data) {
   } else {
     todayRows.push(pfDashRow('🌑', pfT('本日は闇の破片の出現はありません', 'No shard eruptions today')));
   }
+  const candleRealm = pfDashGrandCandleRealm();
+  const candleRealmLabel = pfT(SHARD_REALM_JA[candleRealm], SHARD_REALM_EN[candleRealm]);
+  todayRows.push(pfDashRow('🕯️', `${pfT('大キャンドル', 'Grand Candle')}：<b>${candleRealmLabel}</b>`));
   const todayHtml = todayRows.length ? todayRows.join('') : `<div class="dash-empty">${pfT('現在開催中の季節・イベントはありません', 'No current seasons or events')}</div>`;
 
   const edenDays = pfDashNextEdenResetDays();
