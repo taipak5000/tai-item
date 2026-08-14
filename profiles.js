@@ -395,7 +395,7 @@ function pfDashNextEdenResetDays() {
 // https://github.com/PlutoyDev/sky-shards （src/data/shard.ts）のアルゴリズムを
 // 忠実に移植したもの（"100%の精度"を謳う定番の解析ロジック）。
 // 月の日付・曜日だけから決定論的に計算できるため、手動更新データは不要。
-const SHARD_REALM_JA = { prairie: '草原', forest: '雨林', valley: '峡谷', wasteland: '荒野', vault: '書庫' };
+const SHARD_REALM_JA = { prairie: '草原', forest: '雨林', valley: '峡谷', wasteland: '捨てられた地', vault: '書庫' };
 const SHARD_REALM_EN = { prairie: 'Prairie', forest: 'Forest', valley: 'Valley', wasteland: 'Wasteland', vault: 'Vault' };
 const SHARD_REALMS = ['prairie', 'forest', 'valley', 'wasteland', 'vault'];
 const SHARD_GROUPS = [
