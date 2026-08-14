@@ -453,6 +453,21 @@ function pfDashGrandCandleRealm() {
   return SHARD_REALMS[idx];
 }
 
+// ウニ焼き・パン焼き・亀闇：2時間おき（太平洋時間の偶数時）に発生する協力プレイイベント。
+// サマータイム期間中は各偶数時（0,2,4,...,22時）の指定の分から開始する
+// （ユーザーからの実測情報に基づく。標準時期間のオフセットは未確認）。
+function pfDashNextEvenHourEvent(minuteOffset) {
+  const pacNow = pfDashPacificNow();
+  const realOffsetMs = Date.now() - pacNow.getTime();
+  const candidate = new Date(pacNow);
+  candidate.setSeconds(0, 0);
+  candidate.setMinutes(minuteOffset);
+  const curHour = candidate.getHours();
+  candidate.setHours(curHour % 2 === 0 ? curHour : curHour - 1);
+  if (candidate.getTime() <= pacNow.getTime()) candidate.setTime(candidate.getTime() + 2 * 3600000);
+  return new Date(candidate.getTime() + realOffsetMs);
+}
+
 // REVISIT_SPIRIT_SCHEDULE（2週間おきに4日間だけ来る旅の精霊）の現在の状態を求める。
 // item/index.htmlのisRevisitSpiritCurrentlyActive()と同じロジック（データはfetch経由のため再実装）。
 function pfDashRevisitStatus(schedule) {
@@ -509,6 +524,9 @@ function pfDashBuildHtml(data) {
   const candleRealm = pfDashGrandCandleRealm();
   const candleRealmLabel = pfT(SHARD_REALM_JA[candleRealm], SHARD_REALM_EN[candleRealm]);
   todayRows.push(pfDashRow('🕯️', `${pfT('大キャンドル', 'Grand Candle')}：<b>${candleRealmLabel}</b>`));
+  todayRows.push(pfDashRow('🌋', `${pfT('ウニ焼き', 'Geyser')}：${pfT('次回', 'next')} ${pfDashFormatShardTime(pfDashNextEvenHourEvent(5))}`));
+  todayRows.push(pfDashRow('🍞', `${pfT('パン焼き', 'Bread Baking')}：${pfT('次回', 'next')} ${pfDashFormatShardTime(pfDashNextEvenHourEvent(35))}`));
+  todayRows.push(pfDashRow('🐢', `${pfT('亀闇', 'Turtle Darkness')}：${pfT('次回', 'next')} ${pfDashFormatShardTime(pfDashNextEvenHourEvent(50))}`));
   const todayHtml = todayRows.length ? todayRows.join('') : `<div class="dash-empty">${pfT('現在開催中の季節・イベントはありません', 'No current seasons or events')}</div>`;
 
   const edenDays = pfDashNextEdenResetDays();
