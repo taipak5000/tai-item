@@ -610,7 +610,7 @@ function pfDashBuildHtml(data) {
   todayRows.push(pfDashRow('🐢', `${pfT('亀闇', 'Turtle Darkness')}<span class="dash-countdown">${pfT('次回まで', 'Next in')} ${pfDashCountdown(pfDashNextEvenHourEvent(50))}</span>`));
   const todayHtml = todayRows.length ? todayRows.join('') : `<div class="dash-empty">${pfT('現在開催中の季節・イベントはありません', 'No current seasons or events')}</div>`;
 
-  const weekHtml = pfDashRow('🌩️', `${pfT('原罪', 'Eye of Eden')}：${pfT('羽ばたく光の週間上限のリセットまで', "Weekly Winged Light cap resets in")}<span class="dash-countdown">${pfDashCountdown(pfDashNextEdenResetTarget())}</span><span class="dash-note">${pfT('毎週日曜0時・太平洋時間', 'Every Sunday 00:00 Pacific Time')}</span>`);
+  const weekHtml = pfDashRow('🌩️', `${pfT('原罪', 'Eye of Eden')}：${pfT('週間リセットまで', "Weekly reset in")}<span class="dash-countdown">${pfDashCountdown(pfDashNextEdenResetTarget())}</span><span class="dash-note">${pfT('毎週日曜0時・太平洋時間', 'Every Sunday 00:00 Pacific Time')}</span>`);
 
   let monthHtml;
   if (data.season && data.season.endDate) {
