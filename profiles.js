@@ -318,6 +318,8 @@ function pfInjectStyle() {
     .dash-row b { color: var(--blue); }
     .dash-countdown { display: block; margin-top: 3px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--blue); }
     .dash-note { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 400; color: var(--text-2); }
+    .dash-shard-time { color: var(--blue); font-weight: 600; font-variant-numeric: tabular-nums; }
+    .dash-shard-time.past { color: var(--text-2); font-weight: 400; text-decoration: line-through; }
     .dash-empty { font-size: 12.5px; color: var(--text-2); padding: 2px 2px 4px; }
 
     .srch-modal-card { max-width: 420px; }
@@ -401,6 +403,15 @@ function pfDashNextEdenResetTarget() {
 const SHARD_REALM_JA = { prairie: '草原', forest: '雨林', valley: '峡谷', wasteland: '捨てられた地', vault: '書庫' };
 const SHARD_REALM_EN = { prairie: 'Prairie', forest: 'Forest', valley: 'Valley', wasteland: 'Wasteland', vault: 'Vault' };
 const SHARD_REALMS = ['prairie', 'forest', 'valley', 'wasteland', 'vault'];
+// 各出現グループごとの、レルム内の具体的な出現エリア名（9-bit.jpの闇の破片場所一覧と
+// PlutoyDev/sky-shardsのshardsInfo.mapsを突き合わせて確認したもの）
+const SHARD_LOCATIONS = [
+  { prairie: { ja: '蝶々の住処', en: 'Butterfly Field' }, forest: { ja: '小川', en: 'Forest Brook' }, valley: { ja: 'スケートリンク', en: 'Ice Rink' }, wasteland: { ja: '最初のエリア', en: 'Broken Temple' }, vault: { ja: '星月夜の砂漠', en: 'Starlight Desert' } },
+  { prairie: { ja: '神殿エリア', en: 'Village Islands' }, forest: { ja: '神殿前', en: 'Boneyard' }, valley: { ja: 'スケートリンク', en: 'Ice Rink' }, wasteland: { ja: '戦場', en: 'Battlefield' }, vault: { ja: '星月夜の砂漠', en: 'Starlight Desert' } },
+  { prairie: { ja: '洞窟', en: 'Cave' }, forest: { ja: '神殿奥', en: 'Forest Garden' }, valley: { ja: '夢見の町', en: 'Village of Dreams' }, wasteland: { ja: '墓所', en: 'Graveyard' }, vault: { ja: '海月の入り江', en: 'Jellyfish Cove' } },
+  { prairie: { ja: '鳥の巣', en: 'Bird Nest' }, forest: { ja: 'ツリーハウス', en: 'Treehouse' }, valley: { ja: '夢見の町', en: 'Village of Dreams' }, wasteland: { ja: '座礁船', en: 'Crabfield' }, vault: { ja: '海月の入り江', en: 'Jellyfish Cove' } },
+  { prairie: { ja: '楽園の島々', en: 'Sanctuary Island' }, forest: { ja: '晴れ間', en: 'Elevated Clearing' }, valley: { ja: '隠者の峠', en: 'Hermit Valley' }, wasteland: { ja: '忘れられた方舟', en: 'Forgotten Ark' }, vault: { ja: '海月の入り江', en: 'Jellyfish Cove' } },
+];
 const SHARD_GROUPS = [
   // noShardWkDay: JSのgetDay()基準（0=日,1=月,...,6=土）で出現しない曜日
   { noShardWkDay: [6, 0], intervalH: 8, offsetH: 1, offsetM: 50 },  // 黒闇A（土日は出現しない）
@@ -421,6 +432,7 @@ function pfDashShardInfo() {
   const group = SHARD_GROUPS[groupIdx];
   const hasShard = !group.noShardWkDay.includes(dayOfWk);
   const realm = SHARD_REALMS[realmIdx];
+  const location = SHARD_LOCATIONS[groupIdx][realm];
 
   // pfDashPacificNow()は「太平洋時間の見た目をブラウザのローカルタイムゾーンで表現した」
   // Dateなので、実際の現在時刻とのズレ幅を測り、同じ幅で補正すれば実時刻に戻せる
@@ -431,7 +443,33 @@ function pfDashShardInfo() {
   const intervalMs = group.intervalH * 3600000;
   const occurrences = [0, 1, 2].map(i => new Date(firstStartFake.getTime() + intervalMs * i + realOffsetMs));
 
-  return { isRed, hasShard, realm, occurrences };
+  return { isRed, hasShard, realm, location, occurrences };
+}
+
+// 今日の3回の出現が全て過去の場合に備え、翌日以降（出現なしの日はスキップ）も
+// 探索して次に出現する闇の破片の実時刻を求める
+function pfDashNextShardTime() {
+  const pacNow = pfDashPacificNow();
+  const realOffsetMs = Date.now() - pacNow.getTime();
+  for (let dayOffset = 0; dayOffset <= 10; dayOffset++) {
+    const base = new Date(pacNow);
+    base.setHours(0, 0, 0, 0);
+    base.setDate(base.getDate() + dayOffset);
+    const dayOfMth = base.getDate();
+    const dayOfWk = base.getDay();
+    const isRed = dayOfMth % 2 === 1;
+    const groupIdx = isRed ? (Math.floor((dayOfMth - 1) / 2) % 3) + 2 : Math.floor(dayOfMth / 2) % 2;
+    const group = SHARD_GROUPS[groupIdx];
+    if (group.noShardWkDay.includes(dayOfWk)) continue;
+    const firstStartFake = new Date(base);
+    firstStartFake.setHours(group.offsetH, group.offsetM, 0, 0);
+    const intervalMs = group.intervalH * 3600000;
+    for (let i = 0; i < 3; i++) {
+      const t = new Date(firstStartFake.getTime() + intervalMs * i + realOffsetMs);
+      if (t.getTime() > Date.now()) return t;
+    }
+  }
+  return null;
 }
 function pfDashFormatShardTime(d) {
   const mm = d.getMonth() + 1, dd = d.getDate();
@@ -549,12 +587,19 @@ function pfDashBuildHtml(data) {
     const icon = shard.isRed ? '🔴' : '⚫';
     const colorLabel = shard.isRed ? pfT('赤闇', 'Red Shard') : pfT('黒闇', 'Black Shard');
     const realmLabel = pfT(SHARD_REALM_JA[shard.realm], SHARD_REALM_EN[shard.realm]);
-    const times = shard.occurrences.map(pfDashFormatShardTime).join(' / ');
-    const soon = pfDashSoonestFuture(shard.occurrences);
+    const locationLabel = pfT(shard.location.ja, shard.location.en);
+    const now = new Date();
+    const times = shard.occurrences.map(occ => {
+      const past = occ.getTime() <= now.getTime();
+      return `<span class="dash-shard-time${past ? ' past' : ''}">${pfDashFormatShardTime(occ)}</span>`;
+    }).join(' / ');
+    const soon = pfDashSoonestFuture(shard.occurrences) || pfDashNextShardTime();
     const countdownHtml = soon ? `<span class="dash-countdown">${pfT('次まで', 'Next in')} ${pfDashCountdown(soon)}</span>` : '';
-    todayRows.push(pfDashRow(icon, `${colorLabel}（<b>${realmLabel}</b>）${pfT('が出現', ' erupts')}：${times}${countdownHtml}`));
+    todayRows.push(pfDashRow(icon, `${colorLabel}（<b>${realmLabel}・${locationLabel}</b>）${pfT('が出現', ' erupts')}：${times}${countdownHtml}`));
   } else {
-    todayRows.push(pfDashRow('🌑', pfT('本日は闇の破片の出現はありません', 'No shard eruptions today')));
+    const nextShard = pfDashNextShardTime();
+    const nextHtml = nextShard ? `<span class="dash-countdown">${pfT('次まで', 'Next in')} ${pfDashCountdown(nextShard)}</span>` : '';
+    todayRows.push(pfDashRow('🌑', `${pfT('本日は闇の破片の出現はありません', 'No shard eruptions today')}${nextHtml}`));
   }
   const candleRealm = pfDashGrandCandleRealm();
   const candleRealmLabel = pfT(SHARD_REALM_JA[candleRealm], SHARD_REALM_EN[candleRealm]);
