@@ -374,7 +374,7 @@ function escapeHtmlPf(str) {
 /* ================================================================
    🗓️ ダッシュボード（今日・今週・今月）
    全サイト共通のボタン。データの本家はitem（アイテム所持管理）のindex.html
-   （CURRENT_EVENTS・REVISIT_SPIRIT_SCHEDULE・CURRENT_SEASON）。二重管理を
+   （REVISIT_SPIRIT_SCHEDULE・CURRENT_SEASON・EVENT_SCHEDULE・NEXT_UPDATE）。二重管理を
    避けるため、item自身のページも含めて常にitem/index.htmlをfetchして読む
    （横断検索機能と同じ考え方）。
    ================================================================ */
@@ -561,10 +561,22 @@ async function pfDashLoadData() {
   const res = await fetch(`${SITE_ROOT}/tai-item/index.html`);
   const html = await res.text();
   return {
-    events: srchExtractArray(html, 'CURRENT_EVENTS') || [],
     revisit: srchExtractArray(html, 'REVISIT_SPIRIT_SCHEDULE') || null,
     season: srchExtractArray(html, 'CURRENT_SEASON') || null,
+    eventSchedule: srchExtractArray(html, 'EVENT_SCHEDULE') || [],
+    nextUpdate: srchExtractArray(html, 'NEXT_UPDATE') || null,
   };
+}
+
+// 開始・終了日時付きのイベント一覧（EVENT_SCHEDULE）から、現在開催期間中のものだけを返す。
+// startを省略しているエントリは「常に開催中→endで終了」として扱う
+function pfDashActiveScheduledEvents(schedule) {
+  const now = new Date();
+  return (schedule || []).filter(ev => {
+    const end = new Date(ev.end);
+    const start = ev.start ? new Date(ev.start) : null;
+    return now <= end && (!start || now >= start);
+  });
 }
 
 function pfDashRow(icon, html) {
@@ -573,8 +585,11 @@ function pfDashRow(icon, html) {
 
 function pfDashBuildHtml(data) {
   const todayRows = [];
-  data.events.forEach(name => {
-    todayRows.push(pfDashRow('🌟', `<b>${escapeHtmlPf(name)}</b> ${pfT('が開催中', 'is currently active')}`));
+  if (data.season && data.season.name && data.season.endDate && new Date() < new Date(data.season.endDate)) {
+    todayRows.push(pfDashRow('🌟', `<b>${escapeHtmlPf(data.season.name)}</b> ${pfT('が開催中', 'is currently active')}`));
+  }
+  pfDashActiveScheduledEvents(data.eventSchedule).forEach(ev => {
+    todayRows.push(pfDashRow('🌟', `<b>${escapeHtmlPf(ev.name)}</b> ${pfT('が開催中', 'is currently active')}<span class="dash-countdown">${pfT('終了まで', 'Ends in')} ${pfDashCountdown(new Date(ev.end))}</span>`));
   });
   const rv = pfDashRevisitStatus(data.revisit);
   if (rv && data.revisit) {
@@ -610,7 +625,13 @@ function pfDashBuildHtml(data) {
   todayRows.push(pfDashRow('🐢', `${pfT('亀闇', 'Turtle Darkness')}<span class="dash-countdown">${pfT('次回まで', 'Next in')} ${pfDashCountdown(pfDashNextEvenHourEvent(50))}</span>`));
   const todayHtml = todayRows.length ? todayRows.join('') : `<div class="dash-empty">${pfT('現在開催中の季節・イベントはありません', 'No current seasons or events')}</div>`;
 
-  const weekHtml = pfDashRow('🌩️', `${pfT('原罪', 'Eye of Eden')}：${pfT('週間リセットまで', "Weekly reset in")}<span class="dash-countdown">${pfDashCountdown(pfDashNextEdenResetTarget())}</span><span class="dash-note">${pfT('毎週日曜0時・太平洋時間', 'Every Sunday 00:00 Pacific Time')}</span>`);
+  let weekHtml = pfDashRow('🌩️', `${pfT('原罪', 'Eye of Eden')}：${pfT('週間リセットまで', "Weekly reset in")}<span class="dash-countdown">${pfDashCountdown(pfDashNextEdenResetTarget())}</span><span class="dash-note">${pfT('毎週日曜0時・太平洋時間', 'Every Sunday 00:00 Pacific Time')}</span>`);
+  if (data.nextUpdate && data.nextUpdate.date) {
+    const updateTarget = new Date(data.nextUpdate.date);
+    if (new Date() < updateTarget) {
+      weekHtml += pfDashRow('🔧', `${pfT('次回アップデート予定', 'Next Update')}<span class="dash-countdown">${pfDashCountdown(updateTarget)}</span>`);
+    }
+  }
 
   let monthHtml;
   if (data.season && data.season.endDate) {
