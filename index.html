@@ -1063,6 +1063,10 @@
       <a href="https://taipak5000.github.io/wings/" class="sb-link" data-i18n-en="🪽 Wing Tracker">🪽 羽トラッカー</a>
       <a href="https://taipak5000.github.io/tai-transfer/" class="sb-link" data-i18n-en="🔄 Data Transfer">🔄 データ引継ぎ</a>
     </div>
+    <div style="margin-top:18px; padding-top:14px; border-top:0.5px solid var(--sep);">
+      <div class="sb-label" data-i18n-en="📱 Home Screen Icon">📱 ホーム画面アイコン</div>
+      <button type="button" class="action-btn secondary full" onclick="openModal('iconCustomModal'); closeSidebar();" data-i18n-en="🎨 Customize Icon">🎨 アイコンをカスタマイズ</button>
+    </div>
   </aside>
 
   <div class="wrap">
@@ -1675,6 +1679,60 @@
       <button class="action-btn secondary full" onclick="cancelPhotoCrop()" data-i18n-en="Cancel">キャンセル</button>
       <button class="action-btn primary full" onclick="confirmPhotoCrop()" data-i18n-en="Use This Position">この位置で決定</button>
     </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="iconCustomModal" onclick="if(event.target===this)closeModal('iconCustomModal')">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title" data-i18n-en="🎨 Customize Home Screen Icon">🎨 ホーム画面アイコンをカスタマイズ</span>
+      <button class="modal-close" onclick="closeModal('iconCustomModal')">✕</button>
+    </div>
+
+    <div class="hint" style="margin-top:0;">
+      <span>💡</span>
+      <span data-i18n-en="You can change the icon used when adding this site to your phone's home screen. Set this up before adding it — changing it afterward won't update an icon that's already been added (remove and re-add it if you want to change it later).">
+        スマホの「ホーム画面に追加」をしたときのアイコンを、好きな絵文字や画像に変更できます。<br>
+        <b>追加する前に</b>設定してください。追加した後に変更しても、既に追加済みのアイコンは自動更新されません（変更したい場合は一度削除して追加し直してください）。
+      </span>
+    </div>
+
+    <div style="display:flex; gap:8px; margin:16px 0 14px;">
+      <button type="button" class="action-btn" id="iconModeEmojiBtn" onclick="pfIconSetMode('emoji')" data-i18n-en="😀 Emoji">😀 絵文字</button>
+      <button type="button" class="action-btn" id="iconModeImageBtn" onclick="pfIconSetMode('image')" data-i18n-en="🖼️ Image">🖼️ 画像</button>
+    </div>
+
+    <div id="iconEmojiPanel">
+      <p class="sec-label" data-i18n-en="Emoji">絵文字</p>
+      <input type="text" id="iconEmojiInput" maxlength="8" value="🗂️" oninput="pfIconUpdatePreview()"
+        style="font-size:28px; text-align:center; width:100%; padding:10px; border-radius:var(--r-sm); border:1px solid var(--sep); background:var(--bg); color:var(--text); box-sizing:border-box;">
+      <p class="sec-label" style="margin-top:14px;" data-i18n-en="Background Color">背景色</p>
+      <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+        <button type="button" onclick="pfIconPickSwatch('#FF9500')" style="width:32px; height:32px; border-radius:50%; background:#FF9500; border:2px solid transparent;"></button>
+        <button type="button" onclick="pfIconPickSwatch('#007AFF')" style="width:32px; height:32px; border-radius:50%; background:#007AFF; border:2px solid transparent;"></button>
+        <button type="button" onclick="pfIconPickSwatch('#34C759')" style="width:32px; height:32px; border-radius:50%; background:#34C759; border:2px solid transparent;"></button>
+        <button type="button" onclick="pfIconPickSwatch('#FF2D55')" style="width:32px; height:32px; border-radius:50%; background:#FF2D55; border:2px solid transparent;"></button>
+        <button type="button" onclick="pfIconPickSwatch('#AF52DE')" style="width:32px; height:32px; border-radius:50%; background:#AF52DE; border:2px solid transparent;"></button>
+        <button type="button" onclick="pfIconPickSwatch('#8E8E93')" style="width:32px; height:32px; border-radius:50%; background:#8E8E93; border:2px solid transparent;"></button>
+      </div>
+      <input type="color" id="iconBgColorInput" value="#FF9500" oninput="pfIconUpdatePreview()" style="width:100%; height:40px; border:none; border-radius:var(--r-sm); background:none;">
+    </div>
+
+    <div id="iconImagePanel" style="display:none;">
+      <p class="sec-label" data-i18n-en="Upload Image">画像をアップロード</p>
+      <input type="file" id="iconImageInput" accept="image/*" onchange="pfIconHandleFile(event)">
+    </div>
+
+    <div style="display:flex; flex-direction:column; align-items:center; margin:18px 0;">
+      <p class="sec-label" data-i18n-en="Preview">プレビュー</p>
+      <canvas id="iconPreviewCanvas" width="96" height="96" style="border-radius:22px; box-shadow:0 2px 8px rgba(0,0,0,0.15);"></canvas>
+    </div>
+
+    <div class="action-row">
+      <button type="button" class="action-btn secondary" onclick="pfIconReset()" data-i18n-en="Reset to Default">デフォルトに戻す</button>
+      <button type="button" class="action-btn primary" onclick="pfIconSave()" data-i18n-en="Save & Apply">保存して適用</button>
+    </div>
+    <div id="iconSaveStatus" style="text-align:center; font-size:12px; color:var(--text-2); margin-top:10px;"></div>
   </div>
 </div>
 
@@ -2737,6 +2795,154 @@ function getOwnedItemsForCat(catKey) {
 // モーダル開閉
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── ホーム画面アイコンのカスタマイズ ────────────────────────
+// 「ホーム画面に追加」時に使われるアイコン（apple-touch-icon / manifest.json）を、
+// ユーザーが選んだ絵文字＋背景色、またはアップロード画像に差し替える。
+// プロフィール（保存枠）に関わらずこの端末・ブラウザ共通の設定のため、nsKeyは使わない。
+const PF_ICON_STORAGE_KEY = 'pfCustomHomeIcon_v1';
+let pfIconMode = 'emoji';
+let pfIconUploadedImg = null;
+
+function pfIconSetMode(mode) {
+  pfIconMode = mode;
+  document.getElementById('iconEmojiPanel').style.display = mode === 'emoji' ? '' : 'none';
+  document.getElementById('iconImagePanel').style.display = mode === 'image' ? '' : 'none';
+  document.getElementById('iconModeEmojiBtn').classList.toggle('primary', mode === 'emoji');
+  document.getElementById('iconModeImageBtn').classList.toggle('primary', mode === 'image');
+  pfIconUpdatePreview();
+}
+
+function pfIconPickSwatch(hex) {
+  document.getElementById('iconBgColorInput').value = hex;
+  pfIconUpdatePreview();
+}
+
+function pfIconHandleFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => { pfIconUploadedImg = img; pfIconUpdatePreview(); };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function pfIconRenderToCanvas(canvas) {
+  const size = canvas.width;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, size, size);
+  if (pfIconMode === 'emoji') {
+    const emoji = document.getElementById('iconEmojiInput').value || '🗂️';
+    const bg = document.getElementById('iconBgColorInput').value || '#FF9500';
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, size, size);
+    ctx.font = `${Math.floor(size * 0.6)}px "Apple Color Emoji","Segoe UI Emoji",sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(emoji, size / 2, size / 2 + size * 0.05);
+  } else if (pfIconUploadedImg) {
+    const img = pfIconUploadedImg;
+    const scale = Math.max(size / img.width, size / img.height);
+    const w = img.width * scale, h = img.height * scale;
+    ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+  } else {
+    ctx.fillStyle = '#E5E5EA';
+    ctx.fillRect(0, 0, size, size);
+  }
+}
+
+function pfIconUpdatePreview() {
+  const canvas = document.getElementById('iconPreviewCanvas');
+  if (canvas) pfIconRenderToCanvas(canvas);
+}
+
+function pfIconGenerateDataUrl(size) {
+  const canvas = document.createElement('canvas');
+  canvas.width = size; canvas.height = size;
+  pfIconRenderToCanvas(canvas);
+  return canvas.toDataURL('image/png');
+}
+
+async function pfIconApply(dataUrl) {
+  const appleLink = document.querySelector('link[rel="apple-touch-icon"]');
+  if (appleLink) appleLink.href = dataUrl;
+  try {
+    const res = await fetch('manifest.json');
+    const manifest = await res.json();
+    manifest.icons = [
+      { src: dataUrl, sizes: '192x192', type: 'image/png' },
+      { src: dataUrl, sizes: '512x512', type: 'image/png' },
+    ];
+    const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const manifestLink = document.querySelector('link[rel="manifest"]');
+    if (manifestLink) manifestLink.href = url;
+  } catch (e) { console.error('manifest update failed', e); }
+}
+
+function pfIconSave() {
+  if (pfIconMode === 'image' && !pfIconUploadedImg) {
+    document.getElementById('iconSaveStatus').textContent = '画像を選択してください';
+    return;
+  }
+  const dataUrl = pfIconGenerateDataUrl(512);
+  const state = { mode: pfIconMode, dataUrl };
+  if (pfIconMode === 'emoji') {
+    state.emoji = document.getElementById('iconEmojiInput').value || '🗂️';
+    state.bgColor = document.getElementById('iconBgColorInput').value || '#FF9500';
+  }
+  try {
+    localStorage.setItem(PF_ICON_STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    document.getElementById('iconSaveStatus').textContent = '保存に失敗しました（容量オーバーの可能性があります）';
+    return;
+  }
+  pfIconApply(dataUrl);
+  document.getElementById('iconSaveStatus').textContent = '✅ 保存しました。これでホーム画面に追加すると反映されます';
+}
+
+function pfIconReset() {
+  localStorage.removeItem(PF_ICON_STORAGE_KEY);
+  const appleLink = document.querySelector('link[rel="apple-touch-icon"]');
+  if (appleLink) appleLink.href = 'icons/app-icon-192.png';
+  const manifestLink = document.querySelector('link[rel="manifest"]');
+  if (manifestLink) manifestLink.href = 'manifest.json';
+  pfIconUploadedImg = null;
+  document.getElementById('iconEmojiInput').value = '🗂️';
+  document.getElementById('iconBgColorInput').value = '#FF9500';
+  pfIconSetMode('emoji');
+  document.getElementById('iconSaveStatus').textContent = 'デフォルトのアイコンに戻しました';
+}
+
+function pfIconApplyFromStorage() {
+  let raw;
+  try { raw = localStorage.getItem(PF_ICON_STORAGE_KEY); } catch (e) { return; }
+  if (!raw) return;
+  try {
+    const state = JSON.parse(raw);
+    if (state.dataUrl) pfIconApply(state.dataUrl);
+    if (state.mode === 'image' && state.dataUrl) {
+      pfIconMode = 'image';
+      const img = new Image();
+      img.onload = () => { pfIconUploadedImg = img; pfIconUpdatePreview(); };
+      img.src = state.dataUrl;
+    } else if (state.mode === 'emoji') {
+      pfIconMode = 'emoji';
+      const emojiInput = document.getElementById('iconEmojiInput');
+      const bgInput = document.getElementById('iconBgColorInput');
+      if (emojiInput) emojiInput.value = state.emoji || '🗂️';
+      if (bgInput) bgInput.value = state.bgColor || '#FF9500';
+    }
+  } catch (e) { console.error('failed to restore custom icon', e); }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  pfIconApplyFromStorage();
+  pfIconSetMode(pfIconMode);
+});
 
 // ── ランダムコーデ ────────────────────────────
 let currentRandom = {};
