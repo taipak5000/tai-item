@@ -2801,6 +2801,11 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 // ユーザーが選んだ絵文字＋背景色、またはアップロード画像に差し替える。
 // プロフィール（保存枠）に関わらずこの端末・ブラウザ共通の設定のため、nsKeyは使わない。
 const PF_ICON_STORAGE_KEY = 'pfCustomHomeIcon_v1';
+// ページ読み込み時点の本来のhrefを記憶しておく（サイトによってはmanifestが
+// data: URIで埋め込まれている場合もあるため、'manifest.json'固定パスではなく
+// 実際のリンク要素から取得した値を使う）
+const PF_ICON_ORIGINAL_APPLE_HREF = document.querySelector('link[rel="apple-touch-icon"]')?.href || 'icons/app-icon-192.png';
+const PF_ICON_ORIGINAL_MANIFEST_HREF = document.querySelector('link[rel="manifest"]')?.href || 'manifest.json';
 let pfIconMode = 'emoji';
 let pfIconUploadedImg = null;
 
@@ -2870,7 +2875,7 @@ async function pfIconApply(dataUrl) {
   const appleLink = document.querySelector('link[rel="apple-touch-icon"]');
   if (appleLink) appleLink.href = dataUrl;
   try {
-    const res = await fetch('manifest.json');
+    const res = await fetch(PF_ICON_ORIGINAL_MANIFEST_HREF);
     const manifest = await res.json();
     manifest.icons = [
       { src: dataUrl, sizes: '192x192', type: 'image/png' },
@@ -2907,9 +2912,9 @@ function pfIconSave() {
 function pfIconReset() {
   localStorage.removeItem(PF_ICON_STORAGE_KEY);
   const appleLink = document.querySelector('link[rel="apple-touch-icon"]');
-  if (appleLink) appleLink.href = 'icons/app-icon-192.png';
+  if (appleLink) appleLink.href = PF_ICON_ORIGINAL_APPLE_HREF;
   const manifestLink = document.querySelector('link[rel="manifest"]');
-  if (manifestLink) manifestLink.href = 'manifest.json';
+  if (manifestLink) manifestLink.href = PF_ICON_ORIGINAL_MANIFEST_HREF;
   pfIconUploadedImg = null;
   document.getElementById('iconEmojiInput').value = '🗂️';
   document.getElementById('iconBgColorInput').value = '#FF9500';
