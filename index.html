@@ -844,6 +844,9 @@
     .exp-date {
       color: rgba(255,255,255,0.75); font-size: 10.5px; text-align: right; margin-top: 10px;
     }
+    .exp-attribution {
+      color: rgba(255,255,255,0.55); font-size: 8.5px; line-height: 1.4; text-align: center; margin-top: 10px;
+    }
 
     /* ── コーデ画像（写真×アイコングリッド）スタイル ─── */
     .grid-card {
@@ -3930,6 +3933,11 @@ async function exportElementAsImage(buildCardFn, filenameBase, opts = {}) {
   try {
     await ensureHtml2Canvas();
     card = buildCardFn();
+    // アイテムアイコンはSky Wikiから引用しているため、共有画像にも出典を明記する
+    const attribution = document.createElement('div');
+    attribution.className = 'exp-attribution';
+    attribution.textContent = '© Sky: Children of the Light Icons by contributors of the Sky: Children of the Light wiki';
+    card.appendChild(attribution);
     const canvas = await html2canvas(card, { backgroundColor: null, scale: 2, useCORS: true });
     const filename = sanitizeFilename(filenameBase) + '.png';
 
