@@ -1854,7 +1854,7 @@ function loadAndRender() {
     const d = readCat(c.key);
     if (d) { own += d.owned; tot += d.total; active++; }
     const fallbackTotal = (!d && allItemsCache)
-      ? allItemsCache.filter(it => it.catKey === c.key).length
+      ? allItemsCache.filter(it => it.catKey === c.key && it.event !== 'That Sky Shop').length
       : null;
     return cardHTML(c, d, fallbackTotal);
   }).join('');
@@ -2445,10 +2445,12 @@ function markFilteredItemsOwned() {
       ownedMap[id] = true;
       recordItemAcquire(catKey, id);
     });
+    // total/owned（コンプリート率集計）は That Sky Shop アイテムを除外、ownedItems（コーデ機能用）は除外しない
     const catItems = allItemsCache.filter(it => it.catKey === catKey);
+    const countableCatItems = catItems.filter(it => it.event !== 'That Sky Shop');
     const dataToSave = {
-      total: catItems.length,
-      owned: catItems.filter(it => ownedMap[it.id]).length,
+      total: countableCatItems.length,
+      owned: countableCatItems.filter(it => ownedMap[it.id]).length,
       itemOwned: ownedMap,
       itemFav: saved.itemFav || {},
       ownedItems: catItems.filter(it => ownedMap[it.id]).map(it => ({ id: it.id, name: it.name, nameEn: it.nameEn }))
@@ -2472,10 +2474,12 @@ function toggleOwnedFromSearch(catKey, itemId) {
   const nowOwned = ownedMap[itemId];
   if (nowOwned) recordItemAcquire(catKey, itemId); else removeItemAcquireRecord(itemId);
 
+  // total/owned（コンプリート率集計）は That Sky Shop アイテムを除外、ownedItems（コーデ機能用）は除外しない
   const catItems = allItemsCache.filter(it => it.catKey === catKey);
+  const countableCatItems = catItems.filter(it => it.event !== 'That Sky Shop');
   const dataToSave = {
-    total: catItems.length,
-    owned: catItems.filter(it => ownedMap[it.id]).length,
+    total: countableCatItems.length,
+    owned: countableCatItems.filter(it => ownedMap[it.id]).length,
     itemOwned: ownedMap,
     itemFav: saved.itemFav || {},
     ownedItems: catItems.filter(it => ownedMap[it.id]).map(it => ({ id: it.id, name: it.name, nameEn: it.nameEn }))
@@ -2523,10 +2527,12 @@ function toggleFavFromSearch(catKey, itemId, btnEl) {
   const nowFav = favMap[itemId];
 
   const ownedMap = saved.itemOwned || {};
+  // total/owned（コンプリート率集計）は That Sky Shop アイテムを除外、ownedItems（コーデ機能用）は除外しない
   const catItems = allItemsCache.filter(it => it.catKey === catKey);
+  const countableCatItems = catItems.filter(it => it.event !== 'That Sky Shop');
   const dataToSave = {
-    total: catItems.length,
-    owned: catItems.filter(it => ownedMap[it.id]).length,
+    total: countableCatItems.length,
+    owned: countableCatItems.filter(it => ownedMap[it.id]).length,
     itemOwned: ownedMap,
     itemFav: favMap,
     ownedItems: catItems.filter(it => ownedMap[it.id]).map(it => ({ id: it.id, name: it.name, nameEn: it.nameEn }))
@@ -2989,10 +2995,12 @@ function toggleFavorite(catKey, itemId) {
   const nowFav = favMap[id];
 
   const ownedMap  = saved.itemOwned || {};
+  // total/owned（コンプリート率集計）は That Sky Shop アイテムを除外、ownedItems（コーデ機能用）は除外しない
   const catItems  = allItemsCache ? allItemsCache.filter(it => it.catKey === catKey) : null;
+  const countableCatItems = catItems ? catItems.filter(it => it.event !== 'That Sky Shop') : null;
   const dataToSave = catItems ? {
-    total: catItems.length,
-    owned: catItems.filter(it => ownedMap[it.id]).length,
+    total: countableCatItems.length,
+    owned: countableCatItems.filter(it => ownedMap[it.id]).length,
     itemOwned: ownedMap,
     itemFav: favMap,
     ownedItems: catItems.filter(it => ownedMap[it.id]).map(it => ({ id: it.id, name: it.name, nameEn: it.nameEn }))

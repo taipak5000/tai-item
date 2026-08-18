@@ -475,6 +475,12 @@ const ITEMS_DATA = [
 ];
 /* ========================================================================== */
 
+// That Sky Shop（実物グッズの通販ショップ）で入手するアイテムは「所持品」というより「魔法/呪文」寄りの扱いのため、
+// 所持しているかどうかに関わらずコンプリート率（分母・分子とも）の集計対象から除外する
+function isCountableItem(item) {
+  return item.event !== 'That Sky Shop';
+}
+
 const LS_KEY = nsKey('gameItems_' + CAT_KEY);
 let userStates = { owned: {}, fav: {} };
 
@@ -528,9 +534,10 @@ function loadUserData() {
 
 // ユーザーデータの保存（総合メニューの集計ロジックに対応させる）
 function saveUserData() {
-  // 現実の所持数と総数を計算
-  const total = ITEMS_DATA.length;
-  const owned = ITEMS_DATA.filter(item => userStates.owned[item.id]).length;
+  // 現実の所持数と総数を計算（That Sky Shop限定アイテムはコンプリート率の集計対象外）
+  const countableItems = ITEMS_DATA.filter(isCountableItem);
+  const total = countableItems.length;
+  const owned = countableItems.filter(item => userStates.owned[item.id]).length;
 
   // ランダムコーデ・マイコーデ機能向け: 所持アイテムの名前リストを保存
   const ownedItems = ITEMS_DATA
@@ -722,9 +729,10 @@ function filterAndRender() {
   const listEl = document.getElementById('itemList');
   if (filtered.length === 0) {
     listEl.innerHTML = `<div class="empty-message">${CURRENT_LANG === 'en' ? 'No matching items found.' : '該当するアイテムが見つかりません。'}</div>`;
-    // 全体数は変わらないため初期ヘッダーだけ更新
-    const total = ITEMS_DATA.length;
-    const owned = ITEMS_DATA.filter(item => userStates.owned[item.id]).length;
+    // 全体数は変わらないため初期ヘッダーだけ更新（That Sky Shop限定アイテムはコンプリート率の集計対象外）
+    const countableItems = ITEMS_DATA.filter(isCountableItem);
+    const total = countableItems.length;
+    const owned = countableItems.filter(item => userStates.owned[item.id]).length;
     updateHeaderScore(owned, total);
     return;
   }
@@ -814,9 +822,10 @@ function filterAndRender() {
   // アイテム一覧をDOMに書き込む
   listEl.innerHTML = filtered.map(renderItem).join('');
 
-  // スコアの同期
-  const total = ITEMS_DATA.length;
-  const owned = ITEMS_DATA.filter(item => userStates.owned[item.id]).length;
+  // スコアの同期（That Sky Shop限定アイテムはコンプリート率の集計対象外）
+  const countableItems = ITEMS_DATA.filter(isCountableItem);
+  const total = countableItems.length;
+  const owned = countableItems.filter(item => userStates.owned[item.id]).length;
   updateHeaderScore(owned, total);
 }
 </script>
