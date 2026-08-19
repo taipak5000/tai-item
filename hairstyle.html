@@ -355,7 +355,7 @@
     <div class="list-header-row">
       <p class="sec-label" id="listLabel" data-i18n-en="Item List">アイテム一覧</p>
       <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-        <select class="grid-cols-select" id="gridColsSelect" onchange="setGridCols(this.value)" title="グリッドの列数" aria-label="グリッドの列数">
+        <select class="grid-cols-select" id="gridColsSelect" onchange="setGridCols(this.value)" title="グリッドの列数" aria-label="グリッドの列数" data-i18n-en-title="Grid columns">
           <option value="auto" data-i18n-en="Columns: Auto">列数: 自動</option>
           <option value="2" data-i18n-en="2 columns">2列</option>
           <option value="3" data-i18n-en="3 columns">3列</option>
@@ -847,7 +847,7 @@ function filterAndRender() {
 
     return `
       <div class="item-tile">
-        <div class="item-tile-frame ${isOwned ? 'is-owned' : ''}" id="card_${item.id}" title="${tip}" onclick="toggleOwned('${item.id}')">
+        <div class="item-tile-frame ${isOwned ? 'is-owned' : ''}" id="card_${item.id}" title="${escapeHtml(tip)}" onclick="toggleOwned('${item.id}')">
           ${item.cost === 'premium' ? '<span class="tile-cost-dot" aria-hidden="true"></span>' : ''}
           ${item.noReprint ? '<span class="tile-nr-badge">NR</span>' : ''}
           <!-- お気に入りボタン（タイル選択とバブリングしないようストップ） -->
@@ -855,7 +855,7 @@ function filterAndRender() {
           <button class="tile-wish-btn ${isWish ? 'is-wish' : ''}" onclick="event.stopPropagation(); toggleWishBtn('${item.id}', this)" aria-label="${CURRENT_LANG === 'en' ? 'Wishlist' : 'ウィッシュリスト'}" title="${CURRENT_LANG === 'en' ? 'Add to wishlist' : 'ウィッシュリストに追加'}">🛒</button>
           <div class="item-tile-img-wrap">
             <!-- 画像が未配置の場合は onerror でプレースホルダーアイコンに切り替え -->
-            <img src="${imgSrc}" alt="${trItem(item)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('img-fallback')">
+            <img src="${imgSrc}" alt="${escapeHtml(trItem(item))}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('img-fallback')">
             <span class="item-tile-fallback">${CAT_INFO.icon}</span>
           </div>
           <span class="tile-owned-check">✓</span>
@@ -875,7 +875,7 @@ function filterAndRender() {
         <div class="item-left" onclick="toggleOwned('${item.id}')">
           <div class="item-thumb">
             <!-- 画像が未配置の場合は onerror でプレースホルダーアイコンに切り替え -->
-            <img src="${imgSrc}" alt="${trItem(item)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('img-fallback')">
+            <img src="${imgSrc}" alt="${escapeHtml(trItem(item))}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('img-fallback')">
             <span class="item-thumb-fallback">${CAT_INFO.icon}</span>
             <span class="item-thumb-check">✓</span>
           </div>

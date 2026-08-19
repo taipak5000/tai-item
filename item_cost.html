@@ -807,13 +807,13 @@ function renderGiftItemPicker() {
   let entries; // [{ catKey, item }]
   if (catKey) {
     entries = getGiftPickableItems(catKey)
-      .filter(it => !q || it.name.toLowerCase().includes(q))
+      .filter(it => !q || it.name.toLowerCase().includes(q) || (it.nameEn && it.nameEn.toLowerCase().includes(q)))
       .map(it => ({ catKey, item: it }));
   } else if (!q) {
     picker.innerHTML = `<div class="gift-item-picker-empty">${en ? 'Select a category above, or type an item name to search across all categories.' : 'カテゴリを選ぶか、アイテム名を入力すると全カテゴリから検索できます。'}</div>`;
     return;
   } else {
-    entries = getAllGiftPickableEntries().filter(({ item }) => item.name.toLowerCase().includes(q));
+    entries = getAllGiftPickableEntries().filter(({ item }) => item.name.toLowerCase().includes(q) || (item.nameEn && item.nameEn.toLowerCase().includes(q)));
   }
 
   if (entries.length === 0) {
@@ -832,7 +832,7 @@ function renderGiftItemPicker() {
           ${img ? `<img src="${img}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('img-fallback')">` : ''}
           <span class="item-thumb-fallback">${it.icon || '🏷️'}</span>
         </div>
-        <span class="gift-item-picker-name">${escapeHtml(it.name)}</span>
+        <span class="gift-item-picker-name">${escapeHtml(trItem(it))}</span>
         ${catTag}
         <span class="gift-item-picker-cost">¥${it.cost.value.toLocaleString()}</span>
       </div>`;
@@ -858,7 +858,7 @@ function updateGiftItemPreview() {
   if (img) document.getElementById('giftItemPreviewImg').src = img;
   const fallbackEl = thumb.querySelector('.item-thumb-fallback');
   if (fallbackEl) fallbackEl.textContent = it.icon || '🏷️';
-  document.getElementById('giftItemPreviewLabel').textContent = it.name;
+  document.getElementById('giftItemPreviewLabel').textContent = trItem(it);
   preview.style.display = 'flex';
 }
 
@@ -930,7 +930,7 @@ function renderGiftHistoryList() {
 
   el.innerHTML = list.slice().reverse().map(g => {
     const it = getGiftPickableItem(g.catKey, g.itemId);
-    const itemName = it ? it.name : g.itemId;
+    const itemName = it ? trItem(it) : g.itemId;
     const costTxt = (it && it.cost && it.cost.type === 'money') ? `¥${it.cost.value.toLocaleString()}` : (en ? 'No data' : 'データなし');
     const img = itemImgMap && itemImgMap[g.itemId];
     return `
@@ -1324,7 +1324,7 @@ function buildReceivedGiftExportCardEl() {
         <div class="exp-icon">${item.img ? `<img src="${item.img}" alt="" referrerpolicy="no-referrer">` : '🎁'}</div>
         <div class="exp-info">
           <div class="exp-cat">${escapeHtml(trCat(CAT_LABELS[item.catKey] || item.catKey))}</div>
-          <div class="exp-name">${escapeHtml(item.name)}</div>
+          <div class="exp-name">${escapeHtml(trItem(item))}</div>
         </div>
         <div class="exp-cost">¥${item.cost.value.toLocaleString()}</div>
       </div>`).join('');
@@ -1378,7 +1378,7 @@ function buildGiftHistoryExportCardEl() {
     ? `<div class="exp-empty-list">${en ? 'No gift purchases recorded yet.' : 'まだ記録がありません。'}</div>`
     : list.slice().reverse().map(g => {
         const it = getGiftPickableItem(g.catKey, g.itemId);
-        const itemName = it ? it.name : g.itemId;
+        const itemName = it ? trItem(it) : g.itemId;
         const cost = (it && it.cost && it.cost.type === 'money') ? it.cost.value : null;
         if (typeof cost === 'number') total += cost;
         const img = itemImgMap && itemImgMap[g.itemId];
@@ -1553,7 +1553,7 @@ function renderItemCard(item, owned) {
   if (item.dye) badges.push(`<span class="item-badge dye-yes">${CURRENT_LANG === 'en' ? 'Dyeable' : '染色〇'}</span>`);
   if (item.limited) badges.push(`<span class="item-badge limited">${CURRENT_LANG === 'en' ? 'No Re-release' : '復刻なし'}</span>`);
 
-  const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(item.name + '　Sky')}`;
+  const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(trItem(item) + '　Sky')}`;
   const imgSrc = item.img || `images/${item.catKey}/${item.id}.png`;
 
   const showPendantToggle = owned && item.seasonPendantOwned;
@@ -1610,11 +1610,11 @@ function renderItemCard(item, owned) {
     <div class="item-card ${owned ? 'owned' : ''}">
       <div class="item-head">
         <div class="item-thumb">
-          <img src="${imgSrc}" alt="${escapeHtml(item.name)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('img-fallback')">
+          <img src="${imgSrc}" alt="${escapeHtml(trItem(item))}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('img-fallback')">
           <span class="item-thumb-fallback">🏷️</span>
         </div>
         <div class="item-info">
-          <a href="${searchUrl}" target="_blank" rel="noopener noreferrer" class="item-name">${escapeHtml(item.name)}</a>
+          <a href="${searchUrl}" target="_blank" rel="noopener noreferrer" class="item-name">${escapeHtml(trItem(item))}</a>
           <div class="item-source">${escapeHtml(trSource(item.source))}</div>
         </div>
         <div class="item-cost ${costClass}">${costDisplay}</div>
@@ -1625,7 +1625,8 @@ function renderItemCard(item, owned) {
       </div>
       ${badges.length ? `<div class="item-badges">${badges.join('')}</div>` : ''}
       ${(() => {
-        const noteSource = (showTicketToggle && item.acquireMode === 'revisit') ? (item.revisitCost && item.revisitCost.note) : item.cost.note;
+        const noteObj = (showTicketToggle && item.acquireMode === 'revisit') ? item.revisitCost : item.cost;
+        const noteSource = noteObj && (CURRENT_LANG === 'en' ? (noteObj.noteEn || noteObj.note) : noteObj.note);
         return noteSource ? `<div class="item-note">※ ${escapeHtml(noteSource)}</div>` : '';
       })()}
       ${acquireToggleHtml}

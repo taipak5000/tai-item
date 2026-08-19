@@ -3,7 +3,7 @@
    全ページから <script src="i18n.js"></script> で読み込んで使う。
    ================================================================ */
 
-const SITE_LANG_KEY = 'siteLang';
+const SITE_LANG_KEY = 'sky_app_lang';
 
 function getLang() {
   const v = localStorage.getItem(SITE_LANG_KEY);
@@ -147,6 +147,14 @@ function trItemName(jpName, enMap, id) {
 function trItem(item) {
   if (CURRENT_LANG !== 'en') return item.name;
   return item.nameEn || item.name;
+}
+
+// HTML属性・テキストに埋め込む文字列をエスケープする（nameEnに引用符等が
+// 含まれる場合に属性が壊れるのを防ぐ）。item_cost.html等が持つ同名関数と
+// 同じ実装（それらのページでは自分自身のscript内で再宣言されるため、
+// この定義はそのまま上書きされるだけで問題ない）。
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
 // data-i18n-ja / data-i18n-en 属性を持つ要素のテキストを、現在の言語に応じて一括置換する
