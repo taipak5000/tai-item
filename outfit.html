@@ -3,6 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    // 🌓 描画前にテーマを確定させ、ダークモード時に一瞬でも明るい背景が
+    // 表示されてしまう「ちらつき」を防止する（CSSが解釈される前に同期実行）
+    (function () {
+      try {
+        var saved = localStorage.getItem('sky_app_theme');
+        var isDark = saved ? (saved === 'dark') : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/app-icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -30,6 +43,28 @@
       --r:         16px;
       --r-sm:      10px;
     }
+
+    /* 🌙 ダークモード用のカラー上書き（:root と同じ変数名だけを差し替える。
+       アクセント色（--orange/--blue/--green）は色相はそのまま、暗い背景での
+       AAコントラスト確保のためAppleのシステムカラーのダーク版相当まで
+       明るさだけ引き上げている） */
+    [data-theme="dark"] {
+      --bg:        #000000;
+      --card:      #1C1C1E;
+      --sep:       rgba(255,255,255,0.14);
+      --orange:    #FF9F0A;
+      --orange-d:  #FF8A00;
+      --orange-bg: rgba(255,159,10,0.16);
+      --blue:      #0A84FF;
+      --blue-bg:   rgba(10,132,255,0.16);
+      --green:     #30D158;
+      --green-bg:  rgba(48,209,88,0.16);
+      --text:      #F2F2F7;
+      --text-2:    #98989D;
+      --text-3:    #636366;
+    }
+    /* nav のすりガラス背景は --bg の直接コピーなので、ここだけ個別に上書きする */
+    [data-theme="dark"] nav { background: rgba(0,0,0,0.88); }
 
     /* ── Reset & Body ─────────────────────────────────── */
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }

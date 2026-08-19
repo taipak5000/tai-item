@@ -246,6 +246,108 @@ function deleteProfile(id) {
   pfRenderModal();
 }
 
+/* ================================================================
+   ⚙️ 表示設定（ダークモード・キーボードショートカット）
+   taipak5000.github.io 配下の全ツール共通のキーで保存する
+   （sky_app_theme・sky_shortcuts_enabled）。テーマの初期反映
+   （読み込み時のちらつき防止）は各ページ<head>先頭の同期scriptで
+   行うため、ここではトグル操作と設定モーダルの中身だけを扱う。
+   ================================================================ */
+const SKY_THEME_KEY = 'sky_app_theme';
+const SKY_SHORTCUTS_KEY = 'sky_shortcuts_enabled';
+
+function isDarkModeOn() {
+  return document.documentElement.getAttribute('data-theme') === 'dark';
+}
+function applyThemeToDOM(isDark) {
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+}
+function toggleTheme() {
+  const next = !isDarkModeOn();
+  applyThemeToDOM(next);
+  try { localStorage.setItem(SKY_THEME_KEY, next ? 'dark' : 'light'); } catch (e) { /* private browsing等 */ }
+  pfSyncSettingsUI();
+}
+
+// 未設定（null）の場合は有効（true）扱い。他タブ/他サイトでの変更もすぐ反映されるよう、
+// キャッシュせずその都度localStorageから読み直す。
+function skyShortcutsEnabled() {
+  try {
+    const v = localStorage.getItem(SKY_SHORTCUTS_KEY);
+    return v === null ? true : v === '1';
+  } catch (e) { return true; }
+}
+function settingsSaveShortcutsPref(checked) {
+  try { localStorage.setItem(SKY_SHORTCUTS_KEY, checked ? '1' : '0'); } catch (e) { /* private browsing等 */ }
+}
+
+// 設定モーダル内のテーマ切替ボタン・ショートカットのチェックボックスの表示を、
+// 現在の状態（他タブでの変更を含む）に同期させる。
+function pfSyncSettingsUI() {
+  const btn = document.getElementById('settingsThemeBtn');
+  if (btn) btn.textContent = isDarkModeOn() ? `🌙 ${pfT('ダーク', 'Dark')}` : `☀️ ${pfT('ライト', 'Light')}`;
+  const cb = document.getElementById('settingsShortcutsCheckbox');
+  if (cb) cb.checked = skyShortcutsEnabled();
+}
+function settingsOpen() {
+  pfSyncSettingsUI();
+  document.getElementById('settingsModalOverlay').classList.add('open');
+}
+function settingsClose() {
+  document.getElementById('settingsModalOverlay').classList.remove('open');
+}
+
+// ⌨️ Escキーで「今開いている中で一番手前のモーダル」を1つだけ閉じる。
+// profiles.js製の共有モーダル（設定/ダッシュボード/検索/バックアップ/プロフィール切替）を
+// 優先的に確認し、無ければ各ページ側の汎用 .modal-overlay（openModal/closeModal方式。
+// index.html・item_cost.htmlのみ）を見る。sharedCoordModal・photoCropModalは単純な
+// classList操作だけでは足りない専用の後始末があるため、それぞれの専用クローズ関数を使う。
+function closeTopmostOpenModal() {
+  const isOpen = (id) => { const el = document.getElementById(id); return !!el && el.classList.contains('open'); };
+
+  if (isOpen('settingsModalOverlay')) { settingsClose(); return; }
+  if (isOpen('dashModalOverlay')) { pfDashClose(); return; }
+  if (isOpen('srchModalOverlay')) { srchClose(); return; }
+  if (isOpen('dmModalOverlay')) { dmCloseModal(); return; }
+  if (isOpen('pfModalOverlay')) {
+    // 名前変更・削除確認の途中（行編集状態）であれば、モーダルごと閉じるのではなく
+    // その行編集状態だけをキャンセルする（pfEditInputのEscape単体押下時と同じ挙動）。
+    if (pfEditingId !== null || pfDeletingId !== null) pfCancelRowState();
+    else pfCloseModal();
+    return;
+  }
+
+  const localOverlay = document.querySelector('.modal-overlay.open');
+  if (localOverlay) {
+    if (localOverlay.id === 'sharedCoordModal' && typeof closeSharedCoordModal === 'function') { closeSharedCoordModal(); return; }
+    if (localOverlay.id === 'photoCropModal' && typeof cancelPhotoCrop === 'function') { cancelPhotoCrop(); return; }
+    if (typeof closeModal === 'function') closeModal(localOverlay.id);
+  }
+}
+
+// ⌨️ 全ページ共通のキーボードショートカット（?＝表示設定を開く／d,D＝ダークモード切替／
+// Esc＝開いているモーダルを閉じる）。Escはテキスト入力中でも常に有効（ダイアログを閉じる
+// のはユーザーの期待に沿う、既存のクリックアウトサイドで閉じる挙動と同種の基本UXのため）
+// かつ sky_shortcuts_enabled の対象外。?とdは、テキスト入力中は通常の文字入力として使える
+// ようにガードする。
+function handleGlobalKeydown(e) {
+  if (e.repeat) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const t = e.target;
+  const isTyping = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
+
+  if (e.key === 'Escape') {
+    closeTopmostOpenModal();
+    return;
+  }
+
+  if (isTyping) return;
+  if (!skyShortcutsEnabled()) return;
+
+  if (e.key === '?') { e.preventDefault(); settingsOpen(); return; }
+  if (e.key === 'd' || e.key === 'D') { e.preventDefault(); toggleTheme(); return; }
+}
+
 /* ── UI: プロフィールバー + 切替モーダル（自己完結CSSを注入） ── */
 
 function pfInjectStyle() {
@@ -349,6 +451,10 @@ function pfInjectStyle() {
       border-radius: 20px; z-index: 2000; opacity: 0; transition: all 0.25s ease; white-space: nowrap; pointer-events: none;
     }
     .pf-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .settings-key { flex-shrink: 0; min-width: 30px; text-align: center; font-weight: 700;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px;
+      background: var(--bg); border: 1px solid var(--sep); border-radius: 5px; padding: 2px 6px; color: var(--text); }
   `;
   document.head.appendChild(style);
 }
@@ -364,7 +470,8 @@ function pfRenderBar() {
   bar.innerHTML = `
     <span class="pf-bar-text" onclick="pfOpenModal()">🗂️ <b>${escapeHtmlPf(profile.name)}</b> ${pfT('に切替中（タップで切替）', 'active (tap to switch)')}</span>
     <button type="button" class="pf-search-btn" onclick="pfDashOpen()" title="${pfT('今日・今週・今月ダッシュボード', 'Today / this week / this month')}">🗓️</button>
-    <button type="button" class="pf-search-btn" onclick="srchOpen()" title="${pfT('横断検索（アイテム・エモート・精霊・季節）', 'Cross-site search')}">🔍</button>`;
+    <button type="button" class="pf-search-btn" onclick="srchOpen()" title="${pfT('横断検索（アイテム・エモート・精霊・季節）', 'Cross-site search')}">🔍</button>
+    <button type="button" class="pf-search-btn" onclick="settingsOpen()" title="${pfT('⚙️ 表示設定', '⚙️ Display Settings')}">⚙️</button>`;
 }
 
 function escapeHtmlPf(str) {
@@ -832,7 +939,7 @@ function pfRenderModal() {
       return `
         <div class="pf-row" style="flex-wrap: wrap;">
           <input type="text" class="pf-row-input" id="pfEditInput" value="${nameEsc}" maxlength="30"
-            onkeydown="if(event.key==='Enter') pfConfirmRenameInline('${p.id}'); if(event.key==='Escape') pfCancelRowState();">
+            onkeydown="if(event.key==='Enter') pfConfirmRenameInline('${p.id}'); if(event.key==='Escape') { event.stopPropagation(); pfCancelRowState(); }">
           <button type="button" class="pf-icon-btn pf-row-btn-ok" onclick="pfConfirmRenameInline('${p.id}')">${pfT('保存','Save')}</button>
           <button type="button" class="pf-icon-btn" onclick="pfCancelRowState()">${pfT('取消','Cancel')}</button>
         </div>`;
@@ -921,7 +1028,11 @@ function pfInit() {
 
   window.addEventListener('storage', (e) => {
     if (e.key === PROFILES_KEY) pfApplyThemeColor(getActiveProfile().color);
+    // 🌓 他タブ/他サイトでダークモードが切り替えられた場合も、このページへ即座に反映する
+    if (e.key === SKY_THEME_KEY) { applyThemeToDOM(e.newValue === 'dark'); pfSyncSettingsUI(); }
   });
+
+  document.addEventListener('keydown', handleGlobalKeydown);
 
   const nav = document.querySelector('nav');
   if (!nav) return;
@@ -1008,6 +1119,49 @@ function pfInit() {
       <button type="button" class="pf-close-btn" onclick="pfDashClose()">${pfT('閉じる', 'Close')}</button>
     </div>`;
   document.body.appendChild(dashOverlay);
+
+  const settingsOverlay = document.createElement('div');
+  settingsOverlay.className = 'pf-modal-overlay';
+  settingsOverlay.id = 'settingsModalOverlay';
+  settingsOverlay.onclick = (e) => { if (e.target === settingsOverlay) settingsClose(); };
+  settingsOverlay.innerHTML = `
+    <div class="pf-modal-card">
+      <h3>⚙️ ${pfT('表示設定', 'Display Settings')}</h3>
+
+      <div class="dash-section">
+        <p class="dash-section-label">🌙 ${pfT('表示', 'Display')}</p>
+        <div class="dash-row" style="align-items:center;">
+          <span class="dash-row-icon">🌙</span>
+          <span class="dash-row-text">${pfT('ダークモード', 'Dark Mode')}</span>
+          <button type="button" class="pf-icon-btn" id="settingsThemeBtn" onclick="toggleTheme()"></button>
+        </div>
+      </div>
+
+      <div class="dash-section">
+        <p class="dash-section-label">⌨️ ${pfT('キーボードショートカット', 'Keyboard Shortcuts')}</p>
+        <div class="dash-row" style="align-items:center;">
+          <span class="dash-row-icon">⌨️</span>
+          <span class="dash-row-text">${pfT('ショートカットを有効にする', 'Enable keyboard shortcuts')}</span>
+          <input type="checkbox" id="settingsShortcutsCheckbox" style="width:19px; height:19px; flex-shrink:0; cursor:pointer;"
+            onchange="settingsSaveShortcutsPref(this.checked)">
+        </div>
+        <div class="dash-row">
+          <span class="settings-key">?</span>
+          <span class="dash-row-text">${pfT('この設定を開く', 'Open this settings panel')}</span>
+        </div>
+        <div class="dash-row">
+          <span class="settings-key">D</span>
+          <span class="dash-row-text">${pfT('ダークモード切替', 'Toggle dark mode')}</span>
+        </div>
+        <div class="dash-row">
+          <span class="settings-key">Esc</span>
+          <span class="dash-row-text">${pfT('開いているウィンドウを閉じる', 'Close the open window')}</span>
+        </div>
+      </div>
+
+      <button type="button" class="pf-close-btn" onclick="settingsClose()">${pfT('閉じる', 'Close')}</button>
+    </div>`;
+  document.body.appendChild(settingsOverlay);
 }
 
 /* ================================================================
