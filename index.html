@@ -1916,27 +1916,8 @@ function closeSidebar() {
 let allItemsCache = null;          // [{ id, name, event, cost, dye, noReprint, type, catKey }, ...]
 let allItemsLoadingPromise = null;
 
-// カテゴリページのHTML本文から "const ITEMS_DATA = [ ... ]" の配列部分だけを
-// 文字列として抜き出す（文字列リテラル内の [ ] は無視して深さを数える簡易パーサー）
-function extractItemsDataArray(htmlText) {
-  const m = /(?:const|let|var)\s+ITEMS_DATA\s*=\s*\[/.exec(htmlText);
-  if (!m) return null;
-  let i = m.index + m[0].length - 1; // '[' の位置
-  let depth = 0, inString = false, stringChar = '', escaped = false, endIdx = -1;
-  for (; i < htmlText.length; i++) {
-    const ch = htmlText[i];
-    if (inString) {
-      if (escaped) escaped = false;
-      else if (ch === '\\') escaped = true;
-      else if (ch === stringChar) inString = false;
-      continue;
-    }
-    if (ch === "'" || ch === '"' || ch === '`') { inString = true; stringChar = ch; continue; }
-    if (ch === '[') depth++;
-    else if (ch === ']') { depth--; if (depth === 0) { endIdx = i; break; } }
-  }
-  return endIdx === -1 ? null : htmlText.slice(m.index + m[0].length - 1, endIdx + 1);
-}
+// カテゴリページのHTML本文から ITEMS_DATA 配列を取り出す処理は、横断検索・共有コーデ
+// プレビューなど他の機能とも共通のため profiles.js の srchExtractArray() に統合されている。
 
 // 全カテゴリページを1回だけ取得し、アイテムを1つの配列にまとめてキャッシュする
 function loadAllItemsOnce() {
@@ -1948,9 +1929,8 @@ function loadAllItemsOnce() {
       const res = await fetch(cat.file, { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const text = await res.text();
-      const arrText = extractItemsDataArray(text);
-      if (!arrText) return [];
-      const items = new Function('return ' + arrText)();
+      const items = srchExtractArray(text, 'ITEMS_DATA');
+      if (!items) return [];
       return items.map(it => ({ ...it, catKey: cat.key }));
     } catch (e) {
       console.warn(`アイテム検索: ${cat.file} の読み込みに失敗しました（未作成の可能性があります）`, e);

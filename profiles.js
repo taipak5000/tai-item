@@ -1657,12 +1657,51 @@ const SRCH_ITEM_CATS = [
 let srchIndex = null;
 let srchLoading = null;
 
-// HTMLに埋め込まれた `const 変数名 = [...]` 配列を安全に取り出す
+// HTMLに埋め込まれた `const/let/var 変数名 = [...]` または `{...}` を安全に取り出す。
+// （他サイト・自サイトの各ページを丸ごとfetchしてこの中の1つのデータだけを使う横断検索・
+// 　ダッシュボード機能などで共通に使われる抽出ロジック。index.html/item_cost.htmlの
+// 　extractItemsDataArray()と統合済み — ITEMS_DATA抽出はどちらも本関数を使う）
+//
+// 単純な「次の改行+閉じ括弧」を探す正規表現ではなく、開き括弧からの深さを文字列リテラルを
+// 無視しながら数えることで対応する閉じ括弧を厳密に特定する。ページのインデントや途中の
+// ネストした配列/オブジェクトの形が多少変わっても正しく終端を検出できる（=ページのマークアップが
+// 少し変わっただけで抽出が壊れる、という問題への対策）。
+// 変数が見つからない・閉じ括弧が見つからない・パースに失敗した場合はnullを返しつつ
+// console.warn/errorで理由を残すため、ページ構造が変わって抽出できなくなった場合に
+// 結果を静かに欠落・破損させるのではなく、原因がすぐ追えるようにしている。
 function srchExtractArray(html, varName) {
-  // 配列（[...]）だけでなくオブジェクト（{...}）にも対応（ダッシュボード機能のCURRENT_SEASON等で使用）
-  const m = html.match(new RegExp('const ' + varName + '\\s*=\\s*([\\[{][\\s\\S]*?\\n[\\]}]);'));
-  if (!m) return null;
-  try { return new Function('return ' + m[1] + ';')(); } catch (e) { console.error(varName, e); return null; }
+  const head = new RegExp('(?:const|let|var)\\s+' + varName + '\\s*=\\s*([\\[{])').exec(html);
+  if (!head) {
+    console.warn(`srchExtractArray: "${varName}" の宣言が見つかりませんでした（ページ構造が変わった可能性があります）`);
+    return null;
+  }
+  const openCh = head[1];
+  const closeCh = openCh === '[' ? ']' : '}';
+  const start = head.index + head[0].length - 1; // 開き括弧の位置
+  let depth = 0, inString = false, stringChar = '', escaped = false, endIdx = -1;
+  for (let i = start; i < html.length; i++) {
+    const ch = html[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (ch === '\\') escaped = true;
+      else if (ch === stringChar) inString = false;
+      continue;
+    }
+    if (ch === "'" || ch === '"' || ch === '`') { inString = true; stringChar = ch; continue; }
+    if (ch === openCh) depth++;
+    else if (ch === closeCh) { depth--; if (depth === 0) { endIdx = i; break; } }
+  }
+  if (endIdx === -1) {
+    console.warn(`srchExtractArray: "${varName}" の閉じ括弧が見つかりませんでした（構文が変わった可能性があります）`);
+    return null;
+  }
+  const text = html.slice(start, endIdx + 1);
+  try {
+    return new Function('return ' + text + ';')();
+  } catch (e) {
+    console.error(`srchExtractArray: "${varName}" のパースに失敗しました`, e);
+    return null;
+  }
 }
 
 // 🚧 エモート管理・羽トラッカーはまだ検索結果として案内したくないため、一旦取得自体をオフにしている。

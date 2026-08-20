@@ -1487,9 +1487,8 @@ function loadItemImgMapOnce() {
       const res = await fetch(file, { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const text = await res.text();
-      const arrText = extractItemsDataArray(text);
-      if (!arrText) return [];
-      const items = new Function('return ' + arrText)();
+      const items = srchExtractArray(text, 'ITEMS_DATA');
+      if (!items) return [];
       return items.filter(it => it.img).map(it => [it.id, it.img]);
     } catch (e) {
       console.warn(`アイテム別コスト: ${file} の画像URL読み込みに失敗しました`, e);
@@ -1506,28 +1505,8 @@ function loadItemImgMapOnce() {
   return itemImgMapLoadingPromise;
 }
 
-// カテゴリページのHTML本文から "const ITEMS_DATA = [ ... ]" の配列部分だけを
-// 文字列として抜き出す（文字列リテラル内の [ ] は無視して深さを数える簡易パーサー）
-// index.html の同名関数と同じロジック
-function extractItemsDataArray(htmlText) {
-  const m = /(?:const|let|var)\s+ITEMS_DATA\s*=\s*\[/.exec(htmlText);
-  if (!m) return null;
-  let i = m.index + m[0].length - 1;
-  let depth = 0, inString = false, stringChar = '', escaped = false, endIdx = -1;
-  for (; i < htmlText.length; i++) {
-    const ch = htmlText[i];
-    if (inString) {
-      if (escaped) escaped = false;
-      else if (ch === '\\') escaped = true;
-      else if (ch === stringChar) inString = false;
-      continue;
-    }
-    if (ch === "'" || ch === '"' || ch === '`') { inString = true; stringChar = ch; continue; }
-    if (ch === '[') depth++;
-    else if (ch === ']') { depth--; if (depth === 0) { endIdx = i; break; } }
-  }
-  return endIdx === -1 ? null : htmlText.slice(m.index + m[0].length - 1, endIdx + 1);
-}
+// カテゴリページのHTML本文から ITEMS_DATA 配列を取り出す処理は、index.html の横断検索・
+// 共有コーデプレビューなど他の機能とも共通のため profiles.js の srchExtractArray() に統合されている。
 
 // 全カテゴリのアイテムを1つのリストにまとめ、各アイテムの所持状態も合わせて読み込む
 function getAllItems() {
