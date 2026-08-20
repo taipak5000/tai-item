@@ -314,7 +314,7 @@ function closeTopmostOpenModal() {
 
   if (isOpen('settingsModalOverlay')) { settingsClose(); return; }
   if (isOpen('iconCustomModalOverlay')) { pfIconCloseModal(); return; }
-  if (isOpen('toolsModalOverlay')) { pfToolsClose(); return; }
+  if (isOpen('toolsDrawerPanel')) { pfToolsClose(); return; }
   if (isOpen('dashModalOverlay')) { pfDashClose(); return; }
   if (isOpen('srchModalOverlay')) { srchClose(); return; }
   if (isOpen('dmModalOverlay')) { dmCloseModal(); return; }
@@ -484,6 +484,24 @@ function pfInjectStyle() {
     .site-dock .site-dock-icon { font-size: 20px; line-height: 1; }
     .site-dock .site-dock-label { font-size: 10px; font-weight: 700; color: var(--text-2);
       max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* ── ☰他のツール用ドロワー（左からスライドする既存ハンバーガーサイドバーと
+       同じ見た目に統一。他サイトの「他のツール」も同じ左ドロワー形式なので揃える） ── */
+    .pf-drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 499; }
+    .pf-drawer-overlay.open { display: block; animation: pfDrawerFadeIn 0.2s ease; }
+    @keyframes pfDrawerFadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .pf-drawer { display: none; position: fixed; top: 0; left: 0; height: 100%; width: 240px; max-width: 82vw;
+      z-index: 500; overflow-y: auto; background: var(--card); border-radius: 0 var(--r) var(--r) 0;
+      box-shadow: 4px 0 24px rgba(0,0,0,0.18); padding: 16px; box-sizing: border-box; }
+    .pf-drawer.open { display: flex; flex-direction: column; }
+    .pf-drawer-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-2); }
+    .pf-drawer-close-btn { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-2); padding: 0; line-height: 1; flex-shrink: 0; }
+    .pf-drawer-nav { display: flex; flex-direction: column; }
+    .pf-drawer-link { display: flex; align-items: center; gap: 9px; padding: 9px 12px; border-radius: var(--r-sm);
+      color: var(--text); font-size: 13.5px; font-weight: 500; transition: background 0.15s; margin-bottom: 2px;
+      background: transparent; text-decoration: none; width: 100%; box-sizing: border-box; white-space: nowrap; }
+    .pf-drawer-link:hover { background: var(--bg); }
+    .pf-drawer-link.current { background: var(--orange-bg); color: var(--orange-d); font-weight: 700; }
   `;
   document.head.appendChild(style);
 }
@@ -1204,12 +1222,15 @@ function pfIconApplyFromStorage() {
   } catch (e) { console.error('failed to restore custom icon', e); }
 }
 
-// ☰ 他のツール（関連ツールへのリンク一覧、全14ページ共通）
+// ☰ 他のツール（関連ツールへのリンク一覧、全14ページ共通）。左からのドロワー形式
+// （他サイトの既存ハンバーガーサイドバーと見た目を揃えるため）。
 function pfToolsOpen() {
-  document.getElementById('toolsModalOverlay').classList.add('open');
+  document.getElementById('toolsDrawerOverlay').classList.add('open');
+  document.getElementById('toolsDrawerPanel').classList.add('open');
 }
 function pfToolsClose() {
-  document.getElementById('toolsModalOverlay').classList.remove('open');
+  document.getElementById('toolsDrawerOverlay').classList.remove('open');
+  document.getElementById('toolsDrawerPanel').classList.remove('open');
 }
 
 function pfInit() {
@@ -1451,11 +1472,20 @@ function pfInit() {
     </div>`;
   document.body.appendChild(iconOverlay);
 
-  // ☰ 他のツール（関連ツールへのリンク一覧、全14ページ共通）
-  const toolsOverlay = document.createElement('div');
-  toolsOverlay.className = 'pf-modal-overlay';
-  toolsOverlay.id = 'toolsModalOverlay';
-  toolsOverlay.onclick = (e) => { if (e.target === toolsOverlay) pfToolsClose(); };
+  // ☰ 他のツール（関連ツールへのリンク一覧、全14ページ共通）。
+  // 他サイトの「他のツール」は既存のハンバーガーサイドバー（左から出るドロワー）を
+  // そのまま開いているため、こちらも同じ見た目（中央モーダルではなく左ドロワー）に
+  // 揃える。index.html自身の#sidebar/#sidebarOverlayと同じ視覚デザインを、
+  // id/クラス名を変えて全14ページ共通の自己完結スタイルとして再現する。
+  const toolsDrawerOverlay = document.createElement('div');
+  toolsDrawerOverlay.className = 'pf-drawer-overlay';
+  toolsDrawerOverlay.id = 'toolsDrawerOverlay';
+  toolsDrawerOverlay.onclick = () => pfToolsClose();
+  document.body.appendChild(toolsDrawerOverlay);
+
+  const toolsDrawer = document.createElement('aside');
+  toolsDrawer.className = 'pf-drawer';
+  toolsDrawer.id = 'toolsDrawerPanel';
   const SITE_LINKS = [
     { icon: '🗂️', ja: 'アイテム所持管理', en: 'Item Collection Tracker', href: 'https://taipak5000.github.io/tai-item/', current: true },
     { icon: '🎭', ja: 'エモート所持率管理', en: 'Emote Collection Tracker', href: 'https://taipak5000.github.io/tai-emote/' },
@@ -1467,19 +1497,16 @@ function pfInit() {
     { icon: '🪽', ja: '羽トラッカー', en: 'Wing Tracker', href: 'https://taipak5000.github.io/wings/' },
     { icon: '🔄', ja: 'データ引継ぎ', en: 'Data Transfer', href: 'https://taipak5000.github.io/tai-transfer/' },
   ];
-  toolsOverlay.innerHTML = `
-    <div class="pf-modal-card">
-      <h3>☰ ${pfT('他のツール', 'Other Tools')}</h3>
-      <div class="dash-section">
-        ${SITE_LINKS.map(s => `
-          <a class="dash-row" href="${s.href}" style="align-items:center; text-decoration:none; color:inherit;${s.current ? ' background:var(--orange-bg);' : ''}">
-            <span class="dash-row-icon">${s.icon}</span>
-            <span class="dash-row-text">${pfT(s.ja, s.en)}</span>
-          </a>`).join('')}
-      </div>
-      <button type="button" class="pf-close-btn" onclick="pfToolsClose()">${pfT('閉じる', 'Close')}</button>
+  toolsDrawer.innerHTML = `
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+      <div class="pf-drawer-label">☰ ${pfT('関連ツール', 'Related Tools')}</div>
+      <button class="pf-drawer-close-btn" onclick="pfToolsClose()">×</button>
+    </div>
+    <div class="pf-drawer-nav">
+      ${SITE_LINKS.map(s => `
+        <a class="pf-drawer-link${s.current ? ' current' : ''}" href="${s.href}">${s.icon} ${pfT(s.ja, s.en)}</a>`).join('')}
     </div>`;
-  document.body.appendChild(toolsOverlay);
+  document.body.appendChild(toolsDrawer);
 
   pfIconApplyFromStorage();
   // ドック生成がpfRenderBar()より後に走るため、ここで改めて呼び直してドックの
