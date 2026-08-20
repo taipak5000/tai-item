@@ -83,7 +83,7 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      padding-bottom: 60px;
+      padding-bottom: calc(76px + env(safe-area-inset-bottom));
     }
 
     /* ── Navigation bar ────────────────────────── */
@@ -986,7 +986,7 @@
       line-height: 1.8; padding: 28px 0;
     }
     .toast {
-      position: fixed; bottom: 100px; left: 50%;
+      position: fixed; bottom: calc(84px + env(safe-area-inset-bottom)); left: 50%;
       transform: translateX(-50%) translateY(20px);
       background: rgba(0,0,0,0.75); color: #fff;
       font-size: 13px; font-weight: 500; padding: 10px 20px;

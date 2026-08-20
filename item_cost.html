@@ -76,7 +76,7 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
-      background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 60px;
+      background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: calc(76px + env(safe-area-inset-bottom));
     }
 
     nav {
@@ -220,7 +220,7 @@
     .item-badge.owned { background: var(--green-bg); color: var(--green); }
 
     .toast {
-      position: fixed; bottom: 100px; left: 50%;
+      position: fixed; bottom: calc(84px + env(safe-area-inset-bottom)); left: 50%;
       transform: translateX(-50%) translateY(20px);
       background: rgba(0,0,0,0.75); color: #fff;
       font-size: 13px; font-weight: 500; padding: 10px 20px;

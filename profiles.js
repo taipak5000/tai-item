@@ -455,6 +455,24 @@ function pfInjectStyle() {
     .settings-key { flex-shrink: 0; min-width: 30px; text-align: center; font-weight: 700;
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px;
       background: var(--bg); border: 1px solid var(--sep); border-radius: 5px; padding: 2px 6px; color: var(--text); }
+
+    /* ── サイトドック（画面下部固定のクイックメニュー、全ページ共通） ── */
+    .site-dock {
+      display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 90;
+      padding: 6px 10px calc(8px + env(safe-area-inset-bottom));
+      background: var(--card);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border-top: 0.5px solid var(--sep);
+      justify-content: space-around; align-items: stretch; gap: 4px;
+    }
+    .site-dock button {
+      flex: 1 1 0; max-width: 110px; border: 0; background: none; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      padding: 6px 0; min-height: 52px; border-radius: 12px; font-family: inherit;
+    }
+    .site-dock button:active { background: var(--sep); }
+    .site-dock .site-dock-icon { font-size: 20px; line-height: 1; }
+    .site-dock .site-dock-label { font-size: 10px; font-weight: 700; color: var(--text-2); }
   `;
   document.head.appendChild(style);
 }
@@ -1162,6 +1180,31 @@ function pfInit() {
       <button type="button" class="pf-close-btn" onclick="settingsClose()">${pfT('閉じる', 'Close')}</button>
     </div>`;
   document.body.appendChild(settingsOverlay);
+
+  // 🧭 サイトドック（画面下部固定のクイックメニュー、pengram.jp方式）。
+  // 既存のハンバーガーサイドバー（総合メニューへの関連ツールリンク）はindex.html専用の
+  // ため、ここでは全14ページで共通に動く関数のみを使う（プロフィール切替／
+  // ダッシュボード／表示設定）。div要素にしているのは、ページ側の素の nav{} セレクタ
+  // （sticky上部ナビ用のborder-bottom等）を誤って継承しないようにするため。
+  const dock = document.createElement('div');
+  dock.className = 'site-dock';
+  dock.id = 'siteDock';
+  dock.setAttribute('role', 'navigation');
+  dock.setAttribute('aria-label', pfT('クイックメニュー', 'Quick menu'));
+  dock.innerHTML = `
+    <button type="button" onclick="pfOpenModal()">
+      <span class="site-dock-icon">🗂️</span>
+      <span class="site-dock-label">${pfT('プロフィール', 'Profiles')}</span>
+    </button>
+    <button type="button" onclick="pfDashOpen()">
+      <span class="site-dock-icon">🗓️</span>
+      <span class="site-dock-label">${pfT('ダッシュボード', 'Dashboard')}</span>
+    </button>
+    <button type="button" onclick="settingsOpen()">
+      <span class="site-dock-icon">⚙️</span>
+      <span class="site-dock-label">${pfT('表示設定', 'Settings')}</span>
+    </button>`;
+  document.body.appendChild(dock);
 }
 
 /* ================================================================
