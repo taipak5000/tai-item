@@ -288,8 +288,13 @@ function pfSyncSettingsUI() {
   if (btn) btn.textContent = isDarkModeOn() ? `🌙 ${pfT('ダーク', 'Dark')}` : `☀️ ${pfT('ライト', 'Light')}`;
   const cb = document.getElementById('settingsShortcutsCheckbox');
   if (cb) cb.checked = skyShortcutsEnabled();
-  const langBtn = document.getElementById('settingsLangBtn');
-  if (langBtn) langBtn.textContent = getLang() === 'en' ? '🌐 English' : '🌐 日本語';
+  const langJaBtn = document.getElementById('settingsLangJaBtn');
+  const langEnBtn = document.getElementById('settingsLangEnBtn');
+  if (langJaBtn && langEnBtn) {
+    const lang = getLang();
+    langJaBtn.classList.toggle('active', lang === 'ja');
+    langEnBtn.classList.toggle('active', lang === 'en');
+  }
 }
 function settingsOpen() {
   pfSyncSettingsUI();
@@ -1354,10 +1359,9 @@ function pfInit() {
 
       <div class="dash-section">
         <p class="dash-section-label">🌐 ${pfT('言語 / Language', 'Language')}</p>
-        <div class="dash-row" style="align-items:center;">
-          <span class="dash-row-icon">🌐</span>
-          <span class="dash-row-text">${pfT('表示言語', 'Display Language')}</span>
-          <button type="button" class="pf-icon-btn" id="settingsLangBtn" onclick="toggleLang()"></button>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="pf-icon-btn" id="settingsLangJaBtn" onclick="if(getLang()!=='ja')setLang('ja')">日本語</button>
+          <button type="button" class="pf-icon-btn" id="settingsLangEnBtn" onclick="if(getLang()!=='en')setLang('en')">English</button>
         </div>
       </div>
 
