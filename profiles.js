@@ -1490,7 +1490,6 @@ function pfInit() {
   const SITE_LINKS = [
     { icon: '🗂️', ja: 'アイテム所持管理', en: 'Item Collection Tracker', href: 'https://taipak5000.github.io/tai-item/', current: true },
     { icon: '🎭', ja: 'エモート所持率管理', en: 'Emote Collection Tracker', href: 'https://taipak5000.github.io/tai-emote/' },
-    { icon: '🌳', ja: '精霊ツリー管理', en: 'Spirit Tree Catalog', href: 'https://taipak5000.github.io/tai-catalog/' },
     { icon: '📍', ja: '創作物管理ツール', en: 'Creation Manager', href: 'https://taipak5000.github.io/share/' },
     { icon: '🕯️', ja: 'ノマキャン計算機', en: 'Candle Calculator', href: 'https://taipak5000.github.io/tai-nomacan/' },
     { icon: '🕯️', ja: '星のキャンドル計算機', en: 'Star Candle Calculator', href: 'https://taipak5000.github.io/star-candle/' },
