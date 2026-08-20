@@ -785,9 +785,10 @@ function pfDashBuildHtml(data) {
   });
   const rv = pfDashRevisitStatus(data.revisit);
   if (rv && data.revisit) {
+    // 再訪精霊は毎回違う精霊が来訪するため、固有名詞（誰が来るか）は表示しない
     const revisitLabel = rv.active
-      ? `${pfT('再訪精霊', 'Revisit Spirit')} 「<b>${escapeHtmlPf(data.revisit.name)}</b>」${pfT('が来訪中', ' is here now')}`
-      : `${pfT('再訪精霊', 'Revisit Spirit')} 「<b>${escapeHtmlPf(data.revisit.name)}</b>」${pfT('の次回来訪まで', ' returns in')}`;
+      ? `${pfT('再訪精霊', 'Revisit Spirit')}${pfT('が来訪中', ' is here now')}`
+      : `${pfT('再訪精霊', 'Revisit Spirit')}${pfT('の次回来訪まで', ' returns in')}`;
     todayRows.push(pfDashRow('🕊️', `${revisitLabel}<span class="dash-countdown">${pfDashCountdown(rv.target)}</span>`));
   }
   const todayHtml = todayRows.length ? todayRows.join('') : `<div class="dash-empty">${pfT('現在開催中の季節・イベントはありません', 'No current seasons or events')}</div>`;
