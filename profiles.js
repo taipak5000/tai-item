@@ -482,7 +482,8 @@ function pfInjectStyle() {
     }
     .site-dock button:active { background: var(--sep); }
     .site-dock .site-dock-icon { font-size: 20px; line-height: 1; }
-    .site-dock .site-dock-label { font-size: 10px; font-weight: 700; color: var(--text-2); }
+    .site-dock .site-dock-label { font-size: 10px; font-weight: 700; color: var(--text-2);
+      max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   `;
   document.head.appendChild(style);
 }
@@ -493,13 +494,19 @@ function pfT(ja, en) {
 
 function pfRenderBar() {
   const bar = document.getElementById('pfBar');
-  if (!bar) return;
   const profile = getActiveProfile();
-  bar.innerHTML = `
-    <span class="pf-bar-text" onclick="pfOpenModal()">🗂️ <b>${escapeHtmlPf(profile.name)}</b> ${pfT('に切替中（タップで切替）', 'active (tap to switch)')}</span>
-    <button type="button" class="pf-search-btn" onclick="pfDashOpen()" title="${pfT('今日・今週・今月ダッシュボード', 'Today / this week / this month')}">🗓️</button>
-    <button type="button" class="pf-search-btn" onclick="srchOpen()" title="${pfT('横断検索（アイテム・エモート・精霊・季節）', 'Cross-site search')}">🔍</button>
-    <button type="button" class="pf-search-btn" onclick="settingsOpen()" title="${pfT('⚙️ 表示設定', '⚙️ Display Settings')}">⚙️</button>`;
+  if (bar) {
+    bar.innerHTML = `
+      <span class="pf-bar-text" onclick="pfOpenModal()">🗂️ <b>${escapeHtmlPf(profile.name)}</b> ${pfT('に切替中（タップで切替）', 'active (tap to switch)')}</span>
+      <button type="button" class="pf-search-btn" onclick="pfDashOpen()" title="${pfT('今日・今週・今月ダッシュボード', 'Today / this week / this month')}">🗓️</button>
+      <button type="button" class="pf-search-btn" onclick="srchOpen()" title="${pfT('横断検索（アイテム・エモート・精霊・季節）', 'Cross-site search')}">🔍</button>
+      <button type="button" class="pf-search-btn" onclick="settingsOpen()" title="${pfT('⚙️ 表示設定', '⚙️ Display Settings')}">⚙️</button>`;
+  }
+  // 🧭 画面下部ドックの「プロフィール」ボタンにも、現在アクティブなプロフィール名を表示する
+  // （上部pf-barを将来的に非表示にしても、今どのプロフィールを使っているかドック側だけで
+  // 分かるようにするため）。長い名前は省略記号で切り詰める（CSS側で対応）。
+  const dockLabel = document.getElementById('siteDockProfileLabel');
+  if (dockLabel) dockLabel.textContent = profile.name;
 }
 
 function escapeHtmlPf(str) {
@@ -1382,7 +1389,7 @@ function pfInit() {
   dock.innerHTML = `
     <button type="button" onclick="pfOpenModal()">
       <span class="site-dock-icon">🗂️</span>
-      <span class="site-dock-label">${pfT('プロフィール', 'Profiles')}</span>
+      <span class="site-dock-label" id="siteDockProfileLabel">${pfT('プロフィール', 'Profiles')}</span>
     </button>
     <button type="button" onclick="pfDashOpen()">
       <span class="site-dock-icon">🗓️</span>
@@ -1475,6 +1482,9 @@ function pfInit() {
   document.body.appendChild(toolsOverlay);
 
   pfIconApplyFromStorage();
+  // ドック生成がpfRenderBar()より後に走るため、ここで改めて呼び直してドックの
+  // プロフィール名ラベルを初期表示させる（pfRenderBar自体はガード済みなので安全に再実行可）
+  pfRenderBar();
 }
 
 /* ================================================================
