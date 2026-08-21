@@ -8,12 +8,23 @@
    （i18n.js の後に読み込むこと）。
    ================================================================ */
 
-const PROFILES_KEY        = 'skyProfiles_v1';       // [{ id, name }, ...]（taipak5000.github.io 配下の各ツール共通）
+const PROFILES_KEY        = 'skyProfiles_v1';       // [{ id, name, isDefaultName? }, ...]（taipak5000.github.io 配下の各ツール共通）
 const ACTIVE_PROFILE_KEY   = 'skyActiveProfile_v1';  // 現在選択中のプロフィールID（共通）
 const DEFAULT_PROFILE_ID   = 'default';
 
 function pfDefaultName() {
   return (typeof CURRENT_LANG !== 'undefined' && CURRENT_LANG === 'en') ? 'Main' : 'メイン';
+}
+
+// 「メイン」プロフィール（初期作成・未リネーム）は、作成時点の言語で翻訳した
+// 文字列をそのままnameに保存してしまうと、後から言語を切り替えても表示が
+// 追従しない（プロフィールバー・ドックラベル・切替モーダルの3箇所すべてで
+// 保存時の言語のまま固定されてしまう）。そのためisDefaultNameフラグが立って
+// いる間はnameの中身を使わず、表示のたびにpfDefaultName()で現在の言語へ
+// 翻訳する。ユーザーが明示的にリネームするとrenameProfile()がこのフラグを
+// falseにするため、以降は入力した文字列がそのまま（無加工で）表示される。
+function pfDisplayName(p) {
+  return p.isDefaultName ? pfDefaultName() : p.name;
 }
 
 // id はこのファイル内で常に「英数字・アンダースコア・ハイフンのみ」で生成しているため、
@@ -36,6 +47,18 @@ function loadProfiles() {
       if (p.color !== undefined && !pfIsSafeColor(p.color)) { const { color, ...rest } = p; return rest; }
       return p;
     });
+    // 旧データ互換: isDefaultNameフラグ導入前に作成された「メイン」プロフィールは
+    // nameに翻訳済みの初期名がそのまま保存されている。まだ一度もリネームされて
+    // いない（＝renameProfile()がisDefaultName:falseを明示していない）ものだけを
+    // 対象に、保存名が日本語・英語どちらかの初期名と一致する場合に限りフラグを
+    // 補う。明示的にリネームされた（isDefaultNameがfalseの）プロフィールはここで
+    // 対象外になるため、ユーザーが偶然「メイン」/「Main」と入力し直した場合でも
+    // 上書きされない。
+    list = list.map(p => (
+      p.id === DEFAULT_PROFILE_ID && p.isDefaultName === undefined && (p.name === 'メイン' || p.name === 'Main')
+        ? { ...p, isDefaultName: true }
+        : p
+    ));
     if (list.length > 0) return list;
   } catch (_) {}
   return null;
@@ -51,7 +74,9 @@ function saveProfiles(list) {
 function ensureProfilesInit() {
   let list = loadProfiles();
   if (!list) {
-    list = [{ id: DEFAULT_PROFILE_ID, name: pfDefaultName() }];
+    // nameには翻訳結果を焼き込まず、isDefaultNameフラグだけを立てておく
+    // （表示のたびにpfDisplayName()経由で現在の言語へ翻訳するため）
+    list = [{ id: DEFAULT_PROFILE_ID, name: '', isDefaultName: true }];
     saveProfiles(list);
   }
   if (!localStorage.getItem(ACTIVE_PROFILE_KEY)) {
@@ -228,6 +253,10 @@ function renameProfile(id, name) {
   const p = list.find(pr => pr.id === id);
   if (!p) return;
   p.name = trimmed;
+  // 明示的にリネームされたので、以後は翻訳せず入力した文字列をそのまま表示する
+  // （undefinedではなくfalseにしておくことで、loadProfiles()の旧データ移行処理が
+  // 「メイン」への再リネームを誤ってデフォルト名扱いに戻すのを防ぐ）
+  p.isDefaultName = false;
   saveProfiles(list);
   pfRenderModal();
   pfRenderBar();
@@ -513,9 +542,10 @@ function pfT(ja, en) {
 function pfRenderBar() {
   const bar = document.getElementById('pfBar');
   const profile = getActiveProfile();
+  const displayName = pfDisplayName(profile);
   if (bar) {
     bar.innerHTML = `
-      <span class="pf-bar-text" onclick="pfOpenModal()">🗂️ <b>${escapeHtmlPf(profile.name)}</b> ${pfT('に切替中（タップで切替）', 'active (tap to switch)')}</span>
+      <span class="pf-bar-text" onclick="pfOpenModal()">🗂️ <b>${escapeHtmlPf(displayName)}</b> ${pfT('に切替中（タップで切替）', 'active (tap to switch)')}</span>
       <button type="button" class="pf-search-btn" onclick="pfDashOpen()" title="${pfT('今日・今週・今月ダッシュボード', 'Today / this week / this month')}">🗓️</button>
       <button type="button" class="pf-search-btn" onclick="srchOpen()" title="${pfT('横断検索（アイテム・エモート・精霊・季節）', 'Cross-site search')}">🔍</button>
       <button type="button" class="pf-search-btn" onclick="settingsOpen()" title="${pfT('⚙️ 表示設定', '⚙️ Display Settings')}">⚙️</button>`;
@@ -524,7 +554,7 @@ function pfRenderBar() {
   // （上部pf-barを将来的に非表示にしても、今どのプロフィールを使っているかドック側だけで
   // 分かるようにするため）。長い名前は省略記号で切り詰める（CSS側で対応）。
   const dockLabel = document.getElementById('siteDockProfileLabel');
-  if (dockLabel) dockLabel.textContent = profile.name;
+  if (dockLabel) dockLabel.textContent = displayName;
 }
 
 function escapeHtmlPf(str) {
@@ -989,7 +1019,7 @@ function pfRenderModal() {
     const isActive = p.id === activeId;
 
     if (pfEditingId === p.id) {
-      const nameEsc = escapeHtmlPf(p.name);
+      const nameEsc = escapeHtmlPf(pfDisplayName(p));
       return `
         <div class="pf-row" style="flex-wrap: wrap;">
           <input type="text" class="pf-row-input" id="pfEditInput" value="${nameEsc}" maxlength="30"
@@ -1003,8 +1033,8 @@ function pfRenderModal() {
       return `
         <div class="pf-row" style="flex-wrap: wrap;">
           <span class="pf-row-confirm-text">${pfT(
-            `「${escapeHtmlPf(p.name)}」を削除しますか？（一覧からの削除のみで、保存済みデータはブラウザ内に残ります）`,
-            `Delete "${escapeHtmlPf(p.name)}"? (This only removes it from the list — its saved data stays in this browser.)`
+            `「${escapeHtmlPf(pfDisplayName(p))}」を削除しますか？（一覧からの削除のみで、保存済みデータはブラウザ内に残ります）`,
+            `Delete "${escapeHtmlPf(pfDisplayName(p))}"? (This only removes it from the list — its saved data stays in this browser.)`
           )}</span>
           <button type="button" class="pf-icon-btn pf-row-btn-danger" onclick="pfConfirmDeleteInline('${p.id}')">${pfT('削除','Delete')}</button>
           <button type="button" class="pf-icon-btn" onclick="pfCancelRowState()">${pfT('取消','Cancel')}</button>
@@ -1016,7 +1046,7 @@ function pfRenderModal() {
       <div class="pf-row ${isActive ? 'active' : ''}">
         <input type="color" class="pf-color-input" value="${colorVal}" title="${pfT('アカウントカラー','Account color')}"
           onchange="pfSetProfileColor('${p.id}', this.value)">
-        <span class="pf-row-name" onclick="switchProfile('${p.id}')">${isActive ? '✅ ' : ''}${escapeHtmlPf(p.name)}</span>
+        <span class="pf-row-name" onclick="switchProfile('${p.id}')">${isActive ? '✅ ' : ''}${escapeHtmlPf(pfDisplayName(p))}</span>
         ${p.color ? `<button type="button" class="pf-icon-btn pf-color-clear-btn" title="${pfT('カラーを初期値に戻す','Reset color to default')}" onclick="pfClearProfileColor('${p.id}')">↺</button>` : ''}
         <button type="button" class="pf-icon-btn" title="${pfT('名前を変更','Rename')}" onclick="pfStartRename('${p.id}')">✏️</button>
         ${list.length > 1 ? `<button type="button" class="pf-icon-btn" title="${pfT('削除','Delete')}" onclick="pfStartDelete('${p.id}')">🗑️</button>` : ''}
