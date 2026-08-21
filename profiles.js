@@ -819,10 +819,10 @@ function pfDashBuildHtml(data) {
 
   const todayRows = [];
   if (data.season && data.season.name && data.season.endDate && new Date() < new Date(data.season.endDate)) {
-    todayRows.push(pfDashRow('🌟', `<b>${escapeHtmlPf(data.season.name)}</b> ${pfT('が開催中', 'is currently active')}`));
+    todayRows.push(pfDashRow('🌟', `<b>${escapeHtmlPf(trEvent(data.season.name))}</b> ${pfT('が開催中', 'is currently active')}`));
   }
   pfDashActiveScheduledEvents(data.eventSchedule).forEach(ev => {
-    todayRows.push(pfDashRow('🌟', `<b>${escapeHtmlPf(ev.name)}</b> ${pfT('が開催中', 'is currently active')}<span class="dash-countdown">${pfT('終了まで', 'Ends in')} ${pfDashCountdown(new Date(ev.end))}</span>`));
+    todayRows.push(pfDashRow('🌟', `<b>${escapeHtmlPf(trEvent(ev.name))}</b> ${pfT('が開催中', 'is currently active')}<span class="dash-countdown">${pfT('終了まで', 'Ends in')} ${pfDashCountdown(new Date(ev.end))}</span>`));
   });
   const rv = pfDashRevisitStatus(data.revisit);
   if (rv && data.revisit) {
@@ -845,7 +845,7 @@ function pfDashBuildHtml(data) {
   let monthHtml;
   if (data.season && data.season.endDate) {
     const end = new Date(data.season.endDate);
-    monthHtml = pfDashRow('🎨', `「<b>${escapeHtmlPf(data.season.name)}</b>」${pfT('終了まで', ' ends in')}<span class="dash-countdown">${pfDashCountdown(end)}</span>`);
+    monthHtml = pfDashRow('🎨', `「<b>${escapeHtmlPf(trEvent(data.season.name))}</b>」${pfT('終了まで', ' ends in')}<span class="dash-countdown">${pfDashCountdown(end)}</span>`);
   } else {
     monthHtml = `<div class="dash-empty">${pfT('シーズン情報が取得できませんでした', 'Could not load season info')}</div>`;
   }
@@ -1116,7 +1116,33 @@ function pfConfirmDeleteInline(id) {
 // 「ホーム画面に追加」時に使われるアイコン（apple-touch-icon / manifest.json）を、
 // ユーザーが選んだ絵文字＋背景色、またはアップロード画像に差し替える。
 // プロフィール（保存枠）に関わらずこの端末・ブラウザ共通の設定のため、nsKeyは使わない。
-const PF_ICON_STORAGE_KEY = 'pfCustomHomeIcon_v1';
+//
+// 🔑 保存キーをサイトごとに名前空間化する（プロフィール単位のnsKey()とは別軸）。
+// taipak5000.github.io系サイトは全サイトが同一オリジンでlocalStorageを共有するため、
+// 固定文字列のままだと、あるサイトで設定したホーム画面アイコンが他サイト（emote/
+// companion/share/spirit-catalog/star-candle/tai-nomacan等）の設定まで上書きして
+// しまう（実際に競合することを確認済み）。location.pathnameの先頭セグメント
+// （例: '/tai-item/' → 'tai-item'）は各サイトの実際の公開URLパスと一致し、
+// リポジトリ名の変更にも自動追従するため、これをサイト識別子として使う
+// （wings/tai-infoの同名関数と同じ実装）。
+function pfSiteId() {
+  const seg = location.pathname.split('/').filter(Boolean)[0];
+  return seg || 'root';
+}
+const PF_ICON_STORAGE_KEY_OLD = 'pfCustomHomeIcon_v1';
+const PF_ICON_STORAGE_KEY = 'pfCustomHomeIcon_v1__site_' + pfSiteId();
+
+// 旧: 全サイト共通の固定キーで保存されていたため、既存ユーザーの設定が残っている
+// 場合がある。新（サイト名前空間化）キーにまだ何も保存されていない場合に限り、
+// 旧キーの値を一度だけ新キーへコピーして引き継ぐ（既にカスタマイズ済みのユーザーの
+// 設定が新キー導入によって消えてしまわないようにするため）。
+(function pfMigrateIconStorageKey() {
+  try {
+    if (localStorage.getItem(PF_ICON_STORAGE_KEY) !== null) return;
+    const old = localStorage.getItem(PF_ICON_STORAGE_KEY_OLD);
+    if (old !== null) localStorage.setItem(PF_ICON_STORAGE_KEY, old);
+  } catch (e) { /* ignore */ }
+})();
 const PF_ICON_ORIGINAL_APPLE_HREF = document.querySelector('link[rel="apple-touch-icon"]')?.href || 'icons/app-icon-192.png';
 const PF_ICON_ORIGINAL_MANIFEST_HREF = document.querySelector('link[rel="manifest"]')?.href || 'manifest.json';
 let pfIconMode = 'emoji';
@@ -1851,8 +1877,8 @@ async function srchRun() {
       <a class="srch-row" href="${it.url}">
         <div class="srch-icon">${it.img ? `<img src="${it.img}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : '🗂️'}</div>
         <div class="srch-info">
-          <div class="srch-name">${escapeHtmlPf(it.name)}</div>
-          <div class="srch-meta">${escapeHtmlPf(it.catName)} ・ ${escapeHtmlPf(it.event)}</div>
+          <div class="srch-name">${escapeHtmlPf(trItem(it))}</div>
+          <div class="srch-meta">${escapeHtmlPf(trCat(it.catName))} ・ ${escapeHtmlPf(trEvent(it.event))}</div>
         </div>
         <span class="srch-arrow">›</span>
       </a>`)) +
@@ -1860,7 +1886,7 @@ async function srchRun() {
       <a class="srch-row" href="${em.url}">
         <div class="srch-icon">🎭</div>
         <div class="srch-info">
-          <div class="srch-name">${escapeHtmlPf(em.name)}</div>
+          <div class="srch-name">${escapeHtmlPf(trItem(em))}</div>
           <div class="srch-meta">${escapeHtmlPf(em.location || '')}${em.maxLevel ? ` ・ Lv1〜${em.maxLevel}` : ''}</div>
         </div>
         <span class="srch-arrow">›</span>
@@ -1870,7 +1896,7 @@ async function srchRun() {
         <div class="srch-icon">✨</div>
         <div class="srch-info">
           <div class="srch-name">${escapeHtmlPf(sp.name)}</div>
-          <div class="srch-meta">${escapeHtmlPf(sp.season)}</div>
+          <div class="srch-meta">${escapeHtmlPf(trEvent(sp.season))}</div>
         </div>
         <span class="srch-arrow">›</span>
       </a>`)) +
@@ -1878,7 +1904,7 @@ async function srchRun() {
       <a class="srch-row" href="${ev.url}">
         <div class="srch-icon">🍁</div>
         <div class="srch-info">
-          <div class="srch-name">${escapeHtmlPf(ev.name)}</div>
+          <div class="srch-name">${escapeHtmlPf(trEvent(ev.name))}</div>
           <div class="srch-meta">${pfT('アイテム検索で絞り込みができます', 'Refine in item search')}</div>
         </div>
         <span class="srch-arrow">›</span>

@@ -69,6 +69,10 @@ const SEASON_NAME_EN = {
   'お洒落な日々': 'Days of Style',
   '音楽の日々': 'Days of Music',
   '凱旋の大競技会': 'Tournament of Triumph',
+  // 期間限定イベント（EVENT_SCHEDULE）※他ツール（wings/companion）の表記に合わせる
+  '光に染まるイベント': 'Event of Radiant Light',
+  '来訪する精霊団': 'Traveling Spirit Troupe',
+  '夏のキャンプ': 'Summer Camp',
   // ── その他の共通ソース表記 ──
   '恒常精霊': 'Realm Spirits',
   '恒常精霊・過去': 'Realm Spirits (Past)',
