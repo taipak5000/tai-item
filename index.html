@@ -312,101 +312,6 @@
       display: flex; gap: 6px;
     }
 
-    /* ── Sidebar & App layout ──────────────── */
-    .app-layout {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 0 16px;
-    }
-
-    .app-layout > .wrap {
-      max-width: none; margin: 0; padding: 0; flex: 1; min-width: 0;
-    }
-
-    @media (min-width: 850px) {
-      .app-layout {
-        max-width: 960px;
-        display: flex; gap: 20px; align-items: flex-start;
-      }
-    }
-
-    .sidebar {
-      width: 200px; flex-shrink: 0;
-      position: sticky; top: 58px;
-      background: var(--card);
-      border-radius: var(--r);
-      padding: 16px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0.5px 1px rgba(0,0,0,0.04);
-      display: none;
-    }
-
-    @media (min-width: 850px) { .sidebar { display: block; } }
-
-    .sidebar.sidebar-open {
-      display: flex !important; flex-direction: column;
-      position: fixed; top: 0; left: 0;
-      height: 100%; width: 240px;
-      z-index: 500; overflow-y: auto;
-      border-radius: 0 var(--r) var(--r) 0;
-      box-shadow: 4px 0 24px rgba(0,0,0,0.18);
-    }
-
-    .sidebar-overlay {
-      display: none;
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.35); z-index: 499;
-    }
-
-    .sidebar-overlay.visible {
-      display: block;
-      animation: sbFadeIn 0.2s ease;
-    }
-
-    @keyframes sbFadeIn { from { opacity:0; } to { opacity:1; } }
-
-    .sb-label {
-      font-size: 11px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.05em;
-      color: var(--text-2); margin-bottom: 8px; padding: 0 4px;
-    }
-
-    .sb-nav {
-      display: flex; flex-direction: column;
-    }
-
-    .sb-link {
-      display: flex; align-items: center; gap: 9px;
-      padding: 9px 12px; border-radius: var(--r-sm);
-      color: var(--text); font-size: 13.5px; font-weight: 500;
-      transition: background 0.15s; margin-bottom: 2px;
-      background: transparent; text-decoration: none;
-      width: 100%; box-sizing: border-box;
-      white-space: nowrap;
-    }
-
-    .sb-link:hover { background: var(--bg); }
-
-    .sb-link.current {
-      background: var(--orange-bg); color: var(--orange-d); font-weight: 700;
-    }
-
-    .sb-close-btn {
-      background: none; border: none; font-size: 22px;
-      cursor: pointer; color: var(--text-2);
-      padding: 0; line-height: 1; flex-shrink: 0;
-    }
-
-    .sb-toggle-btn {
-      color: var(--blue); font-size: 15px; padding: 4px 0;
-      display: flex; align-items: center; gap: 4px; font-weight: 500;
-      white-space: nowrap;
-    }
-
-    @media (min-width: 850px) {
-      .sb-toggle-btn { display: none; }
-      .sb-close-btn  { display: none; }
-    }
-
     /* ── Feature buttons ───────────────────────── */
     .feature-row {
       display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
@@ -1073,41 +978,12 @@
 <nav>
   <div class="nav-title" data-i18n-en="🗂️ Item Collection Tracker">🗂️ アイテム所持率管理</div>
   <div style="display:flex; gap:10px; align-items:center;">
-    <button class="sb-toggle-btn" data-i18n-en="☰ Tools" onclick="toggleSidebar()">☰ ツール</button>
     <button class="nav-action" onclick="toggleLang()" id="langToggleBtn" data-i18n-en="日本語">EN</button>
     <button class="nav-action" data-i18n-en="Refresh" onclick="refreshData()">更新</button>
   </div>
 </nav>
 
-<!-- ▸ Sidebar overlay -->
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
-
-<!-- ▸ App layout -->
-<div class="app-layout">
-
-  <!-- Sidebar -->
-  <aside class="sidebar" id="sidebar">
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
-      <div class="sb-label" style="margin-bottom: 0;" data-i18n-en="🔗 Related Tools">🔗 関連ツール</div>
-      <button class="sb-close-btn" onclick="closeSidebar()">×</button>
-    </div>
-    <div class="sb-nav">
-      <a href="https://taipak5000.github.io/tai-item/" class="sb-link current" data-i18n-en="🗂️ Item Collection">🗂️ アイテム所持管理</a>
-      <a href="https://taipak5000.github.io/tai-emote/" class="sb-link" data-i18n-en="🎭 Emote Collection">🎭 エモート所持率管理</a>
-      <a href="https://taipak5000.github.io/share/" class="sb-link" data-i18n-en="📍 Creation Manager">📍 創作物管理ツール</a>
-      <a href="https://taipak5000.github.io/tai-nomacan/" class="sb-link" data-i18n-en="🕯️ Nomacan Calculator">🕯️ ノマキャン計算機</a>
-      <a href="https://taipak5000.github.io/star-candle/" class="sb-link" data-i18n-en="🕯️ Star Candle Calculator">🕯️ 星のキャンドル計算機</a>
-      <a href="https://taipak5000.github.io/companion/" class="sb-link" data-i18n-en="✨ Spirit Companion Tool">✨ 精霊同行ツール</a>
-      <a href="https://taipak5000.github.io/wings/" class="sb-link" data-i18n-en="🪽 Wing Tracker">🪽 羽トラッカー</a>
-      <a href="https://taipak5000.github.io/tai-transfer/" class="sb-link" data-i18n-en="🔄 Data Transfer">🔄 データ引継ぎ</a>
-    </div>
-    <div style="margin-top:18px; padding-top:14px; border-top:0.5px solid var(--sep);">
-      <div class="sb-label" data-i18n-en="📱 Home Screen Icon">📱 ホーム画面アイコン</div>
-      <button type="button" class="action-btn secondary full" onclick="pfIconOpenModal(); closeSidebar();" data-i18n-en="🎨 Customize Icon">🎨 アイコンを<br>カスタマイズ</button>
-    </div>
-  </aside>
-
-  <div class="wrap">
+<div class="wrap">
 
   <!-- ▸ はじめての方へ（紹介文）
        👇 下の .welcome-text の文章を書き換えてください。今は例文が入っています。 -->
@@ -1233,8 +1109,6 @@
   </div>
 
 </div><!-- /wrap -->
-
-</div><!-- /.app-layout -->
 
 <!-- ▸ Modal: ランダムコーデ -->
 <div class="modal-overlay" id="randomModal" onclick="if(event.target===this)closeModal('randomModal')">
@@ -1889,19 +1763,6 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('pageshow', (e) => {
   if (e.persisted) loadAndRender();
 });
-/* ── Sidebar ────────────────────────────── */
-function toggleSidebar() {
-  const s = document.getElementById('sidebar');
-  const o = document.getElementById('sidebarOverlay');
-  const open = s.classList.contains('sidebar-open');
-  s.classList.toggle('sidebar-open', !open);
-  o.classList.toggle('visible', !open);
-}
-function closeSidebar() {
-  document.getElementById('sidebar').classList.remove('sidebar-open');
-  document.getElementById('sidebarOverlay').classList.remove('visible');
-}
-
 /* ================================================================
    アイテム横断検索（季節・日々・イベントで検索）
    ── 各カテゴリページ（outfit.html 等）は総合メニューとは別に

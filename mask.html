@@ -676,6 +676,10 @@ function toggleOwned(id) {
   const card = document.getElementById(`card_${id}`);
   if (card) {
     card.classList.toggle('is-owned', userStates.owned[id]);
+    // キーボード操作用に付与したaria-pressed（グリッド表示ではcard自身、リスト表示では
+    // 子の.item-left）も実際の所持状態に同期する
+    const toggleEl = card.matches('[role="button"]') ? card : card.querySelector('[role="button"]');
+    if (toggleEl) toggleEl.setAttribute('aria-pressed', String(userStates.owned[id]));
     // 所持済みになった場合、自動でウィッシュリストから外れるためボタンの見た目も同期する
     if (userStates.owned[id]) {
       const wishBtn = card.querySelector('.tile-wish-btn, .wish-btn');
@@ -809,7 +813,7 @@ function filterAndRender() {
 
     return `
       <div class="item-tile">
-        <div class="item-tile-frame ${isOwned ? 'is-owned' : ''}" id="card_${item.id}" title="${escapeHtml(tip)}" onclick="toggleOwned('${item.id}')">
+        <div class="item-tile-frame ${isOwned ? 'is-owned' : ''}" id="card_${item.id}" title="${escapeHtml(tip)}" onclick="toggleOwned('${item.id}')" tabindex="0" role="button" aria-pressed="${isOwned}" onkeydown="if(event.target===event.currentTarget&&(event.key==='Enter'||event.key===' ')){event.preventDefault();toggleOwned('${item.id}');}">
           ${item.cost === 'premium' ? '<span class="tile-cost-dot" aria-hidden="true"></span>' : ''}
           ${item.noReprint ? '<span class="tile-nr-badge">NR</span>' : ''}
           <!-- お気に入りボタン（タイル選択とバブリングしないようストップ） -->
@@ -834,7 +838,7 @@ function filterAndRender() {
 
     return `
       <div class="item-card ${isOwned ? 'is-owned' : ''}" id="card_${item.id}">
-        <div class="item-left" onclick="toggleOwned('${item.id}')">
+        <div class="item-left" onclick="toggleOwned('${item.id}')" tabindex="0" role="button" aria-pressed="${isOwned}" onkeydown="if(event.target===event.currentTarget&&(event.key==='Enter'||event.key===' ')){event.preventDefault();toggleOwned('${item.id}');}">
           <div class="item-thumb">
             <!-- 画像が未配置の場合は onerror でプレースホルダーアイコンに切り替え -->
             <img src="${imgSrc}" alt="${escapeHtml(trItem(item))}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('img-fallback')">

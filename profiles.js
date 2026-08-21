@@ -391,6 +391,14 @@ function handleGlobalKeydown(e) {
 function pfInjectStyle() {
   const style = document.createElement('style');
   style.textContent = `
+    /* 🎨 .pf-drawer-link.current専用のコントラスト調整トークン。各ページ固有の
+       --orange/--orange-d/--orange-bg（:root）はそのまま流用しつつ、この1色だけ
+       全14ページ共通で追加できるようここ（profiles.js）にまとめて定義する。
+       ライトモードは--orange-dだと薄いタイント背景上でAA未達（約2.76:1）になるため
+       明度を落とした値に、ダークモードは元々十分なコントラストがある--orange-dを
+       そのまま使う */
+    :root { --orange-current: #B34700; }
+    [data-theme="dark"] { --orange-current: var(--orange-d); }
     .pf-bar { max-width: 600px; margin: 12px auto 0; background: var(--card); border: 1px solid var(--sep);
       border-radius: var(--r-sm); padding: 10px 14px; font-size: 13px; color: var(--text-2);
       display: flex; align-items: center; gap: 10px; }
@@ -530,7 +538,10 @@ function pfInjectStyle() {
       color: var(--text); font-size: 13.5px; font-weight: 500; transition: background 0.15s; margin-bottom: 2px;
       background: transparent; text-decoration: none; width: 100%; box-sizing: border-box; white-space: nowrap; }
     .pf-drawer-link:hover { background: var(--bg); }
-    .pf-drawer-link.current { background: var(--orange-bg); color: var(--orange-d); font-weight: 700; }
+    /* 通常の--orange-dはvar(--orange-bg)の淡いタイント上だと約2.76:1しかなく
+       WCAG AA(4.5:1)未達のため、このリンクの文字色だけ明度を落とした専用トークンを
+       使う（ダークモードは既に十分なコントラストがあるため--orange-dのまま） */
+    .pf-drawer-link.current { background: var(--orange-bg); color: var(--orange-current); font-weight: 700; }
   `;
   document.head.appendChild(style);
 }
@@ -1429,10 +1440,10 @@ function pfInit() {
   document.body.appendChild(settingsOverlay);
 
   // 🧭 サイトドック（画面下部固定のクイックメニュー、pengram.jp方式）。
-  // 既存のハンバーガーサイドバー（総合メニューへの関連ツールリンク）はindex.html専用の
-  // ため、ここでは全14ページで共通に動く関数のみを使う（プロフィール切替／
-  // ダッシュボード／表示設定）。div要素にしているのは、ページ側の素の nav{} セレクタ
-  // （sticky上部ナビ用のborder-bottom等）を誤って継承しないようにするため。
+  // 全14ページで共通に動く関数のみを使う（プロフィール切替／ダッシュボード／
+  // 表示設定／他のツール＝下のtoolsDrawer）。div要素にしているのは、ページ側の
+  // 素の nav{} セレクタ（sticky上部ナビ用のborder-bottom等）を誤って継承しない
+  // ようにするため。
   const dock = document.createElement('div');
   dock.className = 'site-dock';
   dock.id = 'siteDock';
@@ -1503,11 +1514,11 @@ function pfInit() {
     </div>`;
   document.body.appendChild(iconOverlay);
 
-  // ☰ 他のツール（関連ツールへのリンク一覧、全14ページ共通）。
-  // 他サイトの「他のツール」は既存のハンバーガーサイドバー（左から出るドロワー）を
-  // そのまま開いているため、こちらも同じ見た目（中央モーダルではなく左ドロワー）に
-  // 揃える。index.html自身の#sidebar/#sidebarOverlayと同じ視覚デザインを、
-  // id/クラス名を変えて全14ページ共通の自己完結スタイルとして再現する。
+  // ☰ 他のツール（関連ツールへのリンク一覧、全14ページ共通・唯一の入口）。
+  // 他サイトの「他のツール」は左から出るハンバーガードロワーのため、こちらも同じ
+  // 見た目（中央モーダルではなく左ドロワー）に揃える。かつてindex.htmlだけが持って
+  // いた専用の#sidebar/#sidebarOverlay（同じ関連ツール一覧の重複表示）はこの共通
+  // ドロワーに統合済みのため、現在はページ固有のサイドバーは存在しない。
   const toolsDrawerOverlay = document.createElement('div');
   toolsDrawerOverlay.className = 'pf-drawer-overlay';
   toolsDrawerOverlay.id = 'toolsDrawerOverlay';
