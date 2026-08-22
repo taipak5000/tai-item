@@ -334,10 +334,28 @@ function isDarkModeOn() {
 function applyThemeToDOM(isDark) {
   document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
 }
+
+// sky_app_themeの保存値（'light'|'dark'|'system'|未設定）から、実際に適用すべき
+// テーマ（'dark'|'light'）を解決する共通ヘルパー。'system'または未設定の場合は
+// OSの配色設定に従う。ページ<head>先頭の同期script（他のJSより先に単独で実行される
+// 必要があるためこの関数を呼べない）にも同じロジックを複製しているが、常に一致させること。
+function resolveSkyTheme(stored) {
+  if (stored === 'light' || stored === 'dark') return stored;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+// 現在保存されているテーマ「モード」（'light'|'dark'|'system'）を返す。未設定は'system'扱い。
+function getSkyThemeMode() {
+  try {
+    const v = localStorage.getItem(SKY_THEME_KEY);
+    return (v === 'light' || v === 'dark') ? v : 'system';
+  } catch (e) { return 'system'; }
+}
+// ライト → ダーク → システム追従 → ライト …の3状態を順に切り替える。
 function toggleTheme() {
-  const next = !isDarkModeOn();
-  applyThemeToDOM(next);
-  try { localStorage.setItem(SKY_THEME_KEY, next ? 'dark' : 'light'); } catch (e) { /* private browsing等 */ }
+  const current = getSkyThemeMode();
+  const next = current === 'light' ? 'dark' : current === 'dark' ? 'system' : 'light';
+  applyThemeToDOM(resolveSkyTheme(next) === 'dark');
+  try { localStorage.setItem(SKY_THEME_KEY, next); } catch (e) { /* private browsing等 */ }
   pfSyncSettingsUI();
 }
 
@@ -357,7 +375,19 @@ function settingsSaveShortcutsPref(checked) {
 // 現在の状態（他タブでの変更を含む）に同期させる。
 function pfSyncSettingsUI() {
   const btn = document.getElementById('settingsThemeBtn');
-  if (btn) btn.textContent = isDarkModeOn() ? `🌙 ${pfT('ダーク', 'Dark')}` : `☀️ ${pfT('ライト', 'Light')}`;
+  if (btn) {
+    const mode = getSkyThemeMode();
+    const info = {
+      light: { icon: '☀️', label: pfT('ライト', 'Light'), next: pfT('ダーク', 'Dark') },
+      dark: { icon: '🌙', label: pfT('ダーク', 'Dark'), next: pfT('システム', 'System') },
+      system: { icon: '🖥️', label: pfT('システム', 'System'), next: pfT('ライト', 'Light') },
+    }[mode];
+    btn.textContent = `${info.icon} ${info.label}`;
+    btn.setAttribute('aria-label', pfT(
+      `テーマ: ${info.label}（タップで${info.next}に切替）`,
+      `Theme: ${info.label} (tap to switch to ${info.next})`
+    ));
+  }
   const cb = document.getElementById('settingsShortcutsCheckbox');
   if (cb) cb.checked = skyShortcutsEnabled();
   const langJaBtn = document.getElementById('settingsLangJaBtn');
@@ -406,7 +436,7 @@ function closeTopmostOpenModal() {
   }
 }
 
-// ⌨️ 全ページ共通のキーボードショートカット（?＝表示設定を開く／d,D＝ダークモード切替／
+// ⌨️ 全ページ共通のキーボードショートカット（?＝表示設定を開く／d,D＝テーマ切替（ライト→ダーク→システム）／
 // Esc＝開いているモーダルを閉じる）。Escはテキスト入力中でも常に有効（ダイアログを閉じる
 // のはユーザーの期待に沿う、既存のクリックアウトサイドで閉じる挙動と同種の基本UXのため）
 // かつ sky_shortcuts_enabled の対象外。?とdは、テキスト入力中は通常の文字入力として使える
@@ -1518,8 +1548,18 @@ function pfInit() {
 
   window.addEventListener('storage', (e) => {
     if (e.key === PROFILES_KEY) pfApplyThemeColor(getActiveProfile().color);
-    // 🌓 他タブ/他サイトでダークモードが切り替えられた場合も、このページへ即座に反映する
-    if (e.key === SKY_THEME_KEY) { applyThemeToDOM(e.newValue === 'dark'); pfSyncSettingsUI(); }
+    // 🌓 他タブ/他サイトでテーマ（ライト/ダーク/システム追従）が切り替えられた場合も、
+    // このページへ即座に反映する（e.newValueがnull＝キー削除の場合も'system'扱いで解決される）
+    if (e.key === SKY_THEME_KEY) { applyThemeToDOM(resolveSkyTheme(e.newValue) === 'dark'); pfSyncSettingsUI(); }
+  });
+
+  // 🌓 保存モードが「システム追従」の場合、OS側の配色設定がタブを開いたまま
+  // 切り替わったとき（例：日没での自動切替）も即座にページへ反映する
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+    if (getSkyThemeMode() === 'system') {
+      applyThemeToDOM(e.matches);
+      pfSyncSettingsUI();
+    }
   });
 
   document.addEventListener('keydown', handleGlobalKeydown);
@@ -1651,8 +1691,8 @@ function pfInit() {
       <div class="dash-section">
         <p class="dash-section-label">🌙 ${pfT('表示', 'Display')}</p>
         <div class="dash-row" style="align-items:center;">
-          <span class="dash-row-icon">🌙</span>
-          <span class="dash-row-text">${pfT('ダークモード', 'Dark Mode')}</span>
+          <span class="dash-row-icon">🎨</span>
+          <span class="dash-row-text">${pfT('テーマ', 'Theme')}</span>
           <button type="button" class="pf-icon-btn" id="settingsThemeBtn" onclick="toggleTheme()"></button>
         </div>
       </div>
@@ -1671,7 +1711,7 @@ function pfInit() {
         </div>
         <div class="dash-row">
           <span class="settings-key">D</span>
-          <span class="dash-row-text">${pfT('ダークモード切替', 'Toggle dark mode')}</span>
+          <span class="dash-row-text">${pfT('テーマ切替（ライト→ダーク→システム）', 'Cycle theme (Light → Dark → System)')}</span>
         </div>
         <div class="dash-row">
           <span class="settings-key">Esc</span>
