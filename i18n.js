@@ -180,3 +180,18 @@ function applyStaticI18n() {
 }
 
 document.addEventListener('DOMContentLoaded', applyStaticI18n);
+
+// 絞り込み・検索パネル内のすべてのコントロール（テキスト検索／セレクト／チェックボックス）を
+// 初期状態（先頭の選択肢＝「すべて」等）に戻す共通ヘルパー。
+// 各カテゴリページの絞り込みパネル（.control-panel）と、総合メニューの横断検索モーダル
+// （.gs-control-panel）の「フィルターを全てクリア」ボタンから共通で呼び出す。
+function resetFilterPanel(panelSelector, afterRender) {
+  const panel = document.querySelector(panelSelector);
+  if (!panel) return;
+  panel.querySelectorAll('input[type="text"], input[type="search"]').forEach(el => { el.value = ''; });
+  panel.querySelectorAll('input[type="checkbox"]').forEach(el => { el.checked = false; });
+  panel.querySelectorAll('select').forEach(el => {
+    if (el.options.length > 0) el.value = el.options[0].value;
+  });
+  if (typeof afterRender === 'function') afterRender();
+}

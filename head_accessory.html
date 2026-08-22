@@ -134,6 +134,12 @@
       font-size: 13px; color: var(--text); font-weight: 500; outline: none; flex: 1; min-width: 120px;
     }
     .search-input::placeholder { color: var(--text-3); }
+    .control-reset-row { justify-content: flex-end; }
+    .control-reset-btn {
+      background: var(--bg); border: none; padding: 8px 14px; border-radius: var(--r-sm);
+      font-size: 13px; font-weight: 600; color: var(--blue); transition: background 0.15s;
+    }
+    .control-reset-btn:active { background: var(--sep); }
 
     /* ── 表示切替（グリッド／リスト） ───────────────── */
     .list-header-row {
@@ -372,6 +378,13 @@
           <option value="nameAsc" data-i18n-en="Item Name (A-Z)">アイテム名（昇順）</option>
           <option value="event" data-i18n-en="By Event Name">イベント名順</option>
         </select>
+      </div>
+
+      <!-- フィルターを全てクリア -->
+      <div class="control-row control-reset-row">
+        <button type="button" class="control-reset-btn" onclick="resetFilterPanel('.control-panel', filterAndRender)">
+          <span data-i18n-en="🧹 Clear All Filters">🧹 フィルターを全てクリア</span>
+        </button>
       </div>
     </div>
 
