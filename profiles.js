@@ -199,6 +199,49 @@ function toggleWishItem(catKey, itemId) {
   return isAdding;
 }
 
+// 各カテゴリページのお気に入りチェック（gameItems_<catKey> の itemFav）を参照する
+// （isItemOwned と対になる読み取り専用ヘルパー。カテゴリページ自身のtoggleFav()が
+// 　書き込む先と全く同じキー・データ構造を読む）
+function isItemFav(catKey, itemId) {
+  try {
+    const d = JSON.parse(localStorage.getItem(nsKey('gameItems_' + catKey)));
+    return !!(d && d.itemFav && d.itemFav[itemId]);
+  } catch { return false; }
+}
+
+/* ================================================================
+   🔍✅ 横断検索の結果からの一括操作（お気に入り／ウィッシュリスト）
+   カテゴリページ側の単体トグル（toggleFav / toggleWishItem）と全く同じ
+   localStorageキー・データ構造（gameItems_<catKey>.itemFav / wish_<catKey>）
+   を読み書きする。トグルではなく「追加」専用（複数選択して一括で足すための
+   操作のため、既に追加済みのものはそのままにして次に進む）。
+   ================================================================ */
+
+// お気に入りへ追加（既に追加済みなら何もしない）。戻り値: true=新規追加 / false=既に追加済み
+function addItemFavBulk(catKey, itemId) {
+  const id = String(itemId);
+  const key = nsKey('gameItems_' + catKey);
+  let data;
+  try { data = JSON.parse(localStorage.getItem(key)) || {}; } catch { data = {}; }
+  data.itemFav = data.itemFav || {};
+  if (data.itemFav[id]) return false;
+  data.itemFav[id] = true;
+  localStorage.setItem(key, JSON.stringify(data));
+  return true;
+}
+
+// ウィッシュリストへ追加（既に所持済みのアイテムは追加できない＝toggleWishItemと同じ制約）。
+// 戻り値: true=新規追加 / false=既に追加済み / null=所持済みのため追加を拒否した
+function addItemWishBulk(catKey, itemId) {
+  const id = String(itemId);
+  if (isItemOwned(catKey, id)) return null;
+  const wishes = getWishIds(catKey);
+  if (wishes.includes(id)) return false;
+  wishes.push(id);
+  localStorage.setItem(nsKey('wish_' + catKey), JSON.stringify(wishes));
+  return true;
+}
+
 /* ================================================================
    📅 アイテム獲得（所持登録）ログ
    所持チェックをONにした日時を記録する。OFFに戻した場合は記録を削除する
@@ -491,6 +534,16 @@ function pfInjectStyle() {
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .srch-meta { font-size: 11px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .srch-arrow { color: var(--text-2); font-size: 13px; flex-shrink: 0; }
+    .srch-badge { font-size: 11px; margin-left: 4px; }
+
+    /* ── 横断検索: 結果の複数選択チェックボックス＋一括操作バー ── */
+    .srch-check { width: 18px; height: 18px; flex-shrink: 0; cursor: pointer; accent-color: var(--blue); }
+    .srch-bulk-bar { display: none; flex-direction: column; gap: 8px; background: var(--card);
+      border: 1px solid var(--blue); border-radius: var(--r-sm); padding: 10px 12px; margin: 10px 0 4px; }
+    .srch-bulk-bar.open { display: flex; }
+    .srch-bulk-count { font-size: 12.5px; font-weight: 700; color: var(--blue); }
+    .srch-bulk-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .srch-bulk-actions .pf-icon-btn { flex: 1; min-width: 120px; text-align: center; }
 
     .pf-toast {
       position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px);
@@ -1517,6 +1570,14 @@ function pfInit() {
       <h3>🔍 ${pfT('横断検索', 'Cross-site Search')}</h3>
       <input type="search" class="srch-input" id="srchInput" placeholder="${pfT('名前で検索（例: ケープ、砕ケル、バイオリン…）', 'Search by name…')}" oninput="srchOnInput()">
       <div class="srch-status" id="srchStatus">${pfT('2文字以上で検索できます', 'Type at least 2 characters')}</div>
+      <div class="srch-bulk-bar" id="srchBulkBar">
+        <span class="srch-bulk-count" id="srchBulkCount"></span>
+        <div class="srch-bulk-actions">
+          <button type="button" class="pf-icon-btn" onclick="srchBulkAddFav()">⭐ ${pfT('お気に入りに追加', 'Add to Favorites')}</button>
+          <button type="button" class="pf-icon-btn" onclick="srchBulkAddWish()">🛒 ${pfT('ウィッシュリストに追加', 'Add to Wishlist')}</button>
+          <button type="button" class="pf-icon-btn" onclick="srchClearSelection()">${pfT('選択を解除', 'Clear Selection')}</button>
+        </div>
+      </div>
       <div id="srchResults"></div>
       <button type="button" class="pf-close-btn" onclick="srchClose()">${pfT('閉じる', 'Close')}</button>
     </div>`;
@@ -1902,6 +1963,11 @@ const SRCH_ITEM_CATS = [
 let srchIndex = null;
 let srchLoading = null;
 
+// 横断検索結果からの複数選択（お気に入り/ウィッシュリストの一括操作用）。
+// キーは `catKey::id`（アイテムはカテゴリをまたいで結果に並ぶため、
+// カテゴリごとに正しいストレージへ書き込めるようカテゴリキーも一緒に持つ）
+let srchSelected = new Set();
+
 // HTMLに埋め込まれた `const/let/var 変数名 = [...]` または `{...}` を安全に取り出す。
 // （他サイト・自サイトの各ページを丸ごとfetchしてこの中の1つのデータだけを使う横断検索・
 // 　ダッシュボード機能などで共通に使われる抽出ロジック。index.html/item_cost.htmlの
@@ -1964,6 +2030,7 @@ async function srchBuildIndex() {
       const html = await res.text();
       const data = srchExtractArray(html, 'ITEMS_DATA') || [];
       data.forEach(it => idx.items.push({
+        id: it.id, catKey: cat.key,
         name: it.name, nameEn: it.nameEn || '', event: it.event || '',
         eventEn: SEASON_NAME_EN[it.event] || '',
         catName: cat.name, url: `${SITE_ROOT}/tai-item/${cat.file}`,
@@ -2054,15 +2121,30 @@ async function srchRun() {
     ${rows.slice(0, LIMIT).join('')}`;
 
   resultsEl.innerHTML =
-    group(pfT('アイテム', 'Items'), '🗂️', items.map(it => `
+    group(pfT('アイテム', 'Items'), '🗂️', items.map(it => {
+      // catKey/id が取れているアイテムだけ、一括選択用チェックボックスと
+      // 既存の状態バッジ（お気に入り／ウィッシュリスト）を表示する
+      // （抽出失敗など想定外にidが無い場合でも検索結果自体は今まで通り表示する）
+      const canSelect = !!(it.catKey && it.id);
+      const skey = canSelect ? `${it.catKey}::${it.id}` : '';
+      const checkbox = canSelect ? `<input type="checkbox" class="srch-check" aria-label="${pfT('このアイテムを選択', 'Select this item')}"
+          onclick="event.stopPropagation()" onchange="srchToggleSelect('${it.catKey}', '${it.id}', this.checked)"
+          ${srchSelected.has(skey) ? 'checked' : ''}>` : '';
+      const badges = canSelect ? (
+        (isItemFav(it.catKey, it.id) ? `<span class="srch-badge" title="${pfT('お気に入り済み', 'Favorited')}">⭐</span>` : '') +
+        (isWishItem(it.catKey, it.id) ? `<span class="srch-badge" title="${pfT('ウィッシュリスト済み', 'On wishlist')}">🛒</span>` : '')
+      ) : '';
+      return `
       <a class="srch-row" href="${it.url}">
+        ${checkbox}
         <div class="srch-icon">${it.img ? `<img src="${it.img}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : '🗂️'}</div>
         <div class="srch-info">
-          <div class="srch-name">${escapeHtmlPf(trItem(it))}</div>
+          <div class="srch-name">${escapeHtmlPf(trItem(it))}${badges}</div>
           <div class="srch-meta">${escapeHtmlPf(trCat(it.catName))} ・ ${escapeHtmlPf(trEvent(it.event))}</div>
         </div>
         <span class="srch-arrow">›</span>
-      </a>`)) +
+      </a>`;
+    })) +
     group(pfT('エモート', 'Emotes'), '🎭', emotes.map(em => `
       <a class="srch-row" href="${em.url}">
         <div class="srch-icon">🎭</div>
@@ -2101,6 +2183,68 @@ function srchOpen() {
 }
 function srchClose() {
   document.getElementById('srchModalOverlay').classList.remove('open');
+  // 次に開いたときは選択なしの状態から始める（一括操作バーを開いたままにしない）
+  srchSelected.clear();
+  srchUpdateBulkBar();
+}
+
+/* ── 🔍✅ 横断検索結果の複数選択＋一括操作（お気に入り／ウィッシュリスト） ── */
+
+function srchToggleSelect(catKey, id, checked) {
+  const key = `${catKey}::${id}`;
+  if (checked) srchSelected.add(key); else srchSelected.delete(key);
+  srchUpdateBulkBar();
+}
+
+function srchClearSelection() {
+  srchSelected.clear();
+  document.querySelectorAll('#srchResults .srch-check').forEach(cb => { cb.checked = false; });
+  srchUpdateBulkBar();
+}
+
+function srchUpdateBulkBar() {
+  const bar = document.getElementById('srchBulkBar');
+  if (!bar) return;
+  bar.classList.toggle('open', srchSelected.size > 0);
+  const countEl = document.getElementById('srchBulkCount');
+  if (countEl) countEl.textContent = pfT(`${srchSelected.size}件選択中`, `${srchSelected.size} selected`);
+}
+
+// 選択中の全アイテムを、それぞれが属するカテゴリの正しいストレージへお気に入り登録する
+// （各カテゴリページのtoggleFav()と同じ gameItems_<catKey>.itemFav を書き込む addItemFavBulk() を再利用）
+function srchBulkAddFav() {
+  if (srchSelected.size === 0) return;
+  let added = 0, already = 0;
+  srchSelected.forEach(key => {
+    const [catKey, id] = key.split('::');
+    if (addItemFavBulk(catKey, id)) added++; else already++;
+  });
+  const noteJa = already > 0 ? `（${already}件は追加済みでした）` : '';
+  const noteEn = already > 0 ? ` (${already} already favorited)` : '';
+  showToast(pfT(`⭐ ${added}件をお気に入りに追加しました${noteJa}`, `⭐ Added ${added} to favorites${noteEn}`));
+  srchClearSelection();
+  srchRun();
+}
+
+// 選択中の全アイテムを、それぞれが属するカテゴリの正しいストレージへウィッシュリスト登録する
+// （各カテゴリページのtoggleWishBtn()と同じ wish_<catKey> を書き込む addItemWishBulk() を再利用。
+// 　所持済みのアイテムはカテゴリページ側と同じ制約でスキップされる）
+function srchBulkAddWish() {
+  if (srchSelected.size === 0) return;
+  let added = 0, already = 0, owned = 0;
+  srchSelected.forEach(key => {
+    const [catKey, id] = key.split('::');
+    const r = addItemWishBulk(catKey, id);
+    if (r === true) added++;
+    else if (r === null) owned++;
+    else already++;
+  });
+  let noteJa = '', noteEn = '';
+  if (owned > 0) { noteJa += `（所持済みのため${owned}件はスキップ）`; noteEn += ` (skipped ${owned} already owned)`; }
+  if (already > 0) { noteJa += `（${already}件は追加済みでした）`; noteEn += ` (${already} already on wishlist)`; }
+  showToast(pfT(`🛒 ${added}件をウィッシュリストに追加しました${noteJa}`, `🛒 Added ${added} to wishlist${noteEn}`));
+  srchClearSelection();
+  srchRun();
 }
 
 /* ================================================================
