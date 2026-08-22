@@ -845,7 +845,7 @@ function pfDashBuildHtml(data) {
   let monthHtml;
   if (data.season && data.season.endDate) {
     const end = new Date(data.season.endDate);
-    monthHtml = pfDashRow('🎨', `「<b>${escapeHtmlPf(trEvent(data.season.name))}</b>」${pfT('終了まで', ' ends in')}<span class="dash-countdown">${pfDashCountdown(end)}</span>`);
+    monthHtml = pfDashRow('🎨', `${pfT('「', '"')}<b>${escapeHtmlPf(trEvent(data.season.name))}</b>${pfT('」', '"')}${pfT('終了まで', ' ends in')}<span class="dash-countdown">${pfDashCountdown(end)}</span>`);
   } else {
     monthHtml = `<div class="dash-empty">${pfT('シーズン情報が取得できませんでした', 'Could not load season info')}</div>`;
   }
@@ -887,6 +887,7 @@ function pfDashStopTimer() {
 }
 async function pfDashOpen() {
   document.getElementById('dashModalOverlay').classList.add('open');
+  pfSyncReminderUI(); // ブラウザ側の通知許可状態が変わっている可能性があるため開くたびに再同期
   const body = document.getElementById('dashBody');
   if (pfDashCache) { body.innerHTML = pfDashBuildHtml(pfDashCache); pfDashStartTimer(); return; }
   body.innerHTML = `<div class="pf-hint">${pfT('読み込み中…', 'Loading…')}</div>`;
@@ -904,6 +905,157 @@ async function pfDashOpen() {
 function pfDashClose() {
   document.getElementById('dashModalOverlay').classList.remove('open');
   pfDashStopTimer();
+}
+
+/* ================================================================
+   🔔 ダッシュボードのカウントダウンに対する通知リマインダー（任意オプトイン）。
+   ページを開きっぱなしにしない前提のツールのため、Service Worker等での
+   バックグラウンド配信までは行わず、「ページを開いている間、一定間隔で
+   残り時間をチェックしてNotification APIで知らせる」というシンプルな
+   実装に留めている。通知許可のリクエストは、ユーザーが設定を明示的にONに
+   した時だけ行い、ページ読み込み時に勝手に許可を求めることはしない。
+   ================================================================ */
+const PF_REMINDER_ENABLED_KEY = 'sky_dash_reminder_enabled';
+const PF_REMINDER_MINUTES_KEY = 'sky_dash_reminder_minutes';
+const PF_REMINDER_NOTIFIED_KEY = 'sky_dash_reminder_notified_v1';
+const PF_REMINDER_CHECK_INTERVAL_MS = 60 * 1000;
+
+function pfReminderEnabled() {
+  return localStorage.getItem(PF_REMINDER_ENABLED_KEY) === '1';
+}
+function pfReminderMinutes() {
+  const v = parseInt(localStorage.getItem(PF_REMINDER_MINUTES_KEY), 10);
+  return Number.isFinite(v) && v > 0 ? v : 30;
+}
+function pfReminderSaveMinutes(value) {
+  const v = parseInt(value, 10);
+  localStorage.setItem(PF_REMINDER_MINUTES_KEY, String(Number.isFinite(v) && v > 0 ? v : 30));
+  pfReminderCheckNow(); // しきい値を変えたら、既に条件を満たす対象がないか即座に確認する
+}
+
+// 通知済みの対象（"id@目標時刻"）を記録し、同じ対象へ何度も通知を送らないようにする。
+// 古いエントリが無限に溜まらないよう直近200件だけ保持する
+function pfReminderNotifiedSet() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(PF_REMINDER_NOTIFIED_KEY) || '[]'));
+  } catch (e) {
+    return new Set();
+  }
+}
+function pfReminderMarkNotified(key) {
+  const set = pfReminderNotifiedSet();
+  set.add(key);
+  localStorage.setItem(PF_REMINDER_NOTIFIED_KEY, JSON.stringify([...set].slice(-200)));
+}
+
+// 通知対象にする候補（デイリーリセット／週間リセット／季節終了／期間限定イベント終了）を
+// pfDashBuildHtml()と同じデータソースから「ラベル＋目標時刻」の配列として抽出する
+function pfDashReminderTargets(data) {
+  const targets = [
+    { id: 'daily-reset', label: pfT('デイリーリセット（大キャンドル交代）', 'Daily reset (Grand Candle change)'), target: pfDashNextPacificMidnight() },
+    { id: 'eden-weekly-reset', label: pfT('原罪：週間リセット', 'Eye of Eden: weekly reset'), target: pfDashNextEdenResetTarget() },
+  ];
+  if (data.season && data.season.name && data.season.endDate) {
+    const end = new Date(data.season.endDate);
+    if (new Date() < end) targets.push({ id: 'season-end', label: trEvent(data.season.name), target: end });
+  }
+  pfDashActiveScheduledEvents(data.eventSchedule).forEach((ev, i) => {
+    targets.push({ id: `event-${i}-${ev.name}`, label: trEvent(ev.name), target: new Date(ev.end) });
+  });
+  return targets;
+}
+
+async function pfReminderCheckNow() {
+  if (!pfReminderEnabled()) return;
+  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+  try {
+    if (!pfDashCache) {
+      if (!pfDashLoading) pfDashLoading = pfDashLoadData();
+      pfDashCache = await pfDashLoading;
+    }
+  } catch (e) { console.error('pfReminderCheckNow', e); return; }
+
+  const thresholdMs = pfReminderMinutes() * 60000;
+  const notified = pfReminderNotifiedSet();
+  pfDashReminderTargets(pfDashCache).forEach(t => {
+    const msLeft = t.target - new Date();
+    if (msLeft <= 0 || msLeft > thresholdMs) return;
+    const key = `${t.id}@${t.target.getTime()}`;
+    if (notified.has(key)) return;
+    pfReminderMarkNotified(key);
+    try {
+      new Notification(pfT('⏰ まもなく終了', '⏰ Ending soon'), {
+        body: pfT(`${t.label} — 残り ${pfDashCountdown(t.target)}`, `${t.label} — ${pfDashCountdown(t.target)} left`),
+        tag: key,
+      });
+    } catch (e) { console.error('pfReminderCheckNow notify', e); }
+  });
+}
+
+let pfReminderTimer = null;
+function pfReminderStartTimer() {
+  if (pfReminderTimer) return;
+  pfReminderTimer = setInterval(pfReminderCheckNow, PF_REMINDER_CHECK_INTERVAL_MS);
+}
+function pfReminderStopTimer() {
+  if (pfReminderTimer) { clearInterval(pfReminderTimer); pfReminderTimer = null; }
+}
+
+// 設定ON時のみ、権限を明示的にリクエストする（ページ読み込み時に勝手には求めない）
+async function pfReminderToggle(checked) {
+  if (checked) {
+    if (typeof Notification === 'undefined') {
+      localStorage.setItem(PF_REMINDER_ENABLED_KEY, '0');
+      pfSyncReminderUI();
+      return;
+    }
+    let perm = Notification.permission;
+    if (perm === 'default') perm = await Notification.requestPermission();
+    if (perm !== 'granted') {
+      localStorage.setItem(PF_REMINDER_ENABLED_KEY, '0');
+      pfSyncReminderUI();
+      return;
+    }
+    localStorage.setItem(PF_REMINDER_ENABLED_KEY, '1');
+    pfReminderStartTimer();
+    pfReminderCheckNow();
+  } else {
+    localStorage.setItem(PF_REMINDER_ENABLED_KEY, '0');
+    pfReminderStopTimer();
+  }
+  pfSyncReminderUI();
+}
+
+// ダッシュボードモーダル内のリマインダーUI（チェックボックス・タイミング選択・状態文言）を
+// 現在の保存値／通知許可状態に同期させる
+function pfSyncReminderUI() {
+  const cb = document.getElementById('dashReminderCheckbox');
+  if (!cb) return;
+  const sel = document.getElementById('dashReminderMinutes');
+  const status = document.getElementById('dashReminderStatus');
+  const enabled = pfReminderEnabled();
+  cb.checked = enabled;
+  if (sel) sel.value = String(pfReminderMinutes());
+  if (status) {
+    if (typeof Notification === 'undefined') {
+      status.textContent = pfT('この端末・ブラウザは通知に対応していません', 'Notifications are not supported on this device/browser');
+    } else if (Notification.permission === 'denied') {
+      status.textContent = pfT('ブラウザの通知が拒否されています。ブラウザの設定から許可すると使えます', 'Notifications are blocked. Allow them in your browser settings to use this.');
+    } else if (enabled) {
+      status.textContent = pfT('有効：終了・リセットが近づくとこの端末に通知します（このページを開いている間のみ）', 'Enabled: you’ll get a notification as it approaches (only while this page is open)');
+    } else {
+      status.textContent = '';
+    }
+  }
+}
+
+// ページ読み込み時：以前オプトインしていて、かつ既に許可が下りている場合だけ
+// （＝新たな許可リクエストは絶対に発生させない）自動でチェックを再開する
+function pfReminderInit() {
+  if (pfReminderEnabled() && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+    pfReminderCheckNow();
+    pfReminderStartTimer();
+  }
 }
 
 // 名前変更中・削除確認中のプロフィールID（ポップアップブロックの影響を受ける
@@ -1401,9 +1553,31 @@ function pfInit() {
     <div class="pf-modal-card">
       <h3>🗓️ ${pfT('今日・今週・今月', 'Today / This Week / This Month')}</h3>
       <div id="dashBody"><div class="pf-hint">${pfT('読み込み中…', 'Loading…')}</div></div>
+      <div class="dash-section">
+        <p class="dash-section-label">🔔 ${pfT('通知リマインダー', 'Reminder Notifications')}</p>
+        <div class="dash-row" style="align-items:center;">
+          <span class="dash-row-icon">🔔</span>
+          <span class="dash-row-text">${pfT('季節・イベントの終了やリセットが近づいたら通知する', 'Notify me when a season, event, or reset is about to end')}</span>
+          <input type="checkbox" id="dashReminderCheckbox" style="width:19px; height:19px; flex-shrink:0; cursor:pointer;"
+            onchange="pfReminderToggle(this.checked)">
+        </div>
+        <div class="dash-row" style="align-items:center;">
+          <span class="dash-row-icon">⏱️</span>
+          <span class="dash-row-text">${pfT('通知するタイミング', 'Remind me')}</span>
+          <select id="dashReminderMinutes" class="pf-icon-btn" onchange="pfReminderSaveMinutes(this.value)">
+            <option value="10">${pfT('10分前', '10 min before')}</option>
+            <option value="30">${pfT('30分前', '30 min before')}</option>
+            <option value="60">${pfT('1時間前', '1 hour before')}</option>
+            <option value="180">${pfT('3時間前', '3 hours before')}</option>
+            <option value="1440">${pfT('1日前', '1 day before')}</option>
+          </select>
+        </div>
+        <div class="pf-hint" id="dashReminderStatus"></div>
+      </div>
       <button type="button" class="pf-close-btn" onclick="pfDashClose()">${pfT('閉じる', 'Close')}</button>
     </div>`;
   document.body.appendChild(dashOverlay);
+  pfSyncReminderUI();
 
   const settingsOverlay = document.createElement('div');
   settingsOverlay.className = 'pf-modal-overlay';
@@ -1579,6 +1753,10 @@ function pfInit() {
   // ドック生成がpfRenderBar()より後に走るため、ここで改めて呼び直してドックの
   // プロフィール名ラベルを初期表示させる（pfRenderBar自体はガード済みなので安全に再実行可）
   pfRenderBar();
+
+  // 🔔 通知リマインダー：既にオプトイン＆許可済みの場合だけ静かに再開する
+  // （新規の許可リクエストはここでは絶対に発生しない）
+  pfReminderInit();
 }
 
 /* ================================================================
@@ -1787,6 +1965,7 @@ async function srchBuildIndex() {
       const data = srchExtractArray(html, 'ITEMS_DATA') || [];
       data.forEach(it => idx.items.push({
         name: it.name, nameEn: it.nameEn || '', event: it.event || '',
+        eventEn: SEASON_NAME_EN[it.event] || '',
         catName: cat.name, url: `${SITE_ROOT}/tai-item/${cat.file}`,
         img: it.img || ''
       }));
@@ -1819,9 +1998,11 @@ async function srchBuildIndex() {
   }
 
   // 4) 季節・イベント名（アイテムに登場する全イベント名）
+  // 英語検索でも一致するよう、SEASON_NAME_EN（i18n.js）にある英語表記も
+  // 一緒にインデックスしておく（無ければ空文字のまま＝日本語のみ一致）
   const evSet = new Set();
   idx.items.forEach(it => { if (it.event) evSet.add(it.event); });
-  idx.events = [...evSet].map(name => ({ name, url: `${SITE_ROOT}/tai-item/index.html` }));
+  idx.events = [...evSet].map(name => ({ name, nameEn: SEASON_NAME_EN[name] || '', url: `${SITE_ROOT}/tai-item/index.html` }));
 
   return idx;
 }
@@ -1857,10 +2038,10 @@ async function srchRun() {
   }
 
   const match = s => (s || '').toLowerCase().includes(q);
-  const items   = srchIndex.items.filter(it => match(it.name) || match(it.nameEn) || match(it.event));
+  const items   = srchIndex.items.filter(it => match(it.name) || match(it.nameEn) || match(it.event) || match(it.eventEn));
   const emotes  = srchIndex.emotes.filter(em => match(em.name) || match(em.nameEn) || match(em.location));
   const spirits = srchIndex.spirits.filter(sp => match(sp.name) || match(sp.season));
-  const events  = srchIndex.events.filter(ev => match(ev.name));
+  const events  = srchIndex.events.filter(ev => match(ev.name) || match(ev.nameEn));
   const total = items.length + emotes.length + spirits.length + events.length;
 
   statusEl.textContent = total === 0
