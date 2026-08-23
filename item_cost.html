@@ -440,6 +440,10 @@
       <div class="summary-hint" id="summaryHint">読み込み中…</div>
     </div>
 
+    <!-- ▸ 称号（🏆 実績） -->
+    <p class="sec-label" data-i18n-en="🏆 Titles">🏆 称号</p>
+    <div class="titles-panel" id="titlesPanel"></div>
+
     <div class="summary-card remaining">
       <div class="summary-title-row" onclick="toggleRemainingCard()">
         <span class="summary-title" style="margin-bottom:0;" data-i18n-en="Remaining cost to collect unowned items">未所持アイテムを集めるための残りコスト</span>
@@ -1858,6 +1862,12 @@ function renderSummary(items) {
 
   lastOwnedCount = ownedCount;
   lastTotalItemCount = items.length;
+
+  // 🏆 称号：実額の合計（表示中のmoneySumそのもの）をprofiles.js側のハイウォーターマークへ反映する。
+  // 所持解除やギフト扱いへの変更で下がり得る値のため、ここでは生値を保存するだけで判定はしない
+  // （判定・不可逆な確定はprofiles.js の checkAndUnlockTitles 側でMath.maxを通して行う）
+  localStorage.setItem(nsKey(MONEY_SPENT_KEY), String(moneySum));
+  if (typeof refreshTitlesUI === 'function') refreshTitlesUI();
 }
 
 function renderRemainingSummary(items) {

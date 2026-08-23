@@ -685,9 +685,17 @@ const TITLES = [
   { id: 'rate100',    icon: '👑', name: '光の守護者',           nameEn: 'Guardian of the Light',        descJa: '登録した全アイテムを100%所持',    descEn: 'Reached 100% overall ownership',  condition: hwm => hwm.overallPct >= 100 },
   { id: 'catmaster1', icon: '🏅', name: 'コレクションの第一歩', nameEn: 'First Steps of a Collection',  descJa: 'いずれか1カテゴリを100%達成',     descEn: 'Completed at least 1 category',   condition: hwm => hwm.masteredCount >= 1 },
   { id: 'catmaster6', icon: '🏆', name: '熟練コレクター',       nameEn: 'Master Collector',             descJa: '6カテゴリ以上を100%達成',         descEn: 'Completed 6 or more categories',  condition: hwm => hwm.masteredCount >= 6 },
+  // 💴 ここから：item_cost.html（アイテム別コスト）が計算する「実額」合計のハイウォーターマーク基準。
+  // アイテムの所持解除・ギフト扱いへの変更・表示設定の切替などで実額合計は下がり得るため、
+  // 生の値ではなくhwm.moneySpentMaxを見る（golden rule: 一度解禁した称号は下方修正しない）
+  { id: 'spend1k',  icon: '💴', name: '灯火の支援者',     nameEn: 'Supporter of the Flame',   descJa: '実額の合計が¥1,000に到達',   descEn: 'Real-money total reached ¥1,000',  condition: hwm => hwm.moneySpentMax >= 1000 },
+  { id: 'spend5k',  icon: '🎁', name: '季節の後援者',     nameEn: "Patron of the Season",     descJa: '実額の合計が¥5,000に到達',   descEn: 'Real-money total reached ¥5,000',  condition: hwm => hwm.moneySpentMax >= 5000 },
+  { id: 'spend15k', icon: '💎', name: '彩りの後援者',     nameEn: 'Patron of Colors',         descJa: '実額の合計が¥15,000に到達',  descEn: 'Real-money total reached ¥15,000', condition: hwm => hwm.moneySpentMax >= 15000 },
+  { id: 'spend30k', icon: '🌌', name: '星空の大後援者',   nameEn: 'Grand Patron of the Stars', descJa: '実額の合計が¥30,000に到達',  descEn: 'Real-money total reached ¥30,000', condition: hwm => hwm.moneySpentMax >= 30000 },
+  { id: 'spend50k', icon: '🌟', name: '光の大後援者',     nameEn: 'Grand Patron of Light',    descJa: '実額の合計が¥50,000に到達',  descEn: 'Real-money total reached ¥50,000', condition: hwm => hwm.moneySpentMax >= 50000 },
 ];
 
-const TITLES_KEY = 'itemTitles_v1'; // { earned:{<id>:ISO日時}, hwm:{ perCat:{<catKey>:{pctMax}}, overallPct, masteredCount } }（nsKeyでプロフィールごとに分離）
+const TITLES_KEY = 'itemTitles_v1'; // { earned:{<id>:ISO日時}, hwm:{ perCat:{<catKey>:{pctMax}}, overallPct, masteredCount, moneySpentMax } }（nsKeyでプロフィールごとに分離）
 
 function loadTitleStore() {
   try {
@@ -698,12 +706,13 @@ function loadTitleStore() {
         hwm: {
           perCat: (d.hwm && d.hwm.perCat) || {},
           overallPct: (d.hwm && d.hwm.overallPct) || 0,
-          masteredCount: (d.hwm && d.hwm.masteredCount) || 0
+          masteredCount: (d.hwm && d.hwm.masteredCount) || 0,
+          moneySpentMax: (d.hwm && d.hwm.moneySpentMax) || 0
         }
       };
     }
   } catch (e) { /* 破損データは初期状態として扱う */ }
-  return { earned: {}, hwm: { perCat: {}, overallPct: 0, masteredCount: 0 } };
+  return { earned: {}, hwm: { perCat: {}, overallPct: 0, masteredCount: 0, moneySpentMax: 0 } };
 }
 
 function saveTitleStore(store) {
@@ -717,6 +726,14 @@ function titleCatStats(catKey) {
     if (d && d.total > 0) return { owned: d.owned || 0, total: d.total };
   } catch (e) { /* noop */ }
   return null;
+}
+
+// item_cost.html（アイテム別コスト）が直近のrenderSummary()で計算した「実額」合計を読む。
+// item_cost.htmlを一度も開いていない場合は0のまま（そのページで計算され次第このキーが更新される）
+const MONEY_SPENT_KEY = 'itemCostMoneySum_v1';
+function titleMoneySpentStat() {
+  const v = Number(localStorage.getItem(nsKey(MONEY_SPENT_KEY)));
+  return isFinite(v) && v > 0 ? v : 0;
 }
 
 // 現在の所持データからハイウォーターマークを更新し、新規解禁分の称号一覧を返す
@@ -740,6 +757,8 @@ function checkAndUnlockTitles() {
   // perCatのpctMaxは既にhwmなので、そこから数える制覇数も自然と単調増加になる
   const masteredCount = Object.values(store.hwm.perCat).filter(c => c.pctMax >= 100).length;
   store.hwm.masteredCount = Math.max(store.hwm.masteredCount, masteredCount);
+
+  store.hwm.moneySpentMax = Math.max(store.hwm.moneySpentMax || 0, titleMoneySpentStat());
 
   const newlyEarned = [];
   TITLES.forEach(t => {
