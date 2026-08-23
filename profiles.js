@@ -804,7 +804,7 @@ const CROSS_TOOL_TITLE_CATALOG = {
   },
   spirit: {
     storageKey: 'spiritCatalogTitles_v1', namespaced: true,
-    source: '精霊ツリー管理', sourceEn: 'Spirit Tree Manager',
+    source: '姉妹サイト', sourceEn: 'Sibling Site',
     extract: d => Object.keys(d || {}),
     titles: {
       pct1:   { icon: '🌱', name: '芽吹きの精霊使い',     nameEn: 'Budding Spirit Keeper',         descJa: '精霊ツリーのノードを1%以上解放した',   descEn: 'Unlocked 1%+ of all spirit tree nodes' },
@@ -816,7 +816,7 @@ const CROSS_TOOL_TITLE_CATALOG = {
   },
   score: {
     storageKey: 'taiScoreTitles_v1', namespaced: false,
-    source: '楽譜作成ツール', sourceEn: 'Sheet Music Maker',
+    source: '姉妹サイト', sourceEn: 'Sibling Site',
     extract: d => ((d && d.earned) || []).map(e => e.id),
     titles: {
       firstSong:  { icon: '🎼', name: 'はじめの一歩',     nameEn: 'First Step',            descJa: 'はじめての1曲をライブラリに加えた',     descEn: 'Added your first song to the library' },
@@ -2027,8 +2027,8 @@ function pfInit() {
     <div class="pf-modal-card">
       <h3>💾 ${pfT('データのバックアップ・復元・削除', 'Backup / Restore / Erase Data')}</h3>
       <div class="pf-hint" style="margin:0 0 14px;">${pfT(
-        'このブラウザに保存されている taipak5000.github.io 系ツール（item・wings・companion・spirit-catalog 等）のデータをまとめて書き出し・読み込み・削除できます。全プロフィール分がまとめて対象になります。',
-        'Back up, restore, or erase all locally-stored data for the taipak5000.github.io tool suite (item, wings, companion, spirit-catalog, etc.) at once. This covers all profiles together.'
+        'このブラウザに保存されている taipak5000.github.io 系ツール（item・wings・companion 等）のデータをまとめて書き出し・読み込み・削除できます。全プロフィール分がまとめて対象になります。',
+        'Back up, restore, or erase all locally-stored data for the taipak5000.github.io tool suite (item, wings, companion, etc.) at once. This covers all profiles together.'
       )}</div>
       <button type="button" class="pf-add-btn" style="width:100%; margin-bottom:8px;" onclick="dmExport()">⬇️ ${pfT('データをエクスポート（ファイルに保存）','Export data (save to file)')}</button>
       <input type="file" id="dmImportFile" accept="application/json" style="display:none" onchange="dmImportFileSelected(event)">
