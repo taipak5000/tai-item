@@ -135,12 +135,18 @@ function pfClearProfileColor(id) {
   pfRenderModal();
 }
 
-// 保存キーをプロフィールごとに名前空間化する。
+// 保存キーを任意のプロフィールIDで名前空間化する（nsKey()の汎用版）。
 // 「メイン」プロフィールの場合は元のキーをそのまま返すため、
 // このプロフィール機能を追加する前からのユーザーデータは無改造で引き継がれる。
+// プロフィール切替モーダルで「今アクティブでない」プロフィールのデータ
+// （称号など）を読みたい場合はこちらを使う。
+function nsKeyFor(rawKey, profileId) {
+  return profileId === DEFAULT_PROFILE_ID ? rawKey : `${rawKey}__p_${profileId}`;
+}
+
+// 保存キーをプロフィールごとに名前空間化する（現在アクティブなプロフィール専用）。
 function nsKey(rawKey) {
-  const id = getActiveProfileId();
-  return id === DEFAULT_PROFILE_ID ? rawKey : `${rawKey}__p_${id}`;
+  return nsKeyFor(rawKey, getActiveProfileId());
 }
 
 /* ================================================================
@@ -487,10 +493,26 @@ function pfInjectStyle() {
       background: var(--card); border-radius: var(--r); padding: 20px; box-sizing: border-box;
       box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
     .pf-modal-card h3 { margin: 0 0 14px; font-size: 16px; color: var(--text); }
-    .pf-row { display: flex; align-items: center; gap: 8px; padding: 10px 4px; border-bottom: 0.5px solid var(--sep); }
+    .pf-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 4px; border-bottom: 0.5px solid var(--sep); }
     .pf-row:last-of-type { border-bottom: none; }
     .pf-row-name { flex: 1; font-size: 14.5px; color: var(--text); cursor: pointer; word-break: break-all; }
     .pf-row.active .pf-row-name { color: var(--blue); font-weight: 700; }
+
+    /* 🏆 プロフィール切替モーダル各行：獲得済み称号（獲得条件つき）の開閉ブロック。
+       .pf-rowをflex-wrapさせ、この要素だけflex-basis:100%で常に折り返して次の行に出す */
+    .pf-row-titles { flex-basis: 100%; width: 100%; }
+    .pf-row-titles-empty { margin: 4px 0 0; font-size: 11.5px; color: var(--text-3); }
+    .pf-row-titles-toggle { display: flex; align-items: center; gap: 4px; margin: 4px 0 0; padding: 3px 2px;
+      background: none; border: none; color: var(--text-2); font-size: 12.5px; font-weight: 700;
+      font-family: inherit; cursor: pointer; }
+    .pf-row-titles-caret { display: inline-block; transition: transform 0.15s ease; }
+    .pf-row-titles-toggle[aria-expanded="true"] .pf-row-titles-caret { transform: rotate(180deg); }
+    .pf-row-titles-list { display: flex; flex-direction: column; gap: 7px; margin: 6px 0 2px;
+      padding: 9px 10px; background: var(--bg); border-radius: var(--r-sm); }
+    .pf-row-title-item { display: flex; align-items: flex-start; gap: 6px; font-size: 12px;
+      color: var(--text-2); line-height: 1.5; }
+    .pf-row-title-icon { flex-shrink: 0; font-size: 14px; line-height: 1.5; }
+    .pf-row-title-text b { color: var(--text); }
     .pf-icon-btn { background: var(--bg); border: 1px solid var(--sep); color: var(--text-2);
       border-radius: 6px; padding: 5px 9px; font-size: 13px; cursor: pointer; flex-shrink: 0; }
     .pf-icon-btn:hover { background: var(--sep); }
@@ -724,6 +746,21 @@ function loadTitleStore() {
 
 function saveTitleStore(store) {
   localStorage.setItem(nsKey(TITLES_KEY), JSON.stringify(store));
+}
+
+// プロフィール切替モーダル用：ACTIVEでない任意のprofileIdについても、
+// 解除済みの称号一覧（アイコン・名前・獲得条件）を読む。
+// loadTitleStore()はACTIVEプロフィール専用のnsKey()を使うため、
+// ここではnsKeyForで直接キーを組み立てて読む。
+function getEarnedTitlesForProfile(profileId) {
+  let earned = {};
+  try {
+    const d = JSON.parse(localStorage.getItem(nsKeyFor(TITLES_KEY, profileId)));
+    if (d && typeof d === 'object' && d.earned && typeof d.earned === 'object') earned = d.earned;
+  } catch (e) { /* 破損データは「称号なし」として扱う（loadTitleStoreと同方針） */ }
+  return TITLES
+    .filter(t => earned[t.id])
+    .map(t => ({ icon: t.icon, name: t.name, nameEn: t.nameEn, descJa: t.descJa, descEn: t.descEn }));
 }
 
 // カテゴリページを一度も開いていない（=未登録）カテゴリはnullを返しスキップする
@@ -1327,6 +1364,16 @@ function pfReminderInit() {
 let pfEditingId = null;
 let pfDeletingId = null;
 
+// 🏆 プロフィール切替モーダルの各行で「N個の称号 ▾」を展開中のプロフィールID集合。
+// 獲得条件（descJa/descEn）はこれまでバッジのtitle=ツールチップでしか見られず
+// タッチ端末で発見できなかったため、タップで開閉できる形で可視テキスト化する。
+let pfExpandedTitleProfiles = new Set();
+function pfToggleProfileTitles(id) {
+  if (pfExpandedTitleProfiles.has(id)) pfExpandedTitleProfiles.delete(id);
+  else pfExpandedTitleProfiles.add(id);
+  pfRenderModal();
+}
+
 /* ================================================================
    💰 所持通貨の統一管理（プロフィール切替モーダル内、全サイト共通）
    candle/heartはitem自身のwishOwnCurrencyを、seasonCandleはcompanionの
@@ -1429,6 +1476,7 @@ function pfSyncCurrencyToggleUI() {
 function pfOpenModal() {
   pfEditingId = null;
   pfDeletingId = null;
+  pfExpandedTitleProfiles.clear();
   pfRenderModal();
   pfRenderCurrency();
   document.getElementById('pfModalOverlay').classList.add('open');
@@ -1469,6 +1517,24 @@ function pfRenderModal() {
     }
 
     const colorVal = pfIsSafeColor(p.color) ? p.color : '#FF9500';
+
+    // 🏆 このプロフィールで獲得済みの称号（獲得条件つき）。触れているこの行テンプレート
+    // の中で、user-editable自由入力であるpfDisplayName(p)は下記でも必ずescapeHtmlPfを
+    // 通す（既存の他フィールドと同じ扱いに統一する）。
+    const earnedTitles = getEarnedTitlesForProfile(p.id);
+    const titlesExpanded = pfExpandedTitleProfiles.has(p.id);
+    const titlesBlock = earnedTitles.length === 0
+      ? `<p class="pf-row-titles-empty">${escapeHtmlPf(pfT('まだ称号を獲得していません', 'No titles earned yet'))}</p>`
+      : `
+        <button type="button" class="pf-row-titles-toggle" aria-expanded="${titlesExpanded}" onclick="pfToggleProfileTitles('${p.id}')">
+          <span class="pf-row-titles-caret">▾</span>${escapeHtmlPf(pfT(`🏆 ${earnedTitles.length}個の称号`, `🏆 ${earnedTitles.length} title${earnedTitles.length === 1 ? '' : 's'}`))}
+        </button>
+        ${titlesExpanded ? `<div class="pf-row-titles-list">${earnedTitles.map(t => `
+          <div class="pf-row-title-item">
+            <span class="pf-row-title-icon">${t.icon}</span>
+            <span class="pf-row-title-text"><b>${escapeHtmlPf(pfT(t.name, t.nameEn))}</b> — ${escapeHtmlPf(pfT(t.descJa, t.descEn))}</span>
+          </div>`).join('')}</div>` : ''}`;
+
     return `
       <div class="pf-row ${isActive ? 'active' : ''}">
         <input type="color" class="pf-color-input" value="${colorVal}" title="${pfT('アカウントカラー','Account color')}"
@@ -1477,6 +1543,7 @@ function pfRenderModal() {
         ${p.color ? `<button type="button" class="pf-icon-btn pf-color-clear-btn" title="${pfT('カラーを初期値に戻す','Reset color to default')}" onclick="pfClearProfileColor('${p.id}')">↺</button>` : ''}
         <button type="button" class="pf-icon-btn" title="${pfT('名前を変更','Rename')}" onclick="pfStartRename('${p.id}')">✏️</button>
         ${list.length > 1 ? `<button type="button" class="pf-icon-btn" title="${pfT('削除','Delete')}" onclick="pfStartDelete('${p.id}')">🗑️</button>` : ''}
+        <div class="pf-row-titles">${titlesBlock}</div>
       </div>`;
   }).join('');
 
