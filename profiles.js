@@ -632,7 +632,14 @@ function pfInjectStyle() {
       border: 1px solid var(--orange); border-radius: 20px; padding: 6px 12px 6px 8px; }
     .title-badge-icon { font-size: 16px; line-height: 1; }
     .title-badge-name { font-size: 12.5px; font-weight: 700; color: var(--orange-current); white-space: nowrap; }
-    .titles-empty { font-size: 12.5px; color: var(--text-2); }
+    /* 未解除：他要素のグレーアウト表現（.wish-row.owned-item等のopacity/var(--text-3)）と
+       同じ「まだ手が届いていない」印象を、枠線・背景を中立色に落とし名前をtext-3で淡くする形で表現する */
+    .title-badge.locked { background: var(--bg); border-color: var(--sep); }
+    .title-badge.locked .title-badge-name { color: var(--text-3); font-weight: 600; }
+    /* .sec-label（親要素）のtext-transform:uppercase/letter-spacingがこのカウント表示にも
+       継承されてしまう（英語表示時にUNLOCKEDと大文字化される等）ため、明示的に打ち消す */
+    .titles-count { font-size: 12px; font-weight: 700; color: var(--text-2);
+      text-transform: none; letter-spacing: normal; margin-left: 8px; }
   `;
   document.head.appendChild(style);
 }
@@ -773,19 +780,45 @@ function checkAndUnlockTitles() {
   return newlyEarned;
 }
 
-// id="titlesPanel" を置いたページでのみ描画する（置いていないページは何もしない）
+// id="titlesPanel" を置いたページでのみ描画する（置いていないページは何もしない）。
+// 常に全称号を表示し、未解除のものは名前・条件を「？？？」の裏に隠す（DOM上にも
+// 実名・条件文が一切残らないようにする＝隠し要素を開発者ツール等で覗いても漏れない）。
 function renderTitlesPanel() {
   const panels = document.querySelectorAll('#titlesPanel');
   if (!panels.length) return;
   const store = loadTitleStore();
-  const earned = TITLES.filter(t => store.earned[t.id]);
-  const html = earned.length
-    ? earned.map(t => `
-        <div class="title-badge" title="${escapeHtmlPf(pfT(t.descJa, t.descEn))}">
-          <span class="title-badge-icon">${t.icon}</span>
-          <span class="title-badge-name">${escapeHtmlPf(pfT(t.name, t.nameEn))}</span>
-        </div>`).join('')
-    : `<div class="titles-empty">${pfT('まだ称号はありません。コレクションを進めよう！', 'No titles yet. Keep collecting!')}</div>`;
+  const earnedCount = TITLES.filter(t => store.earned[t.id]).length;
+
+  // パネル直前の見出し（各ページ共通の<p class="sec-label">🏆 称号</p>）に解除数を追記する。
+  // このp要素はi18n.jsのapplyStaticI18n()がDOMContentLoaded時にtextContentで一括上書きする
+  // が、それより後（profiles.js自身のpfInit→refreshTitlesUI）に本関数が呼ばれるため上書きの
+  // 心配はない。以降はユーザー操作の都度refreshTitlesUI()経由で呼ばれ、同じ子要素を使い回す。
+  panels.forEach(p => {
+    const label = p.previousElementSibling;
+    if (!label || !label.classList.contains('sec-label')) return;
+    let countEl = label.querySelector('.titles-count');
+    if (!countEl) {
+      countEl = document.createElement('span');
+      countEl.className = 'titles-count';
+      label.appendChild(countEl);
+    }
+    countEl.textContent = pfT(`${earnedCount} / ${TITLES.length} 個解除`, `${earnedCount} / ${TITLES.length} unlocked`);
+  });
+
+  const html = TITLES.map(t => {
+    if (!store.earned[t.id]) {
+      return `
+        <div class="title-badge locked" title="${escapeHtmlPf(pfT('称号は条件を満たすと明らかになります', 'Unlocks when you meet its condition'))}">
+          <span class="title-badge-icon">🔒</span>
+          <span class="title-badge-name">？？？</span>
+        </div>`;
+    }
+    return `
+      <div class="title-badge" title="${escapeHtmlPf(pfT(t.descJa, t.descEn))}">
+        <span class="title-badge-icon">${t.icon}</span>
+        <span class="title-badge-name">${escapeHtmlPf(pfT(t.name, t.nameEn))}</span>
+      </div>`;
+  }).join('');
   panels.forEach(p => { p.innerHTML = html; });
 }
 
