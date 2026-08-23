@@ -326,6 +326,10 @@
       <div class="cat-header-pct" id="catPct">--%</div>
     </div>
 
+    <!-- ▸ 称号（🏆 実績） -->
+    <p class="sec-label" data-i18n-en="🏆 Titles">🏆 称号</p>
+    <div class="titles-panel" id="titlesPanel"></div>
+
     <!-- ▸ Filter & Sort Control Panel -->
     <div class="control-panel">
       <!-- 名前検索 -->
@@ -537,6 +541,7 @@ function saveUserData() {
   };
 
   localStorage.setItem(LS_KEY, JSON.stringify(dataToSave));
+  if (typeof refreshTitlesUI === 'function') refreshTitlesUI(); // 🏆 所持データの変化を即座に称号判定へ反映
   
   // ヘッダーのパーセンテージ表示をリアルタイム更新
   updateHeaderScore(owned, total);

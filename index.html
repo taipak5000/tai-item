@@ -1031,6 +1031,10 @@
     </div>
   </div>
 
+  <!-- ▸ 称号（🏆 実績） -->
+  <p class="sec-label" data-i18n-en="🏆 Titles">🏆 称号</p>
+  <div class="titles-panel" id="titlesPanel"></div>
+
   <!-- ▸ Category cards -->
   <p class="sec-label" id="catLabel">カテゴリ一覧</p>
 
@@ -2276,6 +2280,7 @@ function markFilteredItemsOwned() {
     };
     localStorage.setItem(key, JSON.stringify(dataToSave));
   });
+  if (typeof refreshTitlesUI === 'function') refreshTitlesUI(); // 🏆 一括所持済み化も即座に称号判定へ反映
 
   renderGlobalSearch();
   loadAndRender();
@@ -2304,6 +2309,7 @@ function toggleOwnedFromSearch(catKey, itemId) {
     ownedItems: catItems.filter(it => ownedMap[it.id]).map(it => ({ id: it.id, name: it.name, nameEn: it.nameEn }))
   };
   localStorage.setItem(key, JSON.stringify(dataToSave));
+  if (typeof refreshTitlesUI === 'function') refreshTitlesUI(); // 🏆 検索結果からの所持トグルも即座に称号判定へ反映
 
   // 所持中のみ／未所持のみで絞り込み中は対象から外れる可能性があるため全体を再描画、
   // それ以外はスムーズに該当行だけ切り替える

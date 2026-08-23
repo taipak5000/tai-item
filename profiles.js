@@ -625,6 +625,14 @@ function pfInjectStyle() {
        WCAG AA(4.5:1)未達のため、このリンクの文字色だけ明度を落とした専用トークンを
        使う（ダークモードは既に十分なコントラストがあるため--orange-dのまま） */
     .pf-drawer-link.current { background: var(--orange-bg); color: var(--orange-current); font-weight: 700; }
+
+    /* ── 🏆 称号（実績）パネル。既存の.badgeピル型チップと同じ見た目言語に揃える ── */
+    .titles-panel { display: flex; flex-wrap: wrap; gap: 8px; }
+    .title-badge { display: flex; align-items: center; gap: 6px; background: var(--orange-bg);
+      border: 1px solid var(--orange); border-radius: 20px; padding: 6px 12px 6px 8px; }
+    .title-badge-icon { font-size: 16px; line-height: 1; }
+    .title-badge-name { font-size: 12.5px; font-weight: 700; color: var(--orange-current); white-space: nowrap; }
+    .titles-empty { font-size: 12.5px; color: var(--text-2); }
   `;
   document.head.appendChild(style);
 }
@@ -653,6 +661,127 @@ function pfRenderBar() {
 
 function escapeHtmlPf(str) {
   return String(str).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+
+/* ================================================================
+   🏆 称号（実績）機能
+   各カテゴリページが保存する gameItems_<catKey>（total/owned）から算出した
+   「これまでの最高所持率」等のハイウォーターマークを基準に称号を解禁する。
+   所持チェックを外す、カテゴリの総アイテム数が後から増える等でその場の
+   数値が下がっても、hwm側はMath.max()で常に上向きにしか更新しないため、
+   一度解禁した称号が後から取り消されることはない。
+   ================================================================ */
+
+// 総合達成率・カテゴリ制覇数の集計対象となる12カテゴリ（index.htmlのCATSと同じキー集合）
+const TITLE_CAT_KEYS = [
+  'outfit', 'shoes', 'mask', 'face_accessory', 'necklace', 'hairstyle',
+  'hair_accessory', 'head_accessory', 'cape', 'portable_item', 'large_placeable', 'small_placeable'
+];
+
+const TITLES = [
+  { id: 'rate25',     icon: '🕯️', name: '灯火の旅人',           nameEn: 'Traveler of the Flame',       descJa: '全アイテムの所持率が25%に到達',   descEn: 'Reached 25% overall ownership',   condition: hwm => hwm.overallPct >= 25 },
+  { id: 'rate50',     icon: '🌙', name: '星屑の収集家',         nameEn: 'Stardust Collector',           descJa: '全アイテムの所持率が50%に到達',   descEn: 'Reached 50% overall ownership',   condition: hwm => hwm.overallPct >= 50 },
+  { id: 'rate75',     icon: '✨', name: '煌めきの探究者',       nameEn: 'Seeker of Radiance',           descJa: '全アイテムの所持率が75%に到達',   descEn: 'Reached 75% overall ownership',   condition: hwm => hwm.overallPct >= 75 },
+  { id: 'rate100',    icon: '👑', name: '光の守護者',           nameEn: 'Guardian of the Light',        descJa: '登録した全アイテムを100%所持',    descEn: 'Reached 100% overall ownership',  condition: hwm => hwm.overallPct >= 100 },
+  { id: 'catmaster1', icon: '🏅', name: 'コレクションの第一歩', nameEn: 'First Steps of a Collection',  descJa: 'いずれか1カテゴリを100%達成',     descEn: 'Completed at least 1 category',   condition: hwm => hwm.masteredCount >= 1 },
+  { id: 'catmaster6', icon: '🏆', name: '熟練コレクター',       nameEn: 'Master Collector',             descJa: '6カテゴリ以上を100%達成',         descEn: 'Completed 6 or more categories',  condition: hwm => hwm.masteredCount >= 6 },
+];
+
+const TITLES_KEY = 'itemTitles_v1'; // { earned:{<id>:ISO日時}, hwm:{ perCat:{<catKey>:{pctMax}}, overallPct, masteredCount } }（nsKeyでプロフィールごとに分離）
+
+function loadTitleStore() {
+  try {
+    const d = JSON.parse(localStorage.getItem(nsKey(TITLES_KEY)));
+    if (d && typeof d === 'object') {
+      return {
+        earned: d.earned || {},
+        hwm: {
+          perCat: (d.hwm && d.hwm.perCat) || {},
+          overallPct: (d.hwm && d.hwm.overallPct) || 0,
+          masteredCount: (d.hwm && d.hwm.masteredCount) || 0
+        }
+      };
+    }
+  } catch (e) { /* 破損データは初期状態として扱う */ }
+  return { earned: {}, hwm: { perCat: {}, overallPct: 0, masteredCount: 0 } };
+}
+
+function saveTitleStore(store) {
+  localStorage.setItem(nsKey(TITLES_KEY), JSON.stringify(store));
+}
+
+// カテゴリページを一度も開いていない（=未登録）カテゴリはnullを返しスキップする
+function titleCatStats(catKey) {
+  try {
+    const d = JSON.parse(localStorage.getItem(nsKey('gameItems_' + catKey)));
+    if (d && d.total > 0) return { owned: d.owned || 0, total: d.total };
+  } catch (e) { /* noop */ }
+  return null;
+}
+
+// 現在の所持データからハイウォーターマークを更新し、新規解禁分の称号一覧を返す
+function checkAndUnlockTitles() {
+  const store = loadTitleStore();
+  let sumOwned = 0, sumTotal = 0;
+
+  TITLE_CAT_KEYS.forEach(catKey => {
+    const stats = titleCatStats(catKey);
+    if (!stats) return;
+    sumOwned += stats.owned;
+    sumTotal += stats.total;
+    const pct = Math.round((stats.owned / stats.total) * 100);
+    const prevMax = (store.hwm.perCat[catKey] && store.hwm.perCat[catKey].pctMax) || 0;
+    store.hwm.perCat[catKey] = { pctMax: Math.max(prevMax, pct) };
+  });
+
+  const overallPct = sumTotal > 0 ? Math.round((sumOwned / sumTotal) * 100) : 0;
+  store.hwm.overallPct = Math.max(store.hwm.overallPct, overallPct);
+
+  // perCatのpctMaxは既にhwmなので、そこから数える制覇数も自然と単調増加になる
+  const masteredCount = Object.values(store.hwm.perCat).filter(c => c.pctMax >= 100).length;
+  store.hwm.masteredCount = Math.max(store.hwm.masteredCount, masteredCount);
+
+  const newlyEarned = [];
+  TITLES.forEach(t => {
+    if (store.earned[t.id]) return;
+    if (t.condition(store.hwm)) {
+      store.earned[t.id] = new Date().toISOString();
+      newlyEarned.push(t);
+    }
+  });
+
+  saveTitleStore(store);
+  return newlyEarned;
+}
+
+// id="titlesPanel" を置いたページでのみ描画する（置いていないページは何もしない）
+function renderTitlesPanel() {
+  const panels = document.querySelectorAll('#titlesPanel');
+  if (!panels.length) return;
+  const store = loadTitleStore();
+  const earned = TITLES.filter(t => store.earned[t.id]);
+  const html = earned.length
+    ? earned.map(t => `
+        <div class="title-badge" title="${escapeHtmlPf(pfT(t.descJa, t.descEn))}">
+          <span class="title-badge-icon">${t.icon}</span>
+          <span class="title-badge-name">${escapeHtmlPf(pfT(t.name, t.nameEn))}</span>
+        </div>`).join('')
+    : `<div class="titles-empty">${pfT('まだ称号はありません。コレクションを進めよう！', 'No titles yet. Keep collecting!')}</div>`;
+  panels.forEach(p => { p.innerHTML = html; });
+}
+
+// 判定→保存→新規解禁分のトースト通知→パネル再描画までをまとめて行う。
+// profiles.js自身の初期化時（全ページ共通）に加え、各カテゴリページのsaveUserData()末尾、
+// 総合メニューの横断検索から所持状態を変更した箇所でも呼び出し、その場で解禁を反映する。
+function refreshTitlesUI() {
+  const newlyEarned = checkAndUnlockTitles();
+  if (newlyEarned.length && typeof showToast === 'function') {
+    const msg = newlyEarned.length === 1
+      ? pfT(`🏆 称号解禁「${newlyEarned[0].name}」`, `🏆 Title unlocked: ${newlyEarned[0].nameEn}`)
+      : pfT(`🏆 称号を${newlyEarned.length}個解禁！`, `🏆 ${newlyEarned.length} titles unlocked!`);
+    showToast(msg);
+  }
+  renderTitlesPanel();
 }
 
 /* ================================================================
@@ -1540,6 +1669,7 @@ function pfInit() {
   ensureProfilesInit();
   pfInjectStyle();
   pfApplyThemeColor(getActiveProfile().color);
+  refreshTitlesUI(); // 🏆 全ページ共通：起動のたびに称号判定＆パネル描画（navが無いページでも動くようここで実行）
 
   const tint = document.createElement('div');
   tint.className = 'pf-tint-overlay';
