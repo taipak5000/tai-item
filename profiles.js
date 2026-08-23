@@ -513,6 +513,10 @@ function pfInjectStyle() {
       color: var(--text-2); line-height: 1.5; }
     .pf-row-title-icon { flex-shrink: 0; font-size: 14px; line-height: 1.5; }
     .pf-row-title-text b { color: var(--text); }
+    /* 🌐 称号がどのツール（サイト）で獲得されたかを示す出典ラベル。
+       .dash-section-labelと同じ「小さく・大文字・字間を空けた」控えめな見出し表現に揃える */
+    .pf-row-title-source { display: block; font-size: 10px; font-weight: 700; color: var(--text-3);
+      text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 1px; }
     .pf-icon-btn { background: var(--bg); border: 1px solid var(--sep); color: var(--text-2);
       border-radius: 6px; padding: 5px 9px; font-size: 13px; cursor: pointer; flex-shrink: 0; }
     .pf-icon-btn:hover { background: var(--sep); }
@@ -748,19 +752,159 @@ function saveTitleStore(store) {
   localStorage.setItem(nsKey(TITLES_KEY), JSON.stringify(store));
 }
 
+// このツール（アイテム所持管理）自身の称号一覧に付ける出典ラベル。
+// 他ツール分（CROSS_TOOL_TITLE_CATALOG）と表示を揃えるため、item分にも同じ
+// { source, sourceEn } の形で持たせておく。
+const ITEM_TOOL_SOURCE = 'アイテム所持管理';
+const ITEM_TOOL_SOURCE_EN = 'Item Ownership Tracker';
+
+/* ================================================================
+   🌐 他ツール（taipak5000.github.io配下の姉妹サイト群）の称号カタログ
+   プロフィール切替モーダルで「今開いているこのサイトの称号だけ」ではなく、
+   ユーザーが持つ全ツールの称号を横断して見せるための静的データ。
+   これらは全て別ファイルとして個別にデプロイされているサイトのため、
+   JSモジュールとしては共有できず、このファイル自身に複製を持つ必要がある。
+   （taipak5000.github.io配下は同一originのため、localStorage自体は既に
+   共有されている＝各サイトのタイトル判定ロジックが書き込んだ生データを
+   ここから直接読める）
+
+   storageKey / namespaced / extract は各サイト側の称号保存ロジックと
+   1対1で対応させてある。namespaced:trueは、nsKeyFor()と全く同じ
+   「デフォルトプロフィールは接尾辞なしでそのまま、それ以外は
+   `${storageKey}__p_${profileId}` を付与」というスキームで保存されている
+   （このファイル自身のTITLES_KEY='itemTitles_v1'と同じ方式）。
+   namespaced:falseの1件（score）はプロフィール非対応でプロフィール共通の
+   1キーに全プロフィール分をまとめて保存しているサイトのため、
+   profileIdによらず常に同じキーを読む。
+   ================================================================ */
+const CROSS_TOOL_TITLE_CATALOG = {
+  emote: {
+    storageKey: 'emoteTitles_v1', namespaced: true,
+    source: 'エモート所持率管理', sourceEn: 'Emote Ownership Tracker',
+    extract: d => Object.keys(d || {}),
+    titles: {
+      apprentice:    { icon: '🔰', name: '一芸見習い',       nameEn: 'Apprentice of One Trick', descJa: '所持レベル数が全体の10%に到達',       descEn: 'Owned levels reached 10% of the total' },
+      performer:     { icon: '🎭', name: '芸達者',           nameEn: 'Skilled Performer',        descJa: '所持レベル数が全体の50%に到達',       descEn: 'Owned levels reached 50% of the total' },
+      grandmaster:   { icon: '👑', name: 'エモート完全制覇', nameEn: 'Emote Grandmaster',        descJa: '全エモートの全レベルを所持',           descEn: 'Owns every level of every emote' },
+      completionist: { icon: '🗺️', name: '全種踏破',         nameEn: 'Completionist',            descJa: '全エモートを最低1レベルずつ所持',       descEn: 'Owns at least one level of every emote' },
+      guideFan:      { icon: '🧭', name: '案内人めぐり',     nameEn: 'Guide Wanderer',           descJa: '「案内人」エモートを全種最低1レベルずつ所持', descEn: 'Owns at least one level of every Guide emote' },
+    }
+  },
+  wings: {
+    storageKey: 'wingsTitles_v1', namespaced: true,
+    source: '羽トラッカー', sourceEn: 'Wings Tracker',
+    extract: d => Object.keys(d || {}),
+    titles: {
+      cape_lv5:  { icon: '🪶', name: '羽ばたきの証',       nameEn: 'Mark of the Wingbeat',        descJa: 'ケープレベル5に到達（光の翼20枚）',          descEn: 'Reached Cape Level 5 (20 Wings of Light)' },
+      cape_lv10: { icon: '🧥', name: '旅するケープ使い',   nameEn: 'Traveling Cape Wearer',       descJa: 'ケープレベル10に到達（光の翼120枚）',        descEn: 'Reached Cape Level 10 (120 Wings of Light)' },
+      cape_lv13: { icon: '👑', name: '光の翼、極めし者',   nameEn: 'Master of the Wings of Light', descJa: 'ケープレベル最大の13に到達（光の翼250枚）',   descEn: 'Reached the max Cape Level 13 (250 Wings of Light)' },
+      lc_half:   { icon: '🔦', name: '光を辿る探検家',     nameEn: 'Explorer of the Light',       descJa: '光の子を62体（半数）発見',                   descEn: 'Found 62 Children of Light (half)' },
+      lc_all:    { icon: '🌟', name: '光の子コンプリート', nameEn: 'Children of Light Completionist', descJa: '光の子124体すべてを発見',                descEn: 'Found all 124 Children of Light' },
+    }
+  },
+  spirit: {
+    storageKey: 'spiritCatalogTitles_v1', namespaced: true,
+    source: '精霊ツリー管理', sourceEn: 'Spirit Tree Manager',
+    extract: d => Object.keys(d || {}),
+    titles: {
+      pct1:   { icon: '🌱', name: '芽吹きの精霊使い',     nameEn: 'Budding Spirit Keeper',         descJa: '精霊ツリーのノードを1%以上解放した',   descEn: 'Unlocked 1%+ of all spirit tree nodes' },
+      pct10:  { icon: '🕯️', name: '灯火の道しるべ',       nameEn: 'Guiding Flame',                 descJa: '精霊ツリーのノードを10%以上解放した',  descEn: 'Unlocked 10%+ of all spirit tree nodes' },
+      pct25:  { icon: '🌿', name: '深緑の探求者',         nameEn: 'Explorer of the Deep Green',    descJa: '精霊ツリーのノードを25%以上解放した',  descEn: 'Unlocked 25%+ of all spirit tree nodes' },
+      pct50:  { icon: '🌳', name: '満開の森の守り人',     nameEn: 'Guardian of the Blooming Forest', descJa: '精霊ツリーのノードを50%以上解放した', descEn: 'Unlocked 50%+ of all spirit tree nodes' },
+      pct100: { icon: '👑', name: '精霊の森の賢者',       nameEn: 'Sage of the Spirit Forest',     descJa: '精霊ツリーの全ノードをコンプリートした', descEn: 'Unlocked 100% of all spirit tree nodes' },
+    }
+  },
+  score: {
+    storageKey: 'taiScoreTitles_v1', namespaced: false,
+    source: '楽譜作成ツール', sourceEn: 'Sheet Music Maker',
+    extract: d => ((d && d.earned) || []).map(e => e.id),
+    titles: {
+      firstSong:  { icon: '🎼', name: 'はじめの一歩',     nameEn: 'First Step',            descJa: 'はじめての1曲をライブラリに加えた',     descEn: 'Added your first song to the library' },
+      apprentice: { icon: '🎶', name: '作曲家見習い',     nameEn: 'Apprentice Composer',   descJa: '曲を5曲、ライブラリに加えた',           descEn: 'Added 5 songs to the library' },
+      craftsman:  { icon: '🎹', name: '楽譜職人',         nameEn: 'Sheet Music Craftsman', descJa: '曲を20曲、ライブラリに加えた',          descEn: 'Added 20 songs to the library' },
+      legend:     { icon: '🏅', name: '伝説の作曲家',     nameEn: 'Legendary Composer',    descJa: '曲を50曲、ライブラリに加えた',          descEn: 'Added 50 songs to the library' },
+      passionate: { icon: '🔥', name: '情熱の演奏者',     nameEn: 'Passionate Performer',  descJa: '1曲に100音を超える演奏を詰め込んだ',    descEn: 'Packed over 100 notes into a single song' },
+      virtuoso:   { icon: '⚡', name: '超絶技巧',         nameEn: 'Virtuoso',              descJa: '1曲に300音を超える演奏を詰め込んだ',    descEn: 'Packed over 300 notes into a single song' },
+    }
+  },
+  share: {
+    storageKey: 'shareTitles_v1', namespaced: true,
+    source: '創作物管理ツール', sourceEn: 'Creations Manager',
+    extract: d => ((d && d.earned) || []).map(e => e.id),
+    titles: {
+      first:      { icon: '🌱', name: 'はじめての一歩',   nameEn: 'First Step',           descJa: '創作物をはじめて追加した',       descEn: 'Added your first creation' },
+      apprentice: { icon: '🔨', name: '見習い設置職人',   nameEn: 'Apprentice Builder',   descJa: '累計5個の創作物を追加した',      descEn: '5 creations added (lifetime)' },
+      skilled:    { icon: '🏗️', name: '熟練の設置職人',   nameEn: 'Skilled Builder',      descJa: '累計15個の創作物を追加した',     descEn: '15 creations added (lifetime)' },
+      master:     { icon: '🏛️', name: '創作の匠',         nameEn: 'Master Creator',       descJa: '累計30個の創作物を追加した',     descEn: '30 creations added (lifetime)' },
+      legend:     { icon: '👑', name: '伝説の創作者',     nameEn: 'Legendary Creator',    descJa: '累計50個の創作物を追加した',     descEn: '50 creations added (lifetime)' },
+    }
+  },
+  nomacan: {
+    storageKey: 'skyNomacanTitles_v1', namespaced: true,
+    source: 'ノマキャン計算機', sourceEn: 'Nomacan Calculator',
+    extract: d => Object.keys((d && d.earned) || {}),
+    titles: {
+      streak3:  { icon: '🔥', name: '灯し始め',       nameEn: 'First Light',        descJa: '3日連続で記録',       descEn: 'Recorded 3 days in a row' },
+      streak7:  { icon: '🕯️', name: '一週間の灯火',   nameEn: 'A Week of Flame',    descJa: '7日連続で記録',       descEn: 'Recorded 7 days in a row' },
+      streak30: { icon: '🌟', name: '絶やさぬ灯',     nameEn: 'Unwavering Flame',   descJa: '30日連続で記録',      descEn: 'Recorded 30 days in a row' },
+      hold100:  { icon: '🕯️', name: '灯の蓄え',       nameEn: 'Stockpile of Light', descJa: '所持本数が100本に到達', descEn: 'Reached 100 candles held' },
+      hold300:  { icon: '🏮', name: '光の貯蔵庫',     nameEn: 'Vault of Light',     descJa: '所持本数が300本に到達', descEn: 'Reached 300 candles held' },
+      hold600:  { icon: '👑', name: '灯火の富豪',     nameEn: 'Flame Tycoon',       descJa: '所持本数が600本に到達', descEn: 'Reached 600 candles held' },
+    }
+  },
+  starcandle: {
+    storageKey: 'skyStarCandleCalc_titles_v1', namespaced: true,
+    source: '星のキャンドル計算機', sourceEn: 'Star Candle Calculator',
+    extract: d => Object.keys(d || {}),
+    titles: {
+      streak_3:   { icon: '🕯️', name: '灯を絶やさぬ者',       nameEn: 'Keeper of the Unbroken Flame', descJa: '赤闇を3日連続で取りこぼさず回収',  descEn: 'Collected shard rewards 3 days in a row without missing one' },
+      streak_7:   { icon: '🔥', name: '一週間の灯火番',       nameEn: 'Weeklong Flame Watcher',       descJa: '赤闇を7日連続で取りこぼさず回収',  descEn: 'Collected shard rewards 7 days in a row without missing one' },
+      streak_20:  { icon: '🌌', name: '常夜の灯守',           nameEn: "Eternal Night's Flamekeeper",  descJa: '赤闇を20日連続で取りこぼさず回収', descEn: 'Collected shard rewards 20 days in a row without missing one' },
+      candle_30:  { icon: '⭐', name: '星屑の蒐集者',         nameEn: 'Stardust Gatherer',            descJa: '所持本数が最高30本に到達',        descEn: 'Held 30 candles at once for the first time' },
+      candle_100: { icon: '🌟', name: '百連の灯',             nameEn: 'Hundredfold Flame',            descJa: '所持本数が最高100本に到達',       descEn: 'Held 100 candles at once for the first time' },
+      candle_300: { icon: '👑', name: '星々の帳を統べる者',   nameEn: 'Ruler of the Star Curtain',    descJa: '所持本数が最高300本に到達',       descEn: 'Held 300 candles at once for the first time' },
+    }
+  },
+};
+
+// 上記カタログの1ツール分について、指定プロフィールの解除済み称号を読む。
+// 破損データ・未知のtitle id（カタログ未収録＝相手サイトの将来のアップデートで
+// 追加された等）は静かにスキップし、ここで例外を投げてモーダル全体を
+// 巻き込まないようにする。
+function getCrossToolEarnedTitles(profileId) {
+  const out = [];
+  Object.keys(CROSS_TOOL_TITLE_CATALOG).forEach(toolKey => {
+    const tool = CROSS_TOOL_TITLE_CATALOG[toolKey];
+    const key = tool.namespaced ? nsKeyFor(tool.storageKey, profileId) : tool.storageKey;
+    let raw = null;
+    try { raw = JSON.parse(localStorage.getItem(key)); } catch (e) { /* 破損データはスキップ */ }
+    let ids = [];
+    try { ids = tool.extract(raw) || []; } catch (e) { /* extract失敗時もスキップ */ }
+    ids.forEach(id => {
+      const t = tool.titles[id];
+      if (!t) return; // カタログに無いidは無視
+      out.push({ icon: t.icon, name: t.name, nameEn: t.nameEn, descJa: t.descJa, descEn: t.descEn, source: tool.source, sourceEn: tool.sourceEn });
+    });
+  });
+  return out;
+}
+
 // プロフィール切替モーダル用：ACTIVEでない任意のprofileIdについても、
-// 解除済みの称号一覧（アイコン・名前・獲得条件）を読む。
+// 解除済みの称号一覧（アイコン・名前・獲得条件・出典ツール名）を読む。
 // loadTitleStore()はACTIVEプロフィール専用のnsKey()を使うため、
 // ここではnsKeyForで直接キーを組み立てて読む。
+// このツール（アイテム所持管理）自身の称号に加え、姉妹サイト群
+// （CROSS_TOOL_TITLE_CATALOG）の称号も横断して合算して返す。
 function getEarnedTitlesForProfile(profileId) {
   let earned = {};
   try {
     const d = JSON.parse(localStorage.getItem(nsKeyFor(TITLES_KEY, profileId)));
     if (d && typeof d === 'object' && d.earned && typeof d.earned === 'object') earned = d.earned;
   } catch (e) { /* 破損データは「称号なし」として扱う（loadTitleStoreと同方針） */ }
-  return TITLES
+  const ownTitles = TITLES
     .filter(t => earned[t.id])
-    .map(t => ({ icon: t.icon, name: t.name, nameEn: t.nameEn, descJa: t.descJa, descEn: t.descEn }));
+    .map(t => ({ icon: t.icon, name: t.name, nameEn: t.nameEn, descJa: t.descJa, descEn: t.descEn, source: ITEM_TOOL_SOURCE, sourceEn: ITEM_TOOL_SOURCE_EN }));
+  return ownTitles.concat(getCrossToolEarnedTitles(profileId));
 }
 
 // カテゴリページを一度も開いていない（=未登録）カテゴリはnullを返しスキップする
@@ -1532,7 +1676,10 @@ function pfRenderModal() {
         ${titlesExpanded ? `<div class="pf-row-titles-list">${earnedTitles.map(t => `
           <div class="pf-row-title-item">
             <span class="pf-row-title-icon">${t.icon}</span>
-            <span class="pf-row-title-text"><b>${escapeHtmlPf(pfT(t.name, t.nameEn))}</b> — ${escapeHtmlPf(pfT(t.descJa, t.descEn))}</span>
+            <span class="pf-row-title-text">
+              <span class="pf-row-title-source">${escapeHtmlPf(pfT(t.source, t.sourceEn))}</span>
+              <b>${escapeHtmlPf(pfT(t.name, t.nameEn))}</b> — ${escapeHtmlPf(pfT(t.descJa, t.descEn))}
+            </span>
           </div>`).join('')}</div>` : ''}`;
 
     return `
