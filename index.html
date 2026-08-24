@@ -2565,17 +2565,25 @@ function removeAcquireLogEntry(itemId) {
   renderAcquireLog();
 }
 
-function renderAcquireLog() {
-  const body = document.getElementById('acquireLogBody');
-  if (!body || !allItemsCache) return;
-
+// 獲得ログを cat/item 情報付きの配列に整形する共通ヘルパー
+// （allItemsCacheに存在しないアイテムはカテゴリ改修等で参照できなくなっている
+// 可能性があるため除外する。renderAcquireLog()と振り返り集計の両方で使う）
+function getAcquireLogEntries() {
+  if (!allItemsCache) return [];
   const log = getItemAcquireLog();
-  const entries = Object.keys(log).map(itemId => {
+  return Object.keys(log).map(itemId => {
     const rec = log[itemId];
     const cat = CATS.find(c => c.key === rec.catKey);
     const item = allItemsCache.find(it => it.catKey === rec.catKey && it.id === itemId);
     return (item && cat) ? { itemId, cat, item, at: rec.at } : null;
   }).filter(Boolean);
+}
+
+function renderAcquireLog() {
+  const body = document.getElementById('acquireLogBody');
+  if (!body || !allItemsCache) return;
+
+  const entries = getAcquireLogEntries();
 
   const en = CURRENT_LANG === 'en';
   if (entries.length === 0) {
@@ -2605,11 +2613,117 @@ function renderAcquireLog() {
       <button class="wish-remove" onclick="removeAcquireLogEntry('${e.itemId}')" aria-label="${en ? 'Delete record' : '記録を削除'}">✕</button>
     </div>`).join('');
 
+  // 📊 今月/今年の振り返り集計（画像シェアボタン用のプレビュー表示）
+  const now = new Date();
+  const monthCount = entries.filter(e => {
+    const d = new Date(e.at);
+    return !isNaN(d.getTime()) && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  }).length;
+  const yearCount = entries.filter(e => {
+    const d = new Date(e.at);
+    return !isNaN(d.getTime()) && d.getFullYear() === now.getFullYear();
+  }).length;
+
   body.innerHTML = `
     <div style="margin-top:10px;">${listHtml}</div>
     <div class="wish-total-box">
       <div class="wish-total-row"><span>📦 ${en ? 'Total recorded' : '記録件数'}</span><b>${entries.length}${en ? '' : ' 件'}</b></div>
+      <div class="wish-total-row"><span>📅 ${en ? 'Acquired this month' : '今月の入手数'}</span><b>${monthCount}${en ? '' : ' 件'}</b></div>
+      <div class="wish-total-row"><span>🗓️ ${en ? 'Acquired this year' : '今年の入手数'}</span><b>${yearCount}${en ? '' : ' 件'}</b></div>
+    </div>
+    <div class="action-row" style="margin-top:12px;">
+      <button class="action-btn twitter full" onclick="shareRecapOnTwitter('month')">${en ? '📤🖼️ Share This Month’s Recap' : '📤🖼️ 今月の振り返りを画像でシェア'}</button>
+    </div>
+    <div class="action-row" style="margin-top:8px;">
+      <button class="action-btn twitter full" onclick="shareRecapOnTwitter('year')">${en ? '📅🖼️ Share This Year’s Recap' : '📅🖼️ 今年の振り返りを画像でシェア'}</button>
     </div>`;
+}
+
+const RECAP_MONTH_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+// 指定期間（'month'=今月 / 'year'=今年）に入手したアイテムを集計する
+// （直近5件は振り返りカードのハイライト表示に使う）
+function getRecapStats(scope) {
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth();
+  const entries = getAcquireLogEntries().filter(e => {
+    const d = new Date(e.at);
+    if (isNaN(d.getTime())) return false;
+    return scope === 'year' ? d.getFullYear() === y : (d.getFullYear() === y && d.getMonth() === m);
+  });
+  entries.sort((a, b) => new Date(b.at) - new Date(a.at));
+  return { count: entries.length, recent: entries.slice(0, 5), year: y, month: m };
+}
+
+// 今月/今年の振り返りカード（画面外・html2canvas書き出し用）を生成する
+function buildRecapExportCardEl(scope) {
+  const { count, recent, year, month } = getRecapStats(scope);
+  const en = CURRENT_LANG === 'en';
+  const periodTxt = scope === 'year'
+    ? (en ? `${year}` : `${year}年`)
+    : (en ? `${RECAP_MONTH_EN[month]} ${year}` : `${year}年${month + 1}月`);
+  const labelTxt = scope === 'year'
+    ? (en ? 'Items Acquired This Year' : '今年獲得したアイテム数')
+    : (en ? 'Items Acquired This Month' : '今月獲得したアイテム数');
+
+  const rows = recent.map(e => `
+    <div class="exp-row">
+      <div class="exp-icon">${itemIconHtml(e.cat, e.item)}</div>
+      <div class="exp-info">
+        <div class="exp-cat">${trCat(e.cat.name)}</div>
+        <div class="exp-name">${escapeHtml(trItem(e.item))}</div>
+      </div>
+    </div>`).join('');
+
+  const today = new Date();
+  const dateTxt = en
+    ? `Created ${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`
+    : `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日作成`;
+
+  const card = document.createElement('div');
+  card.className = 'export-card';
+  card.innerHTML = `
+    <div class="exp-brand">${en ? '🗂️ Item Collection Tracker' : '🗂️ アイテム所持率管理'}</div>
+    <div class="exp-hero">
+      <div class="exp-hero-pct">${count}</div>
+      <div class="exp-hero-label">${labelTxt}</div>
+      <div class="exp-hero-nums">${escapeHtml(periodTxt)}</div>
+    </div>
+    ${rows
+      ? `<div class="exp-body">${rows}</div>`
+      : `<div class="exp-comment">${en ? 'No items recorded in this period yet' : 'この期間の記録はまだありません'}</div>`}
+    <div class="exp-date">${dateTxt}</div>
+  `;
+  document.body.appendChild(card);
+  return card;
+}
+
+// 振り返りからツイート本文を作成（文末に必ずサイトURLを付与）
+function buildRecapTweetText(scope) {
+  const { count, year, month } = getRecapStats(scope);
+  const en = CURRENT_LANG === 'en';
+  const periodTxt = scope === 'year'
+    ? (en ? `in ${year}` : `${year}年は`)
+    : (en ? `in ${RECAP_MONTH_EN[month]} ${year}` : `${year}年${month + 1}月は`);
+  return en
+    ? `I acquired ${count} new item(s) ${periodTxt}! ✨\nHow many did you get? 🎁\n\n${SITE_URL}\n${RECAP_SHARE_HASHTAG}`
+    : `${periodTxt}新しく${count}件のアイテムを入手しました！✨\nあなたは何個入手した？🎁\n\n${SITE_URL}\n${RECAP_SHARE_HASHTAG}`;
+}
+
+// 今月/今年の振り返りを画像として保存・Xへ共有する
+function shareRecapOnTwitter(scope) {
+  const { count } = getRecapStats(scope);
+  if (count === 0) {
+    showToast(CURRENT_LANG === 'en' ? 'No items recorded in this period yet' : 'この期間の記録がまだありません');
+    return;
+  }
+  const filenameBase = scope === 'year'
+    ? (CURRENT_LANG === 'en' ? 'Yearly Recap' : '年間振り返り')
+    : (CURRENT_LANG === 'en' ? 'Monthly Recap' : '月間振り返り');
+  return exportElementAsImage(() => buildRecapExportCardEl(scope), filenameBase, {
+    shareText: buildRecapTweetText(scope),
+    successToast: CURRENT_LANG === 'en' ? 'Shared!' : '共有しました！'
+  });
 }
 
 /* ================================================================
@@ -3505,6 +3619,8 @@ const RANDOM_SHARE_HASHTAG = '#Sky所持率管理今日のコーデ';
 const FAV_SHARE_HASHTAG = '#Sky所持率管理お気に入り';
 // クローゼットコラージュの共有専用タグ
 const CLOSET_SHARE_HASHTAG = '#Sky所持率管理コラージュ';
+// 月間/年間振り返りの共有専用タグ
+const RECAP_SHARE_HASHTAG = '#Sky所持率管理振り返り';
 
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, c => ({
