@@ -179,6 +179,11 @@ function showToast(msg) {
   const t = document.createElement('div');
   t.className = 'pf-toast';
   t.textContent = msg;
+  // 称号解禁通知＋通常の操作通知など、同じtick内で2つ以上showToast()が呼ばれると
+  // 全て同じ固定位置に重なって表示され、後から追加した方だけが見え前の通知が
+  // 完全に隠れてしまう。既に表示中のトースト数だけ上に積み上げて両方見えるようにする
+  const stackIndex = document.querySelectorAll('.pf-toast').length;
+  if (stackIndex > 0) t.style.bottom = `calc(100px + ${stackIndex * 44}px)`;
   document.body.appendChild(t);
   setTimeout(() => t.classList.add('show'), 10);
   setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2600);
