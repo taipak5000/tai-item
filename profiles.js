@@ -2239,7 +2239,6 @@ function pfInit() {
     { icon: '✨', ja: '精霊同行ツール', en: 'Spirit Companion Tool', href: 'https://taipak5000.github.io/companion/' },
     { icon: '🪽', ja: '羽トラッカー', en: 'Wing Tracker', href: 'https://taipak5000.github.io/wings/' },
     { icon: '🔄', ja: 'データ引継ぎ', en: 'Data Transfer', href: 'https://taipak5000.github.io/tai-transfer/' },
-    { icon: '📅', ja: 'プロフィール', en: 'Profile', href: 'https://taipak5000.github.io/skyzztai-profile/' },
     { icon: '⚙️', ja: '設定・更新情報', en: 'Settings & Updates', href: 'https://taipak5000.github.io/tai-info/' },
   ];
   toolsDrawer.innerHTML = `
