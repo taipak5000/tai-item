@@ -183,7 +183,7 @@ function showToast(msg) {
   // 全て同じ固定位置に重なって表示され、後から追加した方だけが見え前の通知が
   // 完全に隠れてしまう。既に表示中のトースト数だけ上に積み上げて両方見えるようにする
   const stackIndex = document.querySelectorAll('.pf-toast').length;
-  if (stackIndex > 0) t.style.bottom = `calc(100px + ${stackIndex * 44}px)`;
+  if (stackIndex > 0) t.style.bottom = `calc(84px + env(safe-area-inset-bottom) + ${stackIndex * 44}px)`;
   document.body.appendChild(t);
   setTimeout(() => t.classList.add('show'), 10);
   setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2600);
@@ -607,7 +607,7 @@ function pfInjectStyle() {
     .srch-bulk-actions .pf-icon-btn { flex: 1; min-width: 120px; text-align: center; }
 
     .pf-toast {
-      position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px);
+      position: fixed; bottom: calc(84px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%) translateY(20px);
       background: rgba(0,0,0,0.75); color: #fff; font-size: 13px; font-weight: 500; padding: 10px 20px;
       border-radius: 20px; z-index: 2000; opacity: 0; transition: all 0.25s ease; white-space: nowrap; pointer-events: none;
     }
@@ -2239,6 +2239,10 @@ function pfInit() {
     { icon: '✨', ja: '精霊同行ツール', en: 'Spirit Companion Tool', href: 'https://taipak5000.github.io/companion/' },
     { icon: '🪽', ja: '羽トラッカー', en: 'Wing Tracker', href: 'https://taipak5000.github.io/wings/' },
     { icon: '🔄', ja: 'データ引継ぎ', en: 'Data Transfer', href: 'https://taipak5000.github.io/tai-transfer/' },
+    { icon: '📅', ja: 'プロフィール', en: 'Profile', href: 'https://taipak5000.github.io/skyzztai-profile/' },
+    { icon: '🕯️', ja: 'ノマキャン計算機プロ', en: 'Candle Calculator Pro', href: 'https://taipak5000.github.io/tai-nomacan-pro/' },
+    { icon: '⚙️', ja: '設定・更新情報', en: 'Settings & Updates', href: 'https://taipak5000.github.io/tai-info/' },
+    { icon: '🕊️', ja: '再訪精霊データベース', en: 'Revisit Spirit Database', href: 'https://taipak5000.github.io/tai-revisit/' },
   ];
   toolsDrawer.innerHTML = `
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
