@@ -104,25 +104,9 @@
     }
 
     /* ── Content wrapper ───────────────────────── */
-    /* 🖥️ 他13ページ（cape.html等）と同じ720〜960pxブレークポイント＋200px
-       固定サイドバーのパターンに揃える（デスクトップレイアウト統一） */
-    .app-layout { max-width: 720px; margin: 0 auto; padding: 0 16px; }
-    @media (min-width: 850px) { .app-layout { max-width: 960px; display: flex; gap: 20px; align-items: flex-start; } }
-    .wrap { flex: 1; min-width: 0; }
-
-    /* ── Sidebar（他ページと同じ総合メニュー互換の見た目） ── */
-    .sidebar {
-      width: 200px; flex-shrink: 0; position: sticky; top: 58px;
-      background: var(--card); border-radius: var(--r); padding: 16px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.07); display: none; margin-top: 22px;
+    .wrap {
+      max-width: 720px; margin: 0 auto; padding: 0 16px;
     }
-    @media (min-width: 850px) { .sidebar { display: block; } }
-    .sidebar-section-label { font-size: 11px; font-weight: 700; color: var(--text-2); margin-bottom: 8px; text-transform: uppercase; }
-    .sidebar-nav-link {
-      display: flex; align-items: center; gap: 9px; padding: 9px 12px; border-radius: var(--r-sm);
-      color: var(--text); font-size: 13.5px; font-weight: 500; margin-bottom: 2px;
-    }
-    .sidebar-nav-link.current-tool { background: var(--orange-bg); color: var(--orange); font-weight: 700; }
 
     /* ── Section labels ────────────────────────── */
     .sec-label {
@@ -999,16 +983,6 @@
   </div>
 </nav>
 
-<div class="app-layout">
-
-  <!-- Sidebar（総合メニュー互換。ここが総合メニュー自体なので「現在地」表示のみ） -->
-  <aside class="sidebar">
-    <div class="sidebar-section-label" data-i18n-en="🗂️ Menu">🗂️ メニュー</div>
-    <nav>
-      <span class="sidebar-nav-link current-tool" data-i18n-en="🏠 Main Menu (Current)">🏠 総合メニュー（現在地）</span>
-    </nav>
-  </aside>
-
 <div class="wrap">
 
   <!-- ▸ はじめての方へ（紹介文）
@@ -1139,7 +1113,6 @@
   </div>
 
 </div><!-- /wrap -->
-</div><!-- /.app-layout -->
 
 <!-- ▸ Modal: ランダムコーデ -->
 <div class="modal-overlay" id="randomModal" onclick="if(event.target===this)closeModal('randomModal')">

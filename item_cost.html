@@ -92,22 +92,7 @@
       padding: 6px 12px; font-size: 13px; font-weight: 600; color: var(--text);
     }
 
-    .app-layout { max-width: 720px; margin: 0 auto; padding: 0 16px; }
-    @media (min-width: 850px) { .app-layout { max-width: 960px; display: flex; gap: 20px; align-items: flex-start; } }
-    .wrap { flex: 1; min-width: 0; }
-
-    .sidebar {
-      width: 200px; flex-shrink: 0; position: sticky; top: 58px;
-      background: var(--card); border-radius: var(--r); padding: 16px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.07); display: none; margin-top: 22px;
-    }
-    @media (min-width: 850px) { .sidebar { display: block; } }
-    .sidebar-section-label { font-size: 11px; font-weight: 700; color: var(--text-2); margin-bottom: 8px; text-transform: uppercase; }
-    .sidebar-nav-link {
-      display: flex; align-items: center; gap: 9px; padding: 9px 12px; border-radius: var(--r-sm);
-      color: var(--text); font-size: 13.5px; font-weight: 500; margin-bottom: 2px;
-    }
-    .sidebar-nav-link:hover { background: var(--bg); }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 0 16px; }
 
     .notice-card {
       background: var(--card); border-radius: var(--r); padding: 16px; margin-top: 16px;
@@ -410,16 +395,7 @@
   <button class="nav-action" onclick="toggleLang()" id="langToggleBtn" data-i18n-en="日本語">EN</button>
 </nav>
 
-<div class="app-layout">
-
-  <aside class="sidebar">
-    <div class="sidebar-section-label" data-i18n-en="🗂️ Menu">🗂️ メニュー</div>
-    <nav>
-      <a href="index.html" class="sidebar-nav-link" data-i18n-en="🏠 Back to Main Menu">🏠 総合メニューに戻る</a>
-    </nav>
-  </aside>
-
-  <div class="wrap">
+<div class="wrap">
 
     <div class="notice-card"
       data-i18n-en-html='Costs are compiled from the <a href="https://sky-children-of-the-light.fandom.com/wiki/Shoes" target="_blank" rel="noopener noreferrer">Sky: Children of the Light Wiki (English)</a>&rsquo;s "Source" and "Cost" tables for each item.<br>
@@ -625,7 +601,6 @@
     </div>
 
   </div><!-- /wrap -->
-</div><!-- /.app-layout -->
 
 <!-- ▸ Modal: 画像プレビュー（Xで共有） -->
 <div class="modal-overlay" id="imagePreviewModal" onclick="if(event.target===this)closeModal('imagePreviewModal')">
