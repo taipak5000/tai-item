@@ -1885,16 +1885,14 @@ const NEXT_UPDATE = {
 // アイテム検索の「🌟 現在開催中の季節・イベントのみ」チェックで、来訪期間中だけその精霊のアイテムも表示されるようにする。
 // profile（自己紹介ページ）のrecurringVisitと同じ周期・考え方なので、直近1回分の開始・終了さえ
 // 合わせておけば、以降の来訪期間は自動で計算される（毎回手動で切り替える必要はない）。
-// 別の精霊の再訪に切り替わったら、name・items・anchorStart/anchorEndをその回に合わせて
-// 更新してください（profile側のrecurringVisitも同じタイミングで更新すること）。
+// 別の精霊の再訪に切り替わったら、items・anchorStart/anchorEndをその回に合わせて
+// 更新してください（profile側のrecurringVisitのanchorStart/anchorEndも同じタイミングで更新すること）。
 const REVISIT_SPIRIT_SCHEDULE = {
   items: [
-    { catKey: 'cape', id: 'cape_047' },
-    { catKey: 'mask', id: 'mask_038' },
-    { catKey: 'hairstyle', id: 'hairstyle_070' },
+    { catKey: 'mask', id: 'mask_006' },
   ],
-  anchorStart: '2026-07-30T16:00:00+09:00',
-  anchorEnd: '2026-08-03T15:59:59+09:00',
+  anchorStart: '2026-08-27T16:00:00+09:00',
+  anchorEnd: '2026-08-31T15:59:59+09:00',
   intervalDays: 14,
 };
 
