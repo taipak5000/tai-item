@@ -94,6 +94,9 @@
 
     .wrap { max-width: 720px; margin: 0 auto; padding: 0 16px; }
 
+    /* desktop width standard restored: widen to 960px at >=850px, single column, no sidebar */
+    @media (min-width: 850px) { .wrap { max-width: 960px; } }
+
     .notice-card {
       background: var(--card); border-radius: var(--r); padding: 16px; margin-top: 16px;
       box-shadow: 0 1px 4px rgba(0,0,0,0.07); font-size: 13px; color: var(--text-2); line-height: 1.7;

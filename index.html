@@ -107,6 +107,10 @@
     .wrap {
       max-width: 720px; margin: 0 auto; padding: 0 16px;
     }
+    /* 🖥️ 共有デスクトップ標準：850px以上は960pxまで拡張（1カラムのまま、サイドバーは無し）。
+       常設サイドバー撤去(58790a8)の際にこの幅ブレークポイントまで誤って一緒に削除されて
+       いたため復元。他13ページも同様 */
+    @media (min-width: 850px) { .wrap { max-width: 960px; } }
 
     /* ── Section labels ────────────────────────── */
     .sec-label {

@@ -93,6 +93,9 @@
     /* ── Layout ───────────────────────── */
     .wrap { max-width: 720px; margin: 0 auto; padding: 0 16px; }
 
+    /* desktop width standard restored: widen to 960px at >=850px, single column, no sidebar */
+    @media (min-width: 850px) { .wrap { max-width: 960px; } }
+
     /* ── Category Header Banner ─────────────────── */
     .cat-header-card {
       background: var(--card); border-radius: var(--r); padding: 20px; margin-top: 16px;
