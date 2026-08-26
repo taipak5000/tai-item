@@ -338,6 +338,9 @@
     .exp-hero { text-align: center; padding: 6px 0 18px; }
     .exp-hero-label { color: rgba(255,255,255,0.9); font-size: 15px; font-weight: 700; letter-spacing: 0.3px; }
     .exp-hero-count { color: rgba(255,255,255,0.75); font-size: 12.5px; margin-top: 4px; }
+    /* 📊 月間/年間の支出振り返り用：index.html（入手ログの振り返り）と同じヒーロー数字表現 */
+    .exp-hero-pct { color: #fff; font-size: 40px; font-weight: 800; letter-spacing: -1px; line-height: 1; }
+    .exp-hero-nums { color: #fff; font-size: 13px; margin-top: 10px; opacity: 0.92; }
     .exp-cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; background: #fff; border-radius: 18px; padding: 16px; }
     .exp-cat-cell { background: var(--bg); border-radius: 12px; padding: 14px 8px; text-align: center; }
     .exp-cat-cell-icon { font-size: 20px; }
@@ -503,6 +506,18 @@
       <button type="button" class="share-btn" onclick="shareReceivedGiftsOnTwitter()">
         <span>🎁</span>
         <span data-i18n-en="Share Gifts I Received">もらったギフトを共有</span>
+      </button>
+    </div>
+
+    <!-- 📊 月間/年間の支出振り返り画像シェア（index.htmlの入手ログ振り返りシェアと同じ考え方） -->
+    <div class="share-row" style="margin-top:8px;">
+      <button type="button" class="share-btn" onclick="shareCostRecapOnTwitter('month')">
+        <span>📅</span>
+        <span data-i18n-en="Share This Month's Spending">今月の支出を振り返りシェア</span>
+      </button>
+      <button type="button" class="share-btn" onclick="shareCostRecapOnTwitter('year')">
+        <span>🗓️</span>
+        <span data-i18n-en="Share This Year's Spending">今年の支出を振り返りシェア</span>
       </button>
     </div>
 
@@ -1500,6 +1515,170 @@ function buildGiftHistoryTweetText() {
 function shareGiftHistoryOnTwitter() {
   return exportElementAsImage(buildGiftHistoryExportCardEl, CURRENT_LANG === 'en' ? 'Gift History' : 'プレゼント履歴', {
     shareText: buildGiftHistoryTweetText(),
+    successToast: CURRENT_LANG === 'en' ? 'Shared!' : '共有しました！'
+  });
+}
+
+/* ================================================================
+   📊 月間/年間の支出振り返り画像シェア
+   index.html（入手ログ）の月間/今年の振り返りシェア機能と同じ考え方で、
+   実額支出を振り返りカードとして画像シェアできるようにする。
+   集計対象・除外ルールはrenderSummary()の月間予算算出（monthMoneySum）と同じだが、
+   月・年どちらの期間でも判定できるよう一般化している（アイテム獲得ログ・
+   プレゼント履歴・キャンドル課金ログのいずれも日付が無いものは対象外）。
+   ================================================================ */
+
+// 指定期間（'month'=今月 / 'year'=今年）に実額支出として計上される明細を、新しい順の配列で返す
+function getCostRecapEntries(scope) {
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth();
+  const inScopeIso = iso => {
+    if (!iso) return false;
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return false;
+    return scope === 'year' ? d.getFullYear() === y : (d.getFullYear() === y && d.getMonth() === m);
+  };
+  // "YYYY-MM-DD"（プレゼント履歴・キャンドル課金の日付入力欄由来）はUTCとして解釈されると
+  // タイムゾーンで日付がずれるため、年月日を直接見てローカル日時として判定する
+  const inScopeDateStr = str => {
+    if (!str) return false;
+    const dm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str);
+    if (dm) return scope === 'year' ? Number(dm[1]) === y : (Number(dm[1]) === y && (Number(dm[2]) - 1) === m);
+    return inScopeIso(str);
+  };
+
+  const entries = [];
+  const acquireLog = getItemAcquireLog();
+  const countedSetIds = new Set();
+  getAllItems().forEach(item => {
+    if (!item.owned) return;
+    if (item.seasonPendantOwned && item.acquireMode === 'inSeason') return; // 季節中入手扱いのため対象外
+    if (item.isTicketItem && item.acquireMode !== 'revisit') return; // チケットで入手扱い（0）のため対象外
+    const acquireRec = acquireLog[item.id];
+    if (!acquireRec || acquireRec.catKey !== item.catKey || !inScopeIso(acquireRec.at)) return; // 記録が無い/期間外は対象外
+
+    // renderSummary()のmonthMoneySum算出と同じく、チケット交換アイテムで「復刻で入手」扱いのものは
+    // revisitCost（復刻時の実際のコスト）を見る
+    const cost = item.isTicketItem ? (item.revisitCost || {}) : item.cost;
+    if ((cost.type === 'candle' || cost.type === 'starCandle') && item.candleMoneyMode === 'paidCandle' && item.candleMoneyYen > 0) {
+      entries.push({ name: trItem(item), catLabel: trCat(CAT_LABELS[item.catKey] || item.catKey), img: item.img, icon: '🕯️', yen: item.candleMoneyYen, at: acquireRec.at });
+      return;
+    }
+    if (cost.type === 'money' && typeof cost.value === 'number') {
+      if (item.moneyAcquireMode === 'gift') return; // ギフトでもらった分は自分の支出から除外
+      if (cost.setId) {
+        if (countedSetIds.has(cost.setId)) return;
+        countedSetIds.add(cost.setId);
+      }
+      entries.push({ name: trItem(item), catLabel: trCat(CAT_LABELS[item.catKey] || item.catKey), img: item.img, icon: '💴', yen: cost.value, at: acquireRec.at });
+    }
+  });
+
+  // 課金アイテムプレゼント履歴：実額に含める設定のものだけ（合計に含める設定の場合のみ）
+  if (loadGiftDisplayMode() === 'combined') {
+    loadGiftHistory().filter(g => g.include).forEach(g => {
+      const at = g.date || g.createdAt;
+      if (!inScopeDateStr(at)) return;
+      const it = getGiftPickableItem(g.catKey, g.itemId);
+      if (it && it.cost && it.cost.type === 'money' && typeof it.cost.value === 'number') {
+        const catLabel = g.catKey === GIFT_PASS_CAT_KEY ? (CURRENT_LANG === 'en' ? 'Gift Pass' : 'ギフトパス') : trCat(CAT_LABELS[g.catKey]);
+        entries.push({ name: trItem(it), catLabel, img: itemImgMap && itemImgMap[g.itemId], icon: it.icon || '🎁', yen: it.cost.value, at });
+      }
+    });
+  }
+
+  // キャンドル課金の購入ログ：実額に含める設定のものだけ（合計に含める設定の場合のみ）
+  if (loadCandleDisplayMode() === 'combined') {
+    loadCandlePurchases().filter(p => p.include !== false).forEach(p => {
+      const at = p.date || p.createdAt;
+      if (!inScopeDateStr(at)) return;
+      const pack = candlePackByKey(p.packKey);
+      if (!pack) return;
+      const name = CURRENT_LANG === 'en' ? `Candle Pack (${pack.candles})` : `キャンドルパック（${pack.candles}本）`;
+      entries.push({ name, catLabel: CURRENT_LANG === 'en' ? 'Candle Purchase' : 'キャンドル課金', img: '', icon: '🕯️', yen: pack.price, at });
+    });
+  }
+
+  entries.sort((a, b) => new Date(b.at) - new Date(a.at));
+  return entries;
+}
+
+// 指定期間の実額支出合計・件数・直近5件（振り返りカードのハイライト表示用）を求める
+function getCostRecapStats(scope) {
+  const entries = getCostRecapEntries(scope);
+  return { total: entries.reduce((sum, e) => sum + e.yen, 0), count: entries.length, recent: entries.slice(0, 5) };
+}
+
+// 今月/今年の支出振り返りカード（画面外・html2canvas書き出し用）を生成する
+function buildCostRecapExportCardEl(scope) {
+  const { total, recent } = getCostRecapStats(scope);
+  const en = CURRENT_LANG === 'en';
+  const now = new Date();
+  const periodTxt = scope === 'year'
+    ? (en ? `${now.getFullYear()}` : `${now.getFullYear()}年`)
+    : (en ? `${BUDGET_MONTH_EN[now.getMonth()]} ${now.getFullYear()}` : `${now.getFullYear()}年${now.getMonth() + 1}月`);
+  const labelTxt = scope === 'year'
+    ? (en ? 'Real-Money Spent This Year' : '今年使った実額')
+    : (en ? 'Real-Money Spent This Month' : '今月使った実額');
+
+  const rows = recent.map(e => `
+    <div class="exp-row">
+      <div class="exp-icon">${e.img ? `<img src="${e.img}" alt="" referrerpolicy="no-referrer">` : e.icon}</div>
+      <div class="exp-info">
+        <div class="exp-cat">${escapeHtml(e.catLabel)}</div>
+        <div class="exp-name">${escapeHtml(e.name)}</div>
+      </div>
+      <div class="exp-cost">¥${e.yen.toLocaleString()}</div>
+    </div>`).join('');
+
+  const today = new Date();
+  const dateTxt = en
+    ? `Created ${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`
+    : `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日作成`;
+
+  const card = document.createElement('div');
+  card.className = 'export-card';
+  card.innerHTML = `
+    <div class="exp-brand">${en ? '💴 Item Cost Tracker' : '💴 アイテム別コスト管理'}</div>
+    <div class="exp-hero">
+      <div class="exp-hero-pct">¥${total.toLocaleString()}</div>
+      <div class="exp-hero-label">${labelTxt}</div>
+      <div class="exp-hero-nums">${escapeHtml(periodTxt)}</div>
+    </div>
+    ${rows
+      ? `<div class="exp-body">${rows}</div>`
+      : `<div class="exp-comment">${en ? 'No spending recorded in this period yet' : 'この期間の支出記録はまだありません'}</div>`}
+    <div class="exp-date">${dateTxt}</div>
+  `;
+  document.body.appendChild(card);
+  return card;
+}
+
+// 支出振り返りからツイート本文を作成（文末に必ずサイトURLを付与）
+function buildCostRecapTweetText(scope) {
+  const { total } = getCostRecapStats(scope);
+  const en = CURRENT_LANG === 'en';
+  const now = new Date();
+  const periodTxt = scope === 'year'
+    ? (en ? `in ${now.getFullYear()}` : `${now.getFullYear()}年は`)
+    : (en ? `in ${BUDGET_MONTH_EN[now.getMonth()]} ${now.getFullYear()}` : `${now.getFullYear()}年${now.getMonth() + 1}月は`);
+  return en
+    ? `I spent ¥${total.toLocaleString()} on Sky items ${periodTxt}! 💴\nHow much did you spend? 🎁\n\n${COST_SITE_URL}\n${COST_SHARE_HASHTAG}`
+    : `${periodTxt}Skyのアイテムに¥${total.toLocaleString()}使いました！💴\nあなたはいくら使った？🎁\n\n${COST_SITE_URL}\n${COST_SHARE_HASHTAG}`;
+}
+
+// 今月/今年の支出振り返りを画像として保存・Xへ共有する
+function shareCostRecapOnTwitter(scope) {
+  const { total } = getCostRecapStats(scope);
+  if (total === 0) {
+    showToast(CURRENT_LANG === 'en' ? 'No spending recorded in this period yet' : 'この期間の支出記録がまだありません');
+    return;
+  }
+  const filenameBase = scope === 'year'
+    ? (CURRENT_LANG === 'en' ? 'Yearly Cost Recap' : '年間コスト振り返り')
+    : (CURRENT_LANG === 'en' ? 'Monthly Cost Recap' : '月間コスト振り返り');
+  return exportElementAsImage(() => buildCostRecapExportCardEl(scope), filenameBase, {
+    shareText: buildCostRecapTweetText(scope),
     successToast: CURRENT_LANG === 'en' ? 'Shared!' : '共有しました！'
   });
 }
