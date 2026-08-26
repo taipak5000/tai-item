@@ -1318,9 +1318,12 @@ function pfDashBuildHtml(data) {
   const bucketEmptyMsg = `<div class="dash-empty">${pfT('この期間の予定はありません', 'Nothing scheduled in this range')}</div>`;
   const todayHtml = bucketRows.today.length ? bucketRows.today.join('') : `<div class="dash-empty">${pfT('現在開催中の季節・イベントはありません', 'No current seasons or events')}</div>`;
   const weekHtml = bucketRows.week.length ? bucketRows.week.join('') : bucketEmptyMsg;
-  const monthHtml = seasonErrored
-    ? `<div class="dash-empty">${pfT('シーズン情報が取得できませんでした', 'Could not load season info')}</div>`
-    : (bucketRows.month.length ? bucketRows.month.join('') : bucketEmptyMsg);
+  // 🩹 シーズン情報の取得に失敗しても、次回アップデート等ほかの項目が正しく今月欄に
+  // 振り分けられている場合はそれを消さずに残す（以前はseasonErrored時に今月欄全体を
+  // エラーメッセージだけで上書きしてしまい、無関係な項目まで隠れてしまっていた）
+  const monthParts = bucketRows.month.slice();
+  if (seasonErrored) monthParts.push(`<div class="dash-empty">${pfT('シーズン情報が取得できませんでした', 'Could not load season info')}</div>`);
+  const monthHtml = monthParts.length ? monthParts.join('') : bucketEmptyMsg;
 
   return `
     <div class="dash-section">
@@ -1777,7 +1780,7 @@ function pfConfirmDeleteInline(id) {
 // 🔑 保存キーをサイトごとに名前空間化する（プロフィール単位のnsKey()とは別軸）。
 // taipak5000.github.io系サイトは全サイトが同一オリジンでlocalStorageを共有するため、
 // 固定文字列のままだと、あるサイトで設定したホーム画面アイコンが他サイト（emote/
-// companion/share/spirit-catalog/star-candle/tai-nomacan等）の設定まで上書きして
+// companion/share/star-candle/tai-nomacan等）の設定まで上書きして
 // しまう（実際に競合することを確認済み）。location.pathnameの先頭セグメント
 // （例: '/tai-item/' → 'tai-item'）は各サイトの実際の公開URLパスと一致し、
 // リポジトリ名の変更にも自動追従するため、これをサイト識別子として使う
@@ -2288,7 +2291,7 @@ function pfInit() {
    💾 データのエクスポート/インポート/全削除
    localStorage は taipak5000.github.io 配下の全ツールで共有されているため、
    ここで書き出す/読み込む/消す内容はこのサイトだけでなく item・wings・
-   companion・spirit-catalog 等すべてのデータが対象になる。
+   companion 等すべてのデータが対象になる。
    ================================================================ */
 function dmOpenModal() {
   document.getElementById('dmStatus').textContent = '';
