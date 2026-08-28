@@ -164,13 +164,28 @@
       background: var(--card); border-radius: var(--r-sm);
       border: 2px solid transparent; box-shadow: 0 1px 4px rgba(0,0,0,0.07);
       cursor: pointer; transition: border-color 0.15s, transform 0.1s;
-      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-      filter: grayscale(1) opacity(0.55);
     }
     .sheet-frame:active { transform: scale(0.95); }
-    .sheet-frame.is-owned { border-color: var(--green); filter: none; }
-    .sheet-note-icon { font-size: 18px; opacity: 0.65; }
-    .sheet-num { font-size: 15px; font-weight: 800; color: var(--text); letter-spacing: -0.2px; }
+    .sheet-frame.is-owned { border-color: var(--green); }
+
+    /* アイコン画像（Wiki掲載の入手元アイコン）。未配置・読込失敗時は🎵にフォールバック */
+    .sheet-img-wrap {
+      position: absolute; inset: 0; z-index: 1;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg); filter: grayscale(1) opacity(0.5); transition: filter 0.15s;
+    }
+    .sheet-frame.is-owned .sheet-img-wrap { filter: none; }
+    .sheet-img-wrap img { width: 100%; height: 100%; object-fit: contain; padding: 18%; display: block; }
+    .sheet-img-wrap.img-fallback img { display: none; }
+    .sheet-note-icon { display: none; font-size: 20px; opacity: 0.65; }
+    .sheet-img-wrap.img-fallback .sheet-note-icon { display: block; }
+
+    /* 番号バッジ：同じ入手元アイコンを複数の楽譜が共有するため、番号表示で個別に識別する */
+    .sheet-num-badge {
+      position: absolute; bottom: 5px; left: 5px; z-index: 2;
+      font-size: 10px; font-weight: 800; color: #fff; letter-spacing: -0.1px;
+      background: rgba(0,0,0,0.62); padding: 1px 5px; border-radius: 5px;
+    }
 
     .sheet-method-dot {
       position: absolute; top: 6px; left: 6px; z-index: 2;
@@ -210,12 +225,19 @@
     .sheet-thumb {
       position: relative; width: 48px; height: 48px; flex-shrink: 0;
       border-radius: var(--r-sm); overflow: hidden; background: var(--bg);
-      border: 2px solid transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
-      filter: grayscale(1) opacity(0.55); transition: filter 0.15s, border-color 0.15s;
+      border: 2px solid transparent; display: flex; align-items: center; justify-content: center;
+      filter: grayscale(1) opacity(0.5); transition: filter 0.15s, border-color 0.15s;
     }
     .item-card.is-owned .sheet-thumb { border-color: var(--green); filter: none; }
-    .sheet-thumb .sheet-note-icon { font-size: 15px; }
-    .sheet-thumb .sheet-num { font-size: 12px; }
+    .sheet-thumb img { width: 100%; height: 100%; object-fit: contain; padding: 18%; display: block; }
+    .sheet-thumb.img-fallback img { display: none; }
+    .sheet-thumb .sheet-note-icon { display: none; font-size: 15px; }
+    .sheet-thumb.img-fallback .sheet-note-icon { display: block; }
+    .sheet-thumb-num-badge {
+      position: absolute; bottom: 2px; left: 2px; z-index: 2;
+      font-size: 9px; font-weight: 800; color: #fff; line-height: 1.4;
+      background: rgba(0,0,0,0.62); padding: 0 4px; border-radius: 4px;
+    }
     .sheet-thumb-check {
       position: absolute; bottom: -3px; right: -3px;
       width: 17px; height: 17px; border-radius: 50%; background: var(--green); color: #fff;
@@ -333,62 +355,64 @@
    price: キャンドル価格（Wikiに価格記載が無い項目は null）
    method: R=恒常精霊 / P=常時交換可能 / S=季節精霊 / D=日々イベント
    ========================================================================== */
+// icon画像はSky Wiki「楽譜」ページの一覧表から取得。ゲーム内と同様、季節・日々イベント・
+// 奏の音楽堂など「入手元」を示すアイコンであり、同じ入手元の楽譜は同じ画像を共有する（仕様通り）
 const MUSIC_SHEETS = [
-  { id:'1',  num:'1',  name:'Bounding About',              method:'R', price:1,    diff:{m:4,w:2,b:4,p:2}, key:'Cメジャー' },
-  { id:'2',  num:'2',  name:'Boundaries',                  method:'R', price:2,    diff:{m:1,w:2,b:1,p:2}, key:'Cメジャー' },
-  { id:'3',  num:'3',  name:'Aperture',                    method:'R', price:3,    diff:{m:1,w:1,b:1,p:1}, key:'Cメジャー' },
-  { id:'4',  num:'4',  name:'Floating Bubbles',            method:'S', price:15,   diff:{m:2,w:2,b:2,p:2}, key:'Cメジャー' },
-  { id:'5',  num:'5',  name:'Spinning Thoughts',           method:'S', price:15,   diff:{m:2,w:2,b:1,p:1}, key:'Cメジャー' },
-  { id:'6',  num:'6',  name:'Lighting the Way',            method:'S', price:15,   diff:{m:1,w:1,b:1,p:1}, key:'Cメジャー' },
-  { id:'7',  num:'7',  name:'Wide Stance',                 method:'S', price:15,   diff:{m:3,w:3,b:1,p:2}, key:'Cメジャー' },
-  { id:'8',  num:'8',  name:'Waltzing in the Rain',        method:'S', price:15,   diff:{m:1,w:2,b:1,p:1}, key:'E♭メジャー' },
-  { id:'9',  num:'9',  name:'Finding the Horizon',         method:'S', price:15,   diff:{m:2,w:2,b:2,p:1}, key:'Cメジャー' },
-  { id:'10', num:'10', name:'Relaxed Steps',               method:'S', price:15,   diff:{m:2,w:2,b:2,p:1}, key:'Cメジャー' },
-  { id:'11', num:'11', name:'Support From Above',          method:'S', price:15,   diff:{m:1,w:4,b:1,p:1}, key:'B♭メジャー' },
-  { id:'12', num:'12', name:'Wavy Hair',                   method:'S', price:15,   diff:{m:2,w:2,b:2,p:1}, key:'E♭メジャー' },
-  { id:'13', num:'13', name:'Drifting Over Sand',          method:'S', price:15,   diff:{m:3,w:1,b:1,p:1}, key:'E♭メジャー' },
-  { id:'14', num:'14', name:'Uneven Rhythms',              method:'S', price:15,   diff:{m:4,w:2,b:2,p:3}, key:'Cメジャー' },
-  { id:'15', num:'15', name:'Back and Forth',              method:'S', price:15,   diff:{m:3,w:2,b:2,p:2}, key:'Cメジャー' },
-  { id:'16', num:'16', name:'Soft Blanket',                method:'S', price:15,   diff:{m:2,w:2,b:2,p:2}, key:'Eメジャー' },
-  { id:'17', num:'17', name:'Disappearing Ashes',          method:'S', price:15,   diff:{m:3,w:1,b:1,p:1}, key:'Cメジャー' },
-  { id:'18', num:'18', name:'Springing Step',              method:'S', price:15,   diff:{m:3,w:2,b:2,p:3}, key:'Cメジャー' },
-  { id:'19', num:'19', name:'Forgotten Dance',             method:'S', price:15,   diff:{m:4,w:4,b:4,p:4}, key:'Cメジャー' },
-  { id:'20', num:'20', name:'Forest Walk',                 method:'S', price:15,   diff:{m:2,w:3,b:1,p:3}, key:'Bメジャー' },
-  { id:'21', num:'21', name:'Keeping Myself Together',     method:'S', price:15,   diff:{m:2,w:2,b:1,p:2}, key:'Cメジャー' },
-  { id:'22', num:'22', name:'Looking Up to the Stars',     method:'S', price:15,   diff:{m:1,w:2,b:1,p:2}, key:'Fメジャー' },
-  { id:'23', num:'23', name:'A Glimpse Within',            method:'S', price:15,   diff:{m:2,w:2,b:1,p:1}, key:'Cメジャー' },
-  { id:'24', num:'24', name:'Everything Around Us',        method:'S', price:15,   diff:{m:3,w:3,b:3,p:2}, key:'Cメジャー' },
-  { id:'25', num:'25', name:'Flying Among the Stars',      method:'S', price:15,   diff:{m:1,w:3,b:1,p:3}, key:'Fメジャー' },
-  { id:'26', num:'26', name:'Sowing Mischief',             method:'S', price:15,   diff:{m:4,w:4,b:2,p:4}, key:'Cメジャー' },
-  { id:'27', num:'27', name:'Without a Paddle',            method:'S', price:null, diff:{m:2,w:2,b:1,p:3}, key:'Fメジャー' },
-  { id:'28', num:'28', name:'Hidden Dance',                method:'S', price:15,   diff:{m:3,w:3,b:2,p:3}, key:'Dメジャー' },
-  { id:'29', num:'29', name:'Step by Step',                method:'S', price:22,   diff:{m:4,w:4,b:4,p:4}, key:'Fメジャー' },
-  { id:'30', num:'30', name:'Earnest Looks',               method:'S', price:null, diff:{m:3,w:3,b:1,p:2}, key:'Aメジャー' },
-  { id:'31', num:'31', name:'Searching for Questions',     method:'S', price:null, diff:{m:3,w:4,b:3,p:3}, key:'Cメジャー' },
-  { id:'32', num:'32', name:'Through the Eyes of a Child', method:'S', price:20,   diff:{m:3,w:3,b:1,p:2}, key:'Cメジャー' },
-  { id:'33', num:'33', name:'The Seed',                    method:'S', price:15,   diff:{m:4,w:4,b:3,p:4}, key:'E♭メジャー' },
-  { id:'34', num:'34', name:'Queendom',                    method:'P', price:20,   diff:{m:3,w:3,b:3,p:3}, key:'D♭メジャー' },
-  { id:'35', num:'35', name:'Warrior',                     method:'S', price:15,   diff:{m:4,w:4,b:1,p:3}, key:'Gメジャー' },
-  { id:'36', num:'36', name:'Runaway',                     method:'S', price:15,   diff:{m:4,w:2,b:1,p:2}, key:'Bメジャー' },
-  { id:'37', num:'37', name:'Waltz of the Plains',         method:'S', price:15,   diff:{m:2,w:2,b:2,p:2}, key:'Dメジャー' },
-  { id:'38', num:'38', name:'A Quiet Walk',                method:'S', price:null, diff:{m:3,w:2,b:3,p:2}, key:'Cメジャー' },
-  { id:'39', num:'39', name:'Deer Song',                   method:'S', price:null, diff:{m:2,w:3,b:3,p:3}, key:'Cメジャー' },
-  { id:'40', num:'40', name:'Old Friends',                 method:'S', price:null, diff:{m:1,w:1,b:1,p:2}, key:'Cメジャー' },
-  { id:'41', num:'41', name:'Worlds Between',              method:'S', price:null, diff:{m:2,w:2,b:2,p:2}, key:'Cメジャー' },
-  { id:'42', num:'42', name:'Finding Happiness',           method:'S', price:null, diff:{m:2,w:2,b:4,p:3}, key:'Cメジャー' },
-  { id:'43', num:'43', name:'幸せの青い鳥', nameEn:'Bluebird of Happiness', method:'S', price:null, diff:{m:2,w:2,b:2,p:3}, key:'Cメジャー' },
-  { id:'44', num:'44', name:'生命と楽園', nameEn:'Life and Paradise', method:'S', price:null, diff:{m:2,w:3,b:4,p:4}, key:'Cメジャー' },
-  { id:'45', num:'45', name:'Ancient Echo',                method:'S', price:null, diff:{m:3,w:3,b:3,p:3}, key:'D♭メジャー' },
-  { id:'46', num:'46', name:'Airship',                     method:'S', price:19,   diff:{m:3,w:2,b:2,p:3}, key:'Cメジャー' },
-  { id:'ex1', num:'奏1', name:"Music's Embrace",           method:'P', price:10,   diff:{m:1,w:1,b:1,p:1}, key:'Dメジャー' },
-  { id:'ex2', num:'奏2', name:'Etude No. 1',                method:'P', price:10,   diff:{m:1,w:1,b:1,p:2}, key:'Gメジャー' },
-  { id:'ex3', num:'奏3', name:'Etude No. 2',                method:'P', price:10,   diff:{m:2,w:1,b:1,p:1}, key:'Cメジャー' },
-  { id:'ex4', num:'奏4', name:'Etude No. 3',                method:'P', price:10,   diff:{m:4,w:4,b:4,p:2}, key:'Cメジャー' },
-  { id:'ex5', num:'奏5', name:'Etude No. 4', note:'ゲーム内表記は奏0', noteEn:'Shown in-game as 奏0', method:'P', price:5, diff:{m:1,w:2,b:1,p:3}, key:'Cメジャー' },
-  { id:'e1', num:'E1', name:'歓喜の歌', nameEn:'Song of Joy', method:'D', price:10,  diff:{m:3,w:3,b:3,p:3}, key:'Dメジャー' },
-  { id:'e2', num:'E2', name:'ハッピーバースデー', nameEn:'Happy Birthday', method:'D', price:10, diff:{m:1,w:1,b:1,p:2}, key:'Gメジャー' },
-  { id:'e3', num:'E3', name:'愛しみの日々', nameEn:'Days of Love', method:'D', price:15, diff:{m:2,w:2,b:2,p:2}, key:'Bメジャー' },
-  { id:'e4', num:'E4', name:'Dragon Dance',                method:'D', price:8,   diff:{m:4,w:4,b:3,p:4}, key:'Bメジャー' },
+  { id:'1',  num:'1',  name:'Bounding About',              method:'R', price:1,    diff:{m:4,w:2,b:4,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/f/f0/MusicSheetN-Ray.png/revision/latest/scale-to-width-down/51' },
+  { id:'2',  num:'2',  name:'Boundaries',                  method:'R', price:2,    diff:{m:1,w:2,b:1,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/f/f7/MusicSheetW-Ray.png/revision/latest/scale-to-width-down/51' },
+  { id:'3',  num:'3',  name:'Aperture',                    method:'R', price:3,    diff:{m:1,w:1,b:1,p:1}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/7/70/MusicSheetD-Ray.png/revision/latest/scale-to-width-down/51' },
+  { id:'4',  num:'4',  name:'Floating Bubbles',            method:'S', price:15,   diff:{m:2,w:2,b:2,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/2/25/4_Rhythm.png/revision/latest/scale-to-width-down/24' },
+  { id:'5',  num:'5',  name:'Spinning Thoughts',           method:'S', price:15,   diff:{m:2,w:2,b:1,p:1}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/2/25/4_Rhythm.png/revision/latest/scale-to-width-down/24' },
+  { id:'6',  num:'6',  name:'Lighting the Way',            method:'S', price:15,   diff:{m:1,w:1,b:1,p:1}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/2/25/4_Rhythm.png/revision/latest/scale-to-width-down/24' },
+  { id:'7',  num:'7',  name:'Wide Stance',                 method:'S', price:15,   diff:{m:3,w:3,b:1,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/7/73/1_Gratitude.png/revision/latest/scale-to-width-down/24' },
+  { id:'8',  num:'8',  name:'Waltzing in the Rain',        method:'S', price:15,   diff:{m:1,w:2,b:1,p:1}, key:'E♭メジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/7/73/1_Gratitude.png/revision/latest/scale-to-width-down/24' },
+  { id:'9',  num:'9',  name:'Finding the Horizon',         method:'S', price:15,   diff:{m:2,w:2,b:2,p:1}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/51/2_Lightseekers.png/revision/latest/scale-to-width-down/24' },
+  { id:'10', num:'10', name:'Relaxed Steps',               method:'S', price:15,   diff:{m:2,w:2,b:2,p:1}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/51/2_Lightseekers.png/revision/latest/scale-to-width-down/24' },
+  { id:'11', num:'11', name:'Support From Above',          method:'S', price:15,   diff:{m:1,w:4,b:1,p:1}, key:'B♭メジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/d/dc/3_Belonging.png/revision/latest/scale-to-width-down/24' },
+  { id:'12', num:'12', name:'Wavy Hair',                   method:'S', price:15,   diff:{m:2,w:2,b:2,p:1}, key:'E♭メジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/d/dc/3_Belonging.png/revision/latest/scale-to-width-down/24' },
+  { id:'13', num:'13', name:'Drifting Over Sand',          method:'S', price:15,   diff:{m:3,w:1,b:1,p:1}, key:'E♭メジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/e/e8/5_Enchantment.png/revision/latest/scale-to-width-down/24' },
+  { id:'14', num:'14', name:'Uneven Rhythms',              method:'S', price:15,   diff:{m:4,w:2,b:2,p:3}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/a/a4/6_Sanctuary.png/revision/latest/scale-to-width-down/24' },
+  { id:'15', num:'15', name:'Back and Forth',              method:'S', price:15,   diff:{m:3,w:2,b:2,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/a/a4/6_Sanctuary.png/revision/latest/scale-to-width-down/24' },
+  { id:'16', num:'16', name:'Soft Blanket',                method:'S', price:15,   diff:{m:2,w:2,b:2,p:2}, key:'Eメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/7/76/7_Prophecy.png/revision/latest/scale-to-width-down/24' },
+  { id:'17', num:'17', name:'Disappearing Ashes',          method:'S', price:15,   diff:{m:3,w:1,b:1,p:1}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/7/76/7_Prophecy.png/revision/latest/scale-to-width-down/24' },
+  { id:'18', num:'18', name:'Springing Step',              method:'S', price:15,   diff:{m:3,w:2,b:2,p:3}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/a/a7/8_Dreams.png/revision/latest/scale-to-width-down/24' },
+  { id:'19', num:'19', name:'Forgotten Dance',             method:'S', price:15,   diff:{m:4,w:4,b:4,p:4}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/a/a7/8_Dreams.png/revision/latest/scale-to-width-down/24' },
+  { id:'20', num:'20', name:'Forest Walk',                 method:'S', price:15,   diff:{m:2,w:3,b:1,p:3}, key:'Bメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/4/47/9_Assembly.png/revision/latest/scale-to-width-down/24' },
+  { id:'21', num:'21', name:'Keeping Myself Together',     method:'S', price:15,   diff:{m:2,w:2,b:1,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/4/47/9_Assembly.png/revision/latest/scale-to-width-down/24' },
+  { id:'22', num:'22', name:'Looking Up to the Stars',     method:'S', price:15,   diff:{m:1,w:2,b:1,p:2}, key:'Fメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/2/20/10_Little_Prince.png/revision/latest/scale-to-width-down/24' },
+  { id:'23', num:'23', name:'A Glimpse Within',            method:'S', price:15,   diff:{m:2,w:2,b:1,p:1}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/2/20/10_Little_Prince.png/revision/latest/scale-to-width-down/24' },
+  { id:'24', num:'24', name:'Everything Around Us',        method:'S', price:15,   diff:{m:3,w:3,b:3,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/4/41/11_Flight.png/revision/latest/scale-to-width-down/24' },
+  { id:'25', num:'25', name:'Flying Among the Stars',      method:'S', price:15,   diff:{m:1,w:3,b:1,p:3}, key:'Fメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/4/41/11_Flight.png/revision/latest/scale-to-width-down/24' },
+  { id:'26', num:'26', name:'Sowing Mischief',             method:'S', price:15,   diff:{m:4,w:4,b:2,p:4}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/1/15/Season-of-Abyss-Icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'27', num:'27', name:'Without a Paddle',            method:'S', price:null, diff:{m:2,w:2,b:1,p:3}, key:'Fメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/1/15/Season-of-Abyss-Icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'28', num:'28', name:'Hidden Dance',                method:'S', price:15,   diff:{m:3,w:3,b:2,p:3}, key:'Dメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/1/16/13_SOPerformance_logo.png/revision/latest/scale-to-width-down/24' },
+  { id:'29', num:'29', name:'Step by Step',                method:'S', price:22,   diff:{m:4,w:4,b:4,p:4}, key:'Fメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/1/16/13_SOPerformance_logo.png/revision/latest/scale-to-width-down/24' },
+  { id:'30', num:'30', name:'Earnest Looks',               method:'S', price:null, diff:{m:3,w:3,b:1,p:2}, key:'Aメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/d/d0/14_SOShattering.png/revision/latest/scale-to-width-down/24' },
+  { id:'31', num:'31', name:'Searching for Questions',     method:'S', price:null, diff:{m:3,w:4,b:3,p:3}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/d/d0/14_SOShattering.png/revision/latest/scale-to-width-down/24' },
+  { id:'32', num:'32', name:'Through the Eyes of a Child', method:'S', price:20,   diff:{m:3,w:3,b:1,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3a/15-Aurora.png/revision/latest/scale-to-width-down/24' },
+  { id:'33', num:'33', name:'The Seed',                    method:'S', price:15,   diff:{m:4,w:4,b:3,p:4}, key:'E♭メジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3a/15-Aurora.png/revision/latest/scale-to-width-down/24' },
+  { id:'34', num:'34', name:'Queendom',                    method:'P', price:20,   diff:{m:3,w:3,b:3,p:3}, key:'D♭メジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3a/15-Aurora.png/revision/latest/scale-to-width-down/24' },
+  { id:'35', num:'35', name:'Warrior',                     method:'S', price:15,   diff:{m:4,w:4,b:1,p:3}, key:'Gメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3a/15-Aurora.png/revision/latest/scale-to-width-down/24' },
+  { id:'36', num:'36', name:'Runaway',                     method:'S', price:15,   diff:{m:4,w:2,b:1,p:2}, key:'Bメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3a/15-Aurora.png/revision/latest/scale-to-width-down/24' },
+  { id:'37', num:'37', name:'Waltz of the Plains',         method:'S', price:15,   diff:{m:2,w:2,b:2,p:2}, key:'Dメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/5c/Season-of-Moments-icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'38', num:'38', name:'A Quiet Walk',                method:'S', price:null, diff:{m:3,w:2,b:3,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/6/60/Season-of-Revival-icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'39', num:'39', name:'Deer Song',                   method:'S', price:null, diff:{m:2,w:3,b:3,p:3}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/5a/Season-of-The-Nine-Colored-Deer-icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'40', num:'40', name:'Old Friends',                 method:'S', price:null, diff:{m:1,w:1,b:1,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3f/Season-of-Duets-icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'41', num:'41', name:'Worlds Between',              method:'S', price:null, diff:{m:2,w:2,b:2,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3a/Season-of-Moomin-icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'42', num:'42', name:'Finding Happiness',           method:'S', price:null, diff:{m:2,w:2,b:4,p:3}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3a/Season-of-Moomin-icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'43', num:'43', name:'幸せの青い鳥', nameEn:'Bluebird of Happiness', method:'S', price:null, diff:{m:2,w:2,b:2,p:3}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/6/63/Season-of-Blue-Bird-icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'44', num:'44', name:'生命と楽園', nameEn:'Life and Paradise', method:'S', price:null, diff:{m:2,w:3,b:4,p:4}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/9/98/Season-of-the-Two-Embers-icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'45', num:'45', name:'Ancient Echo',                method:'S', price:null, diff:{m:3,w:3,b:3,p:3}, key:'D♭メジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/59/Season-of-Migration-icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'46', num:'46', name:'Airship',                     method:'S', price:19,   diff:{m:3,w:2,b:2,p:3}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/51/Season-of-Carnival-icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'ex1', num:'奏1', name:"Music's Embrace",           method:'P', price:10,   diff:{m:1,w:1,b:1,p:1}, key:'Dメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3c/Four-point-star-Ray.png/revision/latest/scale-to-width-down/24' },
+  { id:'ex2', num:'奏2', name:'Etude No. 1',                method:'P', price:10,   diff:{m:1,w:1,b:1,p:2}, key:'Gメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3c/Four-point-star-Ray.png/revision/latest/scale-to-width-down/24' },
+  { id:'ex3', num:'奏3', name:'Etude No. 2',                method:'P', price:10,   diff:{m:2,w:1,b:1,p:1}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3c/Four-point-star-Ray.png/revision/latest/scale-to-width-down/24' },
+  { id:'ex4', num:'奏4', name:'Etude No. 3',                method:'P', price:10,   diff:{m:4,w:4,b:4,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3c/Four-point-star-Ray.png/revision/latest/scale-to-width-down/24' },
+  { id:'ex5', num:'奏5', name:'Etude No. 4', note:'ゲーム内表記は奏0', noteEn:'Shown in-game as 奏0', method:'P', price:5, diff:{m:1,w:2,b:1,p:3}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3c/Four-point-star-Ray.png/revision/latest/scale-to-width-down/24' },
+  { id:'e1', num:'E1', name:'歓喜の歌', nameEn:'Song of Joy', method:'D', price:10,  diff:{m:3,w:3,b:3,p:3}, key:'Dメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/4/4e/Days_of_Feast_Snow_Globe_icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'e2', num:'E2', name:'ハッピーバースデー', nameEn:'Happy Birthday', method:'D', price:10, diff:{m:1,w:1,b:1,p:2}, key:'Gメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/0/08/Days_of_Sky_-_Small_cake-spell-icon-Morybel-0146.png/revision/latest/scale-to-width-down/24' },
+  { id:'e3', num:'E3', name:'愛しみの日々', nameEn:'Days of Love', method:'D', price:15, diff:{m:2,w:2,b:2,p:2}, key:'Bメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/54/Love-Heart-Plushie-icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'e4', num:'E4', name:'Dragon Dance',                method:'D', price:8,   diff:{m:4,w:4,b:3,p:4}, key:'Bメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/f/fe/Fortune-Vertical-Poster-Prop-icon.png/revision/latest/scale-to-width-down/24' },
 ];
 /* ========================================================================== */
 
@@ -538,9 +562,12 @@ function filterAndRender() {
     return `
       <div class="item-tile">
         <div class="sheet-frame ${isOwned ? 'is-owned' : ''}" id="card_${s.id}" title="${escapeHtml(tip)}" onclick="toggleOwned('${s.id}')" tabindex="0" role="button" aria-pressed="${isOwned}" onkeydown="if(event.target===event.currentTarget&&(event.key==='Enter'||event.key===' ')){event.preventDefault();toggleOwned('${s.id}');}">
+          <div class="sheet-img-wrap">
+            <img src="${s.img}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('img-fallback')">
+            <span class="sheet-note-icon">🎵</span>
+          </div>
           <span class="sheet-method-dot m-${s.method}" aria-hidden="true"></span>
-          <span class="sheet-note-icon">🎵</span>
-          <span class="sheet-num">${s.num}</span>
+          <span class="sheet-num-badge">${s.num}</span>
           <span class="tile-owned-check">✓</span>
         </div>
         <a href="${wikiUrl}" target="_blank" rel="noopener noreferrer" class="item-tile-name">${dispName}</a>
@@ -558,8 +585,9 @@ function filterAndRender() {
       <div class="item-card ${isOwned ? 'is-owned' : ''}" id="card_${s.id}">
         <div class="item-left" onclick="toggleOwned('${s.id}')" tabindex="0" role="button" aria-pressed="${isOwned}" onkeydown="if(event.target===event.currentTarget&&(event.key==='Enter'||event.key===' ')){event.preventDefault();toggleOwned('${s.id}');}">
           <div class="sheet-thumb">
+            <img src="${s.img}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('img-fallback')">
             <span class="sheet-note-icon">🎵</span>
-            <span class="sheet-num">${s.num}</span>
+            <span class="sheet-thumb-num-badge">${s.num}</span>
             <span class="sheet-thumb-check">✓</span>
           </div>
           <div class="item-details">
