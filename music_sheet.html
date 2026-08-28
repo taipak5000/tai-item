@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    // 🌓 描画前にテーマを確定させ、ダークモード時に一瞬でも明るい背景が
+    // 表示されてしまう「ちらつき」を防止する（CSSが解釈される前に同期実行）
+    (function () {
+      try {
+        var saved = localStorage.getItem('sky_app_theme');
+        var isDark = (saved === 'light' || saved === 'dark') ? (saved === 'dark') : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/app-icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Sky所持率管理">
+  <meta name="theme-color" content="#FF9500">
+  <title>楽譜コンプリート管理 - Sky所持率管理</title>
+  <script src="i18n.js"></script>
+  <script src="profiles.js"></script>
+  <script>if (CURRENT_LANG === 'en') document.title = 'Music Sheet Completion Tracker - Item Collection Tracker';</script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ── Design tokens (総合メニューと完全統一) ──────────────── */
+    :root {
+      --bg:        #F2F2F7;
+      --card:      #FFFFFF;
+      --sep:       rgba(60,60,67,0.12);
+      --orange:    #FF9500;
+      --orange-d:  #FF6200;
+      --orange-bg: rgba(255,149,0,0.10);
+      --blue:      #007AFF;
+      --blue-bg:   rgba(0,122,255,0.08);
+      --green:     #34C759;
+      --green-bg:  rgba(52,199,89,0.10);
+      --purple:    #AF52DE;
+      --purple-bg: rgba(175,82,222,0.10);
+      --text:      #1C1C1E;
+      --text-2:    #8E8E93;
+      --text-3:    #C7C7CC;
+      --r:         16px;
+      --r-sm:      10px;
+    }
+
+    [data-theme="dark"] {
+      --bg:        #000000;
+      --card:      #1C1C1E;
+      --sep:       rgba(255,255,255,0.14);
+      --orange:    #FF9F0A;
+      --orange-d:  #FF8A00;
+      --orange-bg: rgba(255,159,10,0.16);
+      --blue:      #0A84FF;
+      --blue-bg:   rgba(10,132,255,0.16);
+      --green:     #30D158;
+      --green-bg:  rgba(48,209,88,0.16);
+      --purple:    #BF5AF2;
+      --purple-bg: rgba(191,90,242,0.16);
+      --text:      #F2F2F7;
+      --text-2:    #98989D;
+      --text-3:    #636366;
+    }
+    [data-theme="dark"] nav { background: rgba(0,0,0,0.88); }
+
+    /* ── Reset & Body ─────────────────────────────────── */
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    a { text-decoration:none; color:inherit; -webkit-tap-highlight-color:transparent; }
+    button { cursor:pointer; border:none; background:none; font-family:inherit; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+      background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: calc(76px + env(safe-area-inset-bottom));
+    }
+
+    /* ── Navigation bar ────────────────────────── */
+    nav {
+      position: sticky; top: 0; z-index: 20;
+      background: rgba(242,242,247,0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-bottom: 0.5px solid var(--sep); padding: 14px 20px 12px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-title { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
+    .nav-back { color: var(--blue); font-size: 15px; font-weight: 500; display: flex; align-items: center; gap: 4px; }
+    .nav-action {
+      background: var(--card); border: 1px solid var(--sep); border-radius: var(--r-sm);
+      padding: 6px 12px; font-size: 13px; font-weight: 600; color: var(--text);
+    }
+
+    /* ── Layout ───────────────────────── */
+    .wrap { max-width: 720px; margin: 0 auto; padding: 0 16px; }
+    @media (min-width: 850px) { .wrap { max-width: 960px; } }
+
+    /* ── Category Header Banner ─────────────────── */
+    .cat-header-card {
+      background: var(--card); border-radius: var(--r); padding: 20px; margin-top: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07); display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    }
+    .cat-header-info { display: flex; align-items: center; gap: 12px; }
+    .cat-header-icon { width: 44px; height: 44px; background: var(--bg); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+    .cat-header-name { font-size: 18px; font-weight: 700; }
+    .cat-header-count { font-size: 13px; color: var(--text-2); margin-top: 2px; }
+    .cat-header-pct { font-size: 24px; font-weight: 800; color: var(--orange); }
+
+    /* ── 入手方法の内訳（凡例代わりのミニ集計） ─────────── */
+    .method-summary { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .method-chip {
+      display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600;
+      padding: 5px 10px; border-radius: 999px; background: var(--bg); color: var(--text-2);
+    }
+    .method-chip .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .method-chip.on-R .dot { background: var(--green); }
+    .method-chip.on-P .dot { background: var(--blue); }
+    .method-chip.on-S .dot { background: var(--orange); }
+    .method-chip.on-D .dot { background: var(--purple); }
+
+    /* ── Filter / Sort Section ─────────────────── */
+    .control-panel {
+      background: var(--card); border-radius: var(--r); padding: 16px; margin-top: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07); display: flex; flex-direction: column; gap: 12px;
+    }
+    .control-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .control-label { font-size: 12px; font-weight: 600; color: var(--text-2); min-width: 60px; }
+    .select-box {
+      background: var(--bg); border: none; padding: 8px 12px; border-radius: var(--r-sm);
+      font-size: 13px; color: var(--text); font-weight: 500; outline: none; flex: 1; min-width: 120px;
+    }
+    .search-input::placeholder { color: var(--text-3); }
+    .control-reset-row { justify-content: flex-end; }
+    .control-reset-btn {
+      background: var(--bg); border: none; padding: 8px 14px; border-radius: var(--r-sm);
+      font-size: 13px; font-weight: 600; color: var(--blue); transition: background 0.15s;
+    }
+    .control-reset-btn:active { background: var(--sep); }
+
+    /* ── 表示切替（グリッド／リスト） ───────────────── */
+    .list-header-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 22px 4px 8px;
+    }
+    .sec-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-2); }
+    .view-toggle { display: flex; background: var(--bg); border-radius: 999px; padding: 3px; gap: 2px; flex-shrink: 0; }
+    .view-toggle-btn {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 12px; font-weight: 600; color: var(--text-2);
+      padding: 7px 12px; border-radius: 999px; transition: background 0.15s, color 0.15s;
+    }
+    .view-toggle-btn.active { background: var(--card); color: var(--text); font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+
+    /* ── Sheet Grid（バッジタイル形式） ───────────────── */
+    .item-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+      gap: 10px; align-items: start;
+    }
+    .item-tile { display: flex; flex-direction: column; gap: 5px; }
+
+    .sheet-frame {
+      position: relative; aspect-ratio: 1 / 1; overflow: hidden;
+      background: var(--card); border-radius: var(--r-sm);
+      border: 2px solid transparent; box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      cursor: pointer; transition: border-color 0.15s, transform 0.1s;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+      filter: grayscale(1) opacity(0.55);
+    }
+    .sheet-frame:active { transform: scale(0.95); }
+    .sheet-frame.is-owned { border-color: var(--green); filter: none; }
+    .sheet-note-icon { font-size: 18px; opacity: 0.65; }
+    .sheet-num { font-size: 15px; font-weight: 800; color: var(--text); letter-spacing: -0.2px; }
+
+    .sheet-method-dot {
+      position: absolute; top: 6px; left: 6px; z-index: 2;
+      width: 9px; height: 9px; border-radius: 50%;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.85);
+    }
+    .sheet-method-dot.m-R { background: var(--green); }
+    .sheet-method-dot.m-P { background: var(--blue); }
+    .sheet-method-dot.m-S { background: var(--orange); }
+    .sheet-method-dot.m-D { background: var(--purple); }
+
+    .tile-owned-check {
+      position: absolute; bottom: 4px; right: 4px; z-index: 2;
+      width: 19px; height: 19px; border-radius: 50%; background: var(--green); color: #fff;
+      font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+      opacity: 0; transform: scale(0.4); transition: all 0.15s;
+    }
+    .sheet-frame.is-owned .tile-owned-check { opacity: 1; transform: scale(1); }
+
+    .item-tile-name {
+      font-size: 10.5px; line-height: 1.3; text-align: center; color: var(--text-2);
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden; padding: 0 1px;
+    }
+    .item-tile-name:hover { color: var(--blue); }
+
+    /* ── Sheet List ───────────────────────── */
+    .item-list { display: flex; flex-direction: column; gap: 8px; }
+    .item-card {
+      background: var(--card); border-radius: var(--r); padding: 14px 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07); display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      transition: background 0.2s;
+    }
+    .item-card.is-owned { background: rgba(52,199,89,0.03); }
+    .item-left { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0; cursor: pointer; }
+
+    .sheet-thumb {
+      position: relative; width: 48px; height: 48px; flex-shrink: 0;
+      border-radius: var(--r-sm); overflow: hidden; background: var(--bg);
+      border: 2px solid transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+      filter: grayscale(1) opacity(0.55); transition: filter 0.15s, border-color 0.15s;
+    }
+    .item-card.is-owned .sheet-thumb { border-color: var(--green); filter: none; }
+    .sheet-thumb .sheet-note-icon { font-size: 15px; }
+    .sheet-thumb .sheet-num { font-size: 12px; }
+    .sheet-thumb-check {
+      position: absolute; bottom: -3px; right: -3px;
+      width: 17px; height: 17px; border-radius: 50%; background: var(--green); color: #fff;
+      font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+      opacity: 0; transform: scale(0.4); transition: all 0.15s; border: 1.5px solid var(--card);
+    }
+    .item-card.is-owned .sheet-thumb-check { opacity: 1; transform: scale(1); }
+
+    .item-details { flex: 1; min-width: 0; }
+    .item-name-link {
+      font-size: 15px; font-weight: 600; color: var(--text); display: inline-block;
+      max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .item-name-link:hover { color: var(--blue); text-decoration: underline; }
+    .item-meta-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; align-items: center; }
+    .diff-row { font-size: 10.5px; color: var(--text-3); margin-top: 3px; font-variant-numeric: tabular-nums; }
+
+    .badge { font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: var(--bg); color: var(--text-2); }
+    .badge.method-R { background: var(--green-bg); color: var(--green); }
+    .badge.method-P { background: var(--blue-bg); color: var(--blue); }
+    .badge.method-S { background: var(--orange-bg); color: var(--orange-d); }
+    .badge.method-D { background: var(--purple-bg); color: var(--purple); }
+    .badge.price-unknown { color: var(--text-3); }
+
+    .empty-message { grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-2); font-size: 14px; background: var(--card); border-radius: var(--r); }
+  </style>
+</head>
+<body>
+
+<!-- ▸ Navigation bar -->
+<nav>
+  <a href="index.html" class="nav-back" data-i18n-en="◀ Main Menu">◀ 総合メニュー</a>
+  <div class="nav-title" data-i18n-en="Music Sheet Completion">楽譜コンプリート管理</div>
+  <button class="nav-action" onclick="toggleLang()" id="langToggleBtn" data-i18n-en="日本語">EN</button>
+</nav>
+
+<div class="wrap">
+
+    <!-- ▸ Status Banner -->
+    <div class="cat-header-card" style="flex-direction: column; align-items: stretch; gap: 12px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+        <div class="cat-header-info">
+          <div class="cat-header-icon">🎼</div>
+          <div>
+            <div class="cat-header-name" data-i18n-en="Music Sheets">楽譜</div>
+            <div class="cat-header-count" id="catCount">-- / -- 所持</div>
+          </div>
+        </div>
+        <div class="cat-header-pct" id="catPct">--%</div>
+      </div>
+      <div class="method-summary" id="methodSummary"><!-- JS --></div>
+    </div>
+
+    <!-- ▸ Filter & Sort Control Panel -->
+    <div class="control-panel">
+      <!-- 名前検索 -->
+      <div class="control-row">
+        <span class="control-label" data-i18n-en="Name Search">名前検索</span>
+        <input type="text" class="select-box search-input" id="searchName" placeholder="🔍 楽譜名・番号で絞り込み..." data-i18n-en-placeholder="🔍 Filter by name or number..." oninput="filterAndRender()">
+      </div>
+      <!-- 絞り込み -->
+      <div class="control-row">
+        <span class="control-label" data-i18n-en="Filter">絞り込み</span>
+        <select class="select-box" id="filterStatus" onchange="filterAndRender()">
+          <option value="all" data-i18n-en="All ownership states">すべての所持状態</option>
+          <option value="owned" data-i18n-en="Owned only">所持中のみ</option>
+          <option value="notOwned" data-i18n-en="Not owned only">未所持のみ</option>
+        </select>
+        <select class="select-box" id="filterMethod" onchange="filterAndRender()">
+          <option value="all" data-i18n-en="All acquisition methods">すべての入手方法</option>
+          <option value="R" data-i18n-en="R: Always available (Realm Spirits)">R: 常時入手可能（恒常精霊）</option>
+          <option value="P" data-i18n-en="P: Always available (Other permanent source)">P: 常時入手可能（恒常精霊以外）</option>
+          <option value="S" data-i18n-en="S: Rare (Past Season Spirit revisit/troupe only)">S: 稀に入手可能（再訪・来訪団のみ）</option>
+          <option value="D" data-i18n-en="D: Periodic (Future Days events)">D: 定期的に入手可能（日々イベント）</option>
+        </select>
+      </div>
+
+      <!-- 並び替え -->
+      <div class="control-row">
+        <span class="control-label" data-i18n-en="Sort">並び替え</span>
+        <select class="select-box" id="sortOrder" onchange="filterAndRender()">
+          <option value="default" data-i18n-en="Sort: Menu Order">並び替え: 標準（番号順）</option>
+          <option value="nameAsc" data-i18n-en="Name (A-Z)">名前（昇順）</option>
+          <option value="priceDesc" data-i18n-en="Price (High to Low)">価格（高い順）</option>
+        </select>
+      </div>
+
+      <!-- フィルターを全てクリア -->
+      <div class="control-row control-reset-row">
+        <button type="button" class="control-reset-btn" onclick="resetFilterPanel('.control-panel', filterAndRender)">
+          <span data-i18n-en="🧹 Clear All Filters">🧹 フィルターを全てクリア</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ▸ Sheet List Section -->
+    <div class="list-header-row">
+      <p class="sec-label" data-i18n-en="Music Sheet List">楽譜一覧</p>
+      <div class="view-toggle" role="group" aria-label="表示切替">
+        <button type="button" class="view-toggle-btn" id="viewBtnGrid" onclick="setViewMode('grid')" aria-pressed="true" data-i18n-en="▦ Grid">▦ グリッド</button>
+        <button type="button" class="view-toggle-btn" id="viewBtnList" onclick="setViewMode('list')" aria-pressed="false" data-i18n-en="☰ List">☰ リスト</button>
+      </div>
+    </div>
+    <div class="item-grid" id="itemList">
+      <!-- JSで動的に生成 -->
+    </div>
+
+  </div><!-- /wrap -->
+
+<script>
+/* ==========================================================================
+   楽譜（Music Sheets）マスターデータ
+   出典: Sky Wiki「楽譜」ページ（https://sky-children-of-the-light.fandom.com/ja/wiki/楽譜）
+   diff = { m:旋律, w:管楽器, b:低音, p:打楽器 }（各1〜4の難易度）
+   price: キャンドル価格（Wikiに価格記載が無い項目は null）
+   method: R=常時(恒常精霊) / P=常時(その他永続) / S=稀(過去精霊の再訪・来訪団のみ) / D=定期(日々イベント)
+   ========================================================================== */
+const MUSIC_SHEETS = [
+  { id:'1',  num:'1',  name:'Bounding About',              method:'R', price:1,    diff:{m:4,w:2,b:4,p:2}, key:'Cメジャー' },
+  { id:'2',  num:'2',  name:'Boundaries',                  method:'R', price:2,    diff:{m:1,w:2,b:1,p:2}, key:'Cメジャー' },
+  { id:'3',  num:'3',  name:'Aperture',                    method:'R', price:3,    diff:{m:1,w:1,b:1,p:1}, key:'Cメジャー' },
+  { id:'4',  num:'4',  name:'Floating Bubbles',            method:'S', price:15,   diff:{m:2,w:2,b:2,p:2}, key:'Cメジャー' },
+  { id:'5',  num:'5',  name:'Spinning Thoughts',           method:'S', price:15,   diff:{m:2,w:2,b:1,p:1}, key:'Cメジャー' },
+  { id:'6',  num:'6',  name:'Lighting the Way',            method:'S', price:15,   diff:{m:1,w:1,b:1,p:1}, key:'Cメジャー' },
+  { id:'7',  num:'7',  name:'Wide Stance',                 method:'S', price:15,   diff:{m:3,w:3,b:1,p:2}, key:'Cメジャー' },
+  { id:'8',  num:'8',  name:'Waltzing in the Rain',        method:'S', price:15,   diff:{m:1,w:2,b:1,p:1}, key:'E♭メジャー' },
+  { id:'9',  num:'9',  name:'Finding the Horizon',         method:'S', price:15,   diff:{m:2,w:2,b:2,p:1}, key:'Cメジャー' },
+  { id:'10', num:'10', name:'Relaxed Steps',               method:'S', price:15,   diff:{m:2,w:2,b:2,p:1}, key:'Cメジャー' },
+  { id:'11', num:'11', name:'Support From Above',          method:'S', price:15,   diff:{m:1,w:4,b:1,p:1}, key:'B♭メジャー' },
+  { id:'12', num:'12', name:'Wavy Hair',                   method:'S', price:15,   diff:{m:2,w:2,b:2,p:1}, key:'E♭メジャー' },
+  { id:'13', num:'13', name:'Drifting Over Sand',          method:'S', price:15,   diff:{m:3,w:1,b:1,p:1}, key:'E♭メジャー' },
+  { id:'14', num:'14', name:'Uneven Rhythms',              method:'S', price:15,   diff:{m:4,w:2,b:2,p:3}, key:'Cメジャー' },
+  { id:'15', num:'15', name:'Back and Forth',              method:'S', price:15,   diff:{m:3,w:2,b:2,p:2}, key:'Cメジャー' },
+  { id:'16', num:'16', name:'Soft Blanket',                method:'S', price:15,   diff:{m:2,w:2,b:2,p:2}, key:'Eメジャー' },
+  { id:'17', num:'17', name:'Disappearing Ashes',          method:'S', price:15,   diff:{m:3,w:1,b:1,p:1}, key:'Cメジャー' },
+  { id:'18', num:'18', name:'Springing Step',              method:'S', price:15,   diff:{m:3,w:2,b:2,p:3}, key:'Cメジャー' },
+  { id:'19', num:'19', name:'Forgotten Dance',             method:'S', price:15,   diff:{m:4,w:4,b:4,p:4}, key:'Cメジャー' },
+  { id:'20', num:'20', name:'Forest Walk',                 method:'S', price:15,   diff:{m:2,w:3,b:1,p:3}, key:'Bメジャー' },
+  { id:'21', num:'21', name:'Keeping Myself Together',     method:'S', price:15,   diff:{m:2,w:2,b:1,p:2}, key:'Cメジャー' },
+  { id:'22', num:'22', name:'Looking Up to the Stars',     method:'S', price:15,   diff:{m:1,w:2,b:1,p:2}, key:'Fメジャー' },
+  { id:'23', num:'23', name:'A Glimpse Within',            method:'S', price:15,   diff:{m:2,w:2,b:1,p:1}, key:'Cメジャー' },
+  { id:'24', num:'24', name:'Everything Around Us',        method:'S', price:15,   diff:{m:3,w:3,b:3,p:2}, key:'Cメジャー' },
+  { id:'25', num:'25', name:'Flying Among the Stars',      method:'S', price:15,   diff:{m:1,w:3,b:1,p:3}, key:'Fメジャー' },
+  { id:'26', num:'26', name:'Sowing Mischief',             method:'S', price:15,   diff:{m:4,w:4,b:2,p:4}, key:'Cメジャー' },
+  { id:'27', num:'27', name:'Without a Paddle',            method:'S', price:null, diff:{m:2,w:2,b:1,p:3}, key:'Fメジャー' },
+  { id:'28', num:'28', name:'Hidden Dance',                method:'S', price:15,   diff:{m:3,w:3,b:2,p:3}, key:'Dメジャー' },
+  { id:'29', num:'29', name:'Step by Step',                method:'S', price:22,   diff:{m:4,w:4,b:4,p:4}, key:'Fメジャー' },
+  { id:'30', num:'30', name:'Earnest Looks',               method:'S', price:null, diff:{m:3,w:3,b:1,p:2}, key:'Aメジャー' },
+  { id:'31', num:'31', name:'Searching for Questions',     method:'S', price:null, diff:{m:3,w:4,b:3,p:3}, key:'Cメジャー' },
+  { id:'32', num:'32', name:'Through the Eyes of a Child', method:'S', price:20,   diff:{m:3,w:3,b:1,p:2}, key:'Cメジャー' },
+  { id:'33', num:'33', name:'The Seed',                    method:'S', price:15,   diff:{m:4,w:4,b:3,p:4}, key:'E♭メジャー' },
+  { id:'34', num:'34', name:'Queendom',                    method:'P', price:20,   diff:{m:3,w:3,b:3,p:3}, key:'D♭メジャー' },
+  { id:'35', num:'35', name:'Warrior',                     method:'S', price:15,   diff:{m:4,w:4,b:1,p:3}, key:'Gメジャー' },
+  { id:'36', num:'36', name:'Runaway',                     method:'S', price:15,   diff:{m:4,w:2,b:1,p:2}, key:'Bメジャー' },
+  { id:'37', num:'37', name:'Waltz of the Plains',         method:'S', price:15,   diff:{m:2,w:2,b:2,p:2}, key:'Dメジャー' },
+  { id:'38', num:'38', name:'A Quiet Walk',                method:'S', price:null, diff:{m:3,w:2,b:3,p:2}, key:'Cメジャー' },
+  { id:'39', num:'39', name:'Deer Song',                   method:'S', price:null, diff:{m:2,w:3,b:3,p:3}, key:'Cメジャー' },
+  { id:'40', num:'40', name:'Old Friends',                 method:'S', price:null, diff:{m:1,w:1,b:1,p:2}, key:'Cメジャー' },
+  { id:'41', num:'41', name:'Worlds Between',              method:'S', price:null, diff:{m:2,w:2,b:2,p:2}, key:'Cメジャー' },
+  { id:'42', num:'42', name:'Finding Happiness',           method:'S', price:null, diff:{m:2,w:2,b:4,p:3}, key:'Cメジャー' },
+  { id:'43', num:'43', name:'幸せの青い鳥', nameEn:'Bluebird of Happiness', method:'S', price:null, diff:{m:2,w:2,b:2,p:3}, key:'Cメジャー' },
+  { id:'44', num:'44', name:'生命と楽園', nameEn:'Life and Paradise', method:'S', price:null, diff:{m:2,w:3,b:4,p:4}, key:'Cメジャー' },
+  { id:'45', num:'45', name:'Ancient Echo',                method:'S', price:null, diff:{m:3,w:3,b:3,p:3}, key:'D♭メジャー' },
+  { id:'46', num:'46', name:'Airship',                     method:'S', price:19,   diff:{m:3,w:2,b:2,p:3}, key:'Cメジャー' },
+  { id:'ex1', num:'奏1', name:"Music's Embrace",           method:'P', price:10,   diff:{m:1,w:1,b:1,p:1}, key:'Dメジャー' },
+  { id:'ex2', num:'奏2', name:'Etude No. 1',                method:'P', price:10,   diff:{m:1,w:1,b:1,p:2}, key:'Gメジャー' },
+  { id:'ex3', num:'奏3', name:'Etude No. 2',                method:'P', price:10,   diff:{m:2,w:1,b:1,p:1}, key:'Cメジャー' },
+  { id:'ex4', num:'奏4', name:'Etude No. 3',                method:'P', price:10,   diff:{m:4,w:4,b:4,p:2}, key:'Cメジャー' },
+  { id:'ex5', num:'奏5', name:'Etude No. 4', note:'ゲーム内表記は奏0', noteEn:'Shown in-game as 奏0', method:'P', price:5, diff:{m:1,w:2,b:1,p:3}, key:'Cメジャー' },
+  { id:'e1', num:'E1', name:'歓喜の歌', nameEn:'Song of Joy', method:'D', price:10,  diff:{m:3,w:3,b:3,p:3}, key:'Dメジャー' },
+  { id:'e2', num:'E2', name:'ハッピーバースデー', nameEn:'Happy Birthday', method:'D', price:10, diff:{m:1,w:1,b:1,p:2}, key:'Gメジャー' },
+  { id:'e3', num:'E3', name:'愛しみの日々', nameEn:'Days of Love', method:'D', price:15, diff:{m:2,w:2,b:2,p:2}, key:'Bメジャー' },
+  { id:'e4', num:'E4', name:'Dragon Dance',                method:'D', price:8,   diff:{m:4,w:4,b:3,p:4}, key:'Bメジャー' },
+];
+/* ========================================================================== */
+
+const METHOD_LABEL_JA = { R:'常時（恒常精霊）', P:'常時（その他永続）', S:'稀（再訪・来訪団のみ）', D:'定期（日々イベント）' };
+const METHOD_LABEL_EN = { R:'Always (Realm Spirits)', P:'Always (Other permanent)', S:'Rare (Revisit/Troupe only)', D:'Periodic (Days event)' };
+
+const LS_KEY = nsKey('musicSheets');
+let userStates = { owned: {} };
+
+const VIEW_MODE_KEY = 'musicSheets_viewMode';
+let viewMode = localStorage.getItem(VIEW_MODE_KEY) || 'grid';
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadUserData();
+  updateViewToggleUI();
+  filterAndRender();
+});
+
+function loadUserData() {
+  try {
+    const saved = localStorage.getItem(LS_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      userStates.owned = parsed.itemOwned || {};
+    }
+  } catch (e) {
+    console.error('データ読み込み失敗:', e);
+  }
+}
+
+function saveUserData() {
+  const total = MUSIC_SHEETS.length;
+  const ownedCount = MUSIC_SHEETS.filter(s => userStates.owned[s.id]).length;
+  localStorage.setItem(LS_KEY, JSON.stringify({ total, owned: ownedCount, itemOwned: userStates.owned }));
+  updateHeaderScore(ownedCount, total);
+  updateMethodSummary();
+}
+
+function updateHeaderScore(owned, total) {
+  const pct = total > 0 ? Math.round((owned / total) * 100) : 0;
+  document.getElementById('catCount').textContent = CURRENT_LANG === 'en' ? `${owned} / ${total} owned` : `${owned} / ${total} 所持`;
+  document.getElementById('catPct').textContent = `${pct}%`;
+}
+
+// 入手方法ごとの所持内訳（R/P/S/D）をヘッダー下に表示
+function updateMethodSummary() {
+  const en = CURRENT_LANG === 'en';
+  const methods = ['R', 'P', 'S', 'D'];
+  const html = methods.map(m => {
+    const group = MUSIC_SHEETS.filter(s => s.method === m);
+    const owned = group.filter(s => userStates.owned[s.id]).length;
+    const label = en ? METHOD_LABEL_EN[m] : METHOD_LABEL_JA[m];
+    return `<span class="method-chip on-${m}"><span class="dot"></span>${m}: ${owned}/${group.length} ${label}</span>`;
+  }).join('');
+  document.getElementById('methodSummary').innerHTML = html;
+}
+
+function trKey(k) {
+  return CURRENT_LANG === 'en' ? k.replace('メジャー', ' Major').trim() : k;
+}
+
+function sheetDisplayName(s) {
+  return CURRENT_LANG === 'en' ? (s.nameEn || s.name) : s.name;
+}
+
+function toggleOwned(id) {
+  userStates.owned[id] = !userStates.owned[id];
+  saveUserData();
+  const card = document.getElementById(`card_${id}`);
+  if (card) {
+    card.classList.toggle('is-owned', userStates.owned[id]);
+    const toggleEl = card.matches('[role="button"]') ? card : card.querySelector('[role="button"]');
+    if (toggleEl) toggleEl.setAttribute('aria-pressed', String(userStates.owned[id]));
+  }
+}
+
+function setViewMode(mode) {
+  if (mode !== 'grid' && mode !== 'list') return;
+  viewMode = mode;
+  localStorage.setItem(VIEW_MODE_KEY, mode);
+  updateViewToggleUI();
+  filterAndRender();
+}
+
+function updateViewToggleUI() {
+  const gridBtn = document.getElementById('viewBtnGrid');
+  const listBtn = document.getElementById('viewBtnList');
+  const container = document.getElementById('itemList');
+  gridBtn.classList.toggle('active', viewMode === 'grid');
+  gridBtn.setAttribute('aria-pressed', viewMode === 'grid');
+  listBtn.classList.toggle('active', viewMode === 'list');
+  listBtn.setAttribute('aria-pressed', viewMode === 'list');
+  container.classList.toggle('item-grid', viewMode === 'grid');
+  container.classList.toggle('item-list', viewMode === 'list');
+}
+
+function filterAndRender() {
+  const fStatus = document.getElementById('filterStatus').value;
+  const fMethod = document.getElementById('filterMethod').value;
+  const sOrder = document.getElementById('sortOrder').value;
+  const fName = document.getElementById('searchName').value.trim().toLowerCase();
+  const en = CURRENT_LANG === 'en';
+
+  let filtered = MUSIC_SHEETS.filter(s => {
+    const isOwned = !!userStates.owned[s.id];
+    if (fName) {
+      const hay = `${s.num} ${s.name} ${s.nameEn || ''}`.toLowerCase();
+      if (!hay.includes(fName)) return false;
+    }
+    if (fStatus === 'owned' && !isOwned) return false;
+    if (fStatus === 'notOwned' && isOwned) return false;
+    if (fMethod !== 'all' && s.method !== fMethod) return false;
+    return true;
+  });
+
+  if (sOrder === 'nameAsc') {
+    filtered.sort((a, b) => sheetDisplayName(a).localeCompare(sheetDisplayName(b), en ? 'en' : 'ja'));
+  } else if (sOrder === 'priceDesc') {
+    filtered.sort((a, b) => (b.price ?? -1) - (a.price ?? -1));
+  }
+
+  const listEl = document.getElementById('itemList');
+  if (filtered.length === 0) {
+    listEl.innerHTML = `<div class="empty-message">${en ? 'No matching music sheets found.' : '該当する楽譜が見つかりません。'}</div>`;
+    const total = MUSIC_SHEETS.length;
+    const owned = MUSIC_SHEETS.filter(s => userStates.owned[s.id]).length;
+    updateHeaderScore(owned, total);
+    updateMethodSummary();
+    return;
+  }
+
+  const priceLabel = (s) => s.price === null ? `<span class="badge price-unknown">${en ? 'Price: -' : '価格: -'}</span>` : `<span class="badge">🕯️${s.price}</span>`;
+
+  const renderGrid = (s) => {
+    const isOwned = !!userStates.owned[s.id];
+    const dispName = sheetDisplayName(s);
+    const tip = [
+      `${en ? 'No.' : '№'}${s.num} ${dispName}`,
+      en ? METHOD_LABEL_EN[s.method] : METHOD_LABEL_JA[s.method],
+      s.price === null ? (en ? 'Price unlisted on wiki' : '価格: Wiki未記載') : `🕯️${s.price}`,
+      trKey(s.key),
+      `${en ? 'Melody' : '旋律'}${s.diff.m} / ${en ? 'Wind' : '管楽器'}${s.diff.w} / ${en ? 'Bass' : '低音'}${s.diff.b} / ${en ? 'Percussion' : '打楽器'}${s.diff.p}`,
+      s.note ? (en ? (s.noteEn || s.note) : s.note) : ''
+    ].filter(Boolean).join(' ／ ');
+    const wikiUrl = `https://www.google.com/search?q=${encodeURIComponent('Sky 星を紡ぐ子どもたち 楽譜 ' + s.name)}`;
+
+    return `
+      <div class="item-tile">
+        <div class="sheet-frame ${isOwned ? 'is-owned' : ''}" id="card_${s.id}" title="${escapeHtml(tip)}" onclick="toggleOwned('${s.id}')" tabindex="0" role="button" aria-pressed="${isOwned}" onkeydown="if(event.target===event.currentTarget&&(event.key==='Enter'||event.key===' ')){event.preventDefault();toggleOwned('${s.id}');}">
+          <span class="sheet-method-dot m-${s.method}" aria-hidden="true"></span>
+          <span class="sheet-note-icon">🎵</span>
+          <span class="sheet-num">${s.num}</span>
+          <span class="tile-owned-check">✓</span>
+        </div>
+        <a href="${wikiUrl}" target="_blank" rel="noopener noreferrer" class="item-tile-name">${dispName}</a>
+      </div>
+    `;
+  };
+
+  const renderList = (s) => {
+    const isOwned = !!userStates.owned[s.id];
+    const dispName = sheetDisplayName(s);
+    const wikiUrl = `https://www.google.com/search?q=${encodeURIComponent('Sky 星を紡ぐ子どもたち 楽譜 ' + s.name)}`;
+    const diffText = `${en ? 'Melody' : '旋律'} ${s.diff.m} ／ ${en ? 'Wind' : '管楽器'} ${s.diff.w} ／ ${en ? 'Bass' : '低音'} ${s.diff.b} ／ ${en ? 'Percussion' : '打楽器'} ${s.diff.p}`;
+
+    return `
+      <div class="item-card ${isOwned ? 'is-owned' : ''}" id="card_${s.id}">
+        <div class="item-left" onclick="toggleOwned('${s.id}')" tabindex="0" role="button" aria-pressed="${isOwned}" onkeydown="if(event.target===event.currentTarget&&(event.key==='Enter'||event.key===' ')){event.preventDefault();toggleOwned('${s.id}');}">
+          <div class="sheet-thumb">
+            <span class="sheet-note-icon">🎵</span>
+            <span class="sheet-num">${s.num}</span>
+            <span class="sheet-thumb-check">✓</span>
+          </div>
+          <div class="item-details">
+            <a href="${wikiUrl}" target="_blank" rel="noopener noreferrer" class="item-name-link" onclick="event.stopPropagation();">
+              ${dispName} 🔗
+            </a>
+            <div class="item-meta-row">
+              <span class="badge method-${s.method}">${s.method}: ${en ? METHOD_LABEL_EN[s.method] : METHOD_LABEL_JA[s.method]}</span>
+              ${priceLabel(s)}
+              <span class="badge">${trKey(s.key)}</span>
+              ${s.note ? `<span class="badge">${en ? (s.noteEn || s.note) : s.note}</span>` : ''}
+            </div>
+            <div class="diff-row">${diffText}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  };
+
+  listEl.innerHTML = filtered.map(viewMode === 'list' ? renderList : renderGrid).join('');
+
+  const total = MUSIC_SHEETS.length;
+  const owned = MUSIC_SHEETS.filter(s => userStates.owned[s.id]).length;
+  updateHeaderScore(owned, total);
+  updateMethodSummary();
+}
+</script>
+
+<footer style="text-align:center; padding:24px 16px; color:var(--text-2); font-size:13px; border-top:1px solid var(--sep); margin-top:40px; line-height:1.6;">
+  <span data-i18n-en="This is an unofficial fan site for Sky: Children of the Light. thatgamecompany is not involved in any way.">このサイトはSky 星を紡ぐ子どもたちの非公式ファンサイトです。thatgamecompanyは一切関与していません。</span><br>
+  <span data-i18n-en-html='Created by / feedback: <a href="https://x.com/Skyzztai" target="_blank" rel="noopener noreferrer" style="color:var(--blue); text-decoration:none; font-weight:bold;">@Skyzztai</a>&nbsp;&nbsp;/&nbsp;&nbsp;<a href="https://odaibako.net/u/Skyzztai" target="_blank" rel="noopener noreferrer" style="color:var(--blue); text-decoration:none; font-weight:bold;">Request form</a>'>
+  作成・ご意見: <a href="https://x.com/Skyzztai" target="_blank" rel="noopener noreferrer" style="color:var(--blue); text-decoration:none; font-weight:bold;">@Skyzztai</a>　／　<a href="https://odaibako.net/u/Skyzztai" target="_blank" rel="noopener noreferrer" style="color:var(--blue); text-decoration:none; font-weight:bold;">リクエストフォーム</a>
+  </span><br>
+  <span style="color:var(--text-2); font-size:12px; margin-top:4px; display:inline-block;"
+    data-i18n-en-html='References: <a href="https://sky-children-of-the-light.fandom.com/wiki/Music_Sheets" target="_blank" rel="noopener noreferrer" style="color: var(--blue);">Music Sheets (Sky Wiki English)</a>'>
+    参考: <a href="https://sky-children-of-the-light.fandom.com/ja/wiki/%E6%A5%BD%E8%AD%9C" target="_blank" rel="noopener noreferrer" style="color: var(--blue);">楽譜 (Sky Wiki 日本語)</a>
+  </span>
+</footer>
+
+</body>
+</html>
