@@ -253,6 +253,7 @@
     }
     .item-name-link:hover { color: var(--blue); text-decoration: underline; }
     .item-meta-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; align-items: center; }
+    .source-row { font-size: 11px; color: var(--text-2); margin-top: 5px; }
     .diff-row { font-size: 10.5px; color: var(--text-3); margin-top: 3px; font-variant-numeric: tabular-nums; }
 
     .badge { font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: var(--bg); color: var(--text-2); }
@@ -315,6 +316,15 @@
         </select>
       </div>
 
+      <!-- 季節・イベント絞り込み -->
+      <div class="control-row">
+        <span class="control-label" data-i18n-en="Season">季節・入手元</span>
+        <select class="select-box" id="filterSeason" onchange="filterAndRender()">
+          <option value="all" data-i18n-en="All seasons/sources">すべての季節・入手元</option>
+          <!-- JSで動的に追加されます -->
+        </select>
+      </div>
+
       <!-- 並び替え -->
       <div class="control-row">
         <span class="control-label" data-i18n-en="Sort">並び替え</span>
@@ -322,6 +332,7 @@
           <option value="default" data-i18n-en="Sort: Menu Order">並び替え: 標準（番号順）</option>
           <option value="nameAsc" data-i18n-en="Name (A-Z)">名前（昇順）</option>
           <option value="priceDesc" data-i18n-en="Price (High to Low)">価格（高い順）</option>
+          <option value="season" data-i18n-en="By Season/Source">季節・入手元順</option>
         </select>
       </div>
 
@@ -358,66 +369,78 @@
 // icon画像はSky Wiki「楽譜」ページの一覧表から取得。ゲーム内と同様、季節・日々イベント・
 // 奏の音楽堂など「入手元」を示すアイコンであり、同じ入手元の楽譜は同じ画像を共有する（仕様通り）
 const MUSIC_SHEETS = [
-  { id:'1',  num:'1',  name:'Bounding About',              method:'R', price:1,    diff:{m:4,w:2,b:4,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/f/f0/MusicSheetN-Ray.png/revision/latest/scale-to-width-down/51' },
-  { id:'2',  num:'2',  name:'Boundaries',                  method:'R', price:2,    diff:{m:1,w:2,b:1,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/f/f7/MusicSheetW-Ray.png/revision/latest/scale-to-width-down/51' },
-  { id:'3',  num:'3',  name:'Aperture',                    method:'R', price:3,    diff:{m:1,w:1,b:1,p:1}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/7/70/MusicSheetD-Ray.png/revision/latest/scale-to-width-down/51' },
-  { id:'4',  num:'4',  name:'Floating Bubbles',            method:'S', price:15,   diff:{m:2,w:2,b:2,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/2/25/4_Rhythm.png/revision/latest/scale-to-width-down/24' },
-  { id:'5',  num:'5',  name:'Spinning Thoughts',           method:'S', price:15,   diff:{m:2,w:2,b:1,p:1}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/2/25/4_Rhythm.png/revision/latest/scale-to-width-down/24' },
-  { id:'6',  num:'6',  name:'Lighting the Way',            method:'S', price:15,   diff:{m:1,w:1,b:1,p:1}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/2/25/4_Rhythm.png/revision/latest/scale-to-width-down/24' },
-  { id:'7',  num:'7',  name:'Wide Stance',                 method:'S', price:15,   diff:{m:3,w:3,b:1,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/7/73/1_Gratitude.png/revision/latest/scale-to-width-down/24' },
-  { id:'8',  num:'8',  name:'Waltzing in the Rain',        method:'S', price:15,   diff:{m:1,w:2,b:1,p:1}, key:'E♭メジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/7/73/1_Gratitude.png/revision/latest/scale-to-width-down/24' },
-  { id:'9',  num:'9',  name:'Finding the Horizon',         method:'S', price:15,   diff:{m:2,w:2,b:2,p:1}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/51/2_Lightseekers.png/revision/latest/scale-to-width-down/24' },
-  { id:'10', num:'10', name:'Relaxed Steps',               method:'S', price:15,   diff:{m:2,w:2,b:2,p:1}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/51/2_Lightseekers.png/revision/latest/scale-to-width-down/24' },
-  { id:'11', num:'11', name:'Support From Above',          method:'S', price:15,   diff:{m:1,w:4,b:1,p:1}, key:'B♭メジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/d/dc/3_Belonging.png/revision/latest/scale-to-width-down/24' },
-  { id:'12', num:'12', name:'Wavy Hair',                   method:'S', price:15,   diff:{m:2,w:2,b:2,p:1}, key:'E♭メジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/d/dc/3_Belonging.png/revision/latest/scale-to-width-down/24' },
-  { id:'13', num:'13', name:'Drifting Over Sand',          method:'S', price:15,   diff:{m:3,w:1,b:1,p:1}, key:'E♭メジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/e/e8/5_Enchantment.png/revision/latest/scale-to-width-down/24' },
-  { id:'14', num:'14', name:'Uneven Rhythms',              method:'S', price:15,   diff:{m:4,w:2,b:2,p:3}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/a/a4/6_Sanctuary.png/revision/latest/scale-to-width-down/24' },
-  { id:'15', num:'15', name:'Back and Forth',              method:'S', price:15,   diff:{m:3,w:2,b:2,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/a/a4/6_Sanctuary.png/revision/latest/scale-to-width-down/24' },
-  { id:'16', num:'16', name:'Soft Blanket',                method:'S', price:15,   diff:{m:2,w:2,b:2,p:2}, key:'Eメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/7/76/7_Prophecy.png/revision/latest/scale-to-width-down/24' },
-  { id:'17', num:'17', name:'Disappearing Ashes',          method:'S', price:15,   diff:{m:3,w:1,b:1,p:1}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/7/76/7_Prophecy.png/revision/latest/scale-to-width-down/24' },
-  { id:'18', num:'18', name:'Springing Step',              method:'S', price:15,   diff:{m:3,w:2,b:2,p:3}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/a/a7/8_Dreams.png/revision/latest/scale-to-width-down/24' },
-  { id:'19', num:'19', name:'Forgotten Dance',             method:'S', price:15,   diff:{m:4,w:4,b:4,p:4}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/a/a7/8_Dreams.png/revision/latest/scale-to-width-down/24' },
-  { id:'20', num:'20', name:'Forest Walk',                 method:'S', price:15,   diff:{m:2,w:3,b:1,p:3}, key:'Bメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/4/47/9_Assembly.png/revision/latest/scale-to-width-down/24' },
-  { id:'21', num:'21', name:'Keeping Myself Together',     method:'S', price:15,   diff:{m:2,w:2,b:1,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/4/47/9_Assembly.png/revision/latest/scale-to-width-down/24' },
-  { id:'22', num:'22', name:'Looking Up to the Stars',     method:'S', price:15,   diff:{m:1,w:2,b:1,p:2}, key:'Fメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/2/20/10_Little_Prince.png/revision/latest/scale-to-width-down/24' },
-  { id:'23', num:'23', name:'A Glimpse Within',            method:'S', price:15,   diff:{m:2,w:2,b:1,p:1}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/2/20/10_Little_Prince.png/revision/latest/scale-to-width-down/24' },
-  { id:'24', num:'24', name:'Everything Around Us',        method:'S', price:15,   diff:{m:3,w:3,b:3,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/4/41/11_Flight.png/revision/latest/scale-to-width-down/24' },
-  { id:'25', num:'25', name:'Flying Among the Stars',      method:'S', price:15,   diff:{m:1,w:3,b:1,p:3}, key:'Fメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/4/41/11_Flight.png/revision/latest/scale-to-width-down/24' },
-  { id:'26', num:'26', name:'Sowing Mischief',             method:'S', price:15,   diff:{m:4,w:4,b:2,p:4}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/1/15/Season-of-Abyss-Icon.png/revision/latest/scale-to-width-down/24' },
-  { id:'27', num:'27', name:'Without a Paddle',            method:'S', price:null, diff:{m:2,w:2,b:1,p:3}, key:'Fメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/1/15/Season-of-Abyss-Icon.png/revision/latest/scale-to-width-down/24' },
-  { id:'28', num:'28', name:'Hidden Dance',                method:'S', price:15,   diff:{m:3,w:3,b:2,p:3}, key:'Dメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/1/16/13_SOPerformance_logo.png/revision/latest/scale-to-width-down/24' },
-  { id:'29', num:'29', name:'Step by Step',                method:'S', price:22,   diff:{m:4,w:4,b:4,p:4}, key:'Fメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/1/16/13_SOPerformance_logo.png/revision/latest/scale-to-width-down/24' },
-  { id:'30', num:'30', name:'Earnest Looks',               method:'S', price:null, diff:{m:3,w:3,b:1,p:2}, key:'Aメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/d/d0/14_SOShattering.png/revision/latest/scale-to-width-down/24' },
-  { id:'31', num:'31', name:'Searching for Questions',     method:'S', price:null, diff:{m:3,w:4,b:3,p:3}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/d/d0/14_SOShattering.png/revision/latest/scale-to-width-down/24' },
-  { id:'32', num:'32', name:'Through the Eyes of a Child', method:'S', price:20,   diff:{m:3,w:3,b:1,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3a/15-Aurora.png/revision/latest/scale-to-width-down/24' },
-  { id:'33', num:'33', name:'The Seed',                    method:'S', price:15,   diff:{m:4,w:4,b:3,p:4}, key:'E♭メジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3a/15-Aurora.png/revision/latest/scale-to-width-down/24' },
-  { id:'34', num:'34', name:'Queendom',                    method:'P', price:20,   diff:{m:3,w:3,b:3,p:3}, key:'D♭メジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3a/15-Aurora.png/revision/latest/scale-to-width-down/24' },
-  { id:'35', num:'35', name:'Warrior',                     method:'S', price:15,   diff:{m:4,w:4,b:1,p:3}, key:'Gメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3a/15-Aurora.png/revision/latest/scale-to-width-down/24' },
-  { id:'36', num:'36', name:'Runaway',                     method:'S', price:15,   diff:{m:4,w:2,b:1,p:2}, key:'Bメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3a/15-Aurora.png/revision/latest/scale-to-width-down/24' },
-  { id:'37', num:'37', name:'Waltz of the Plains',         method:'S', price:15,   diff:{m:2,w:2,b:2,p:2}, key:'Dメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/5c/Season-of-Moments-icon.png/revision/latest/scale-to-width-down/24' },
-  { id:'38', num:'38', name:'A Quiet Walk',                method:'S', price:null, diff:{m:3,w:2,b:3,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/6/60/Season-of-Revival-icon.png/revision/latest/scale-to-width-down/24' },
-  { id:'39', num:'39', name:'Deer Song',                   method:'S', price:null, diff:{m:2,w:3,b:3,p:3}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/5a/Season-of-The-Nine-Colored-Deer-icon.png/revision/latest/scale-to-width-down/24' },
-  { id:'40', num:'40', name:'Old Friends',                 method:'S', price:null, diff:{m:1,w:1,b:1,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3f/Season-of-Duets-icon.png/revision/latest/scale-to-width-down/24' },
-  { id:'41', num:'41', name:'Worlds Between',              method:'S', price:null, diff:{m:2,w:2,b:2,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3a/Season-of-Moomin-icon.png/revision/latest/scale-to-width-down/24' },
-  { id:'42', num:'42', name:'Finding Happiness',           method:'S', price:null, diff:{m:2,w:2,b:4,p:3}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3a/Season-of-Moomin-icon.png/revision/latest/scale-to-width-down/24' },
-  { id:'43', num:'43', name:'幸せの青い鳥', nameEn:'Bluebird of Happiness', method:'S', price:null, diff:{m:2,w:2,b:2,p:3}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/6/63/Season-of-Blue-Bird-icon.png/revision/latest/scale-to-width-down/24' },
-  { id:'44', num:'44', name:'生命と楽園', nameEn:'Life and Paradise', method:'S', price:null, diff:{m:2,w:3,b:4,p:4}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/9/98/Season-of-the-Two-Embers-icon.png/revision/latest/scale-to-width-down/24' },
-  { id:'45', num:'45', name:'Ancient Echo',                method:'S', price:null, diff:{m:3,w:3,b:3,p:3}, key:'D♭メジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/59/Season-of-Migration-icon.png/revision/latest/scale-to-width-down/24' },
-  { id:'46', num:'46', name:'Airship',                     method:'S', price:19,   diff:{m:3,w:2,b:2,p:3}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/51/Season-of-Carnival-icon.png/revision/latest/scale-to-width-down/24' },
-  { id:'ex1', num:'奏1', name:"Music's Embrace",           method:'P', price:10,   diff:{m:1,w:1,b:1,p:1}, key:'Dメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3c/Four-point-star-Ray.png/revision/latest/scale-to-width-down/24' },
-  { id:'ex2', num:'奏2', name:'Etude No. 1',                method:'P', price:10,   diff:{m:1,w:1,b:1,p:2}, key:'Gメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3c/Four-point-star-Ray.png/revision/latest/scale-to-width-down/24' },
-  { id:'ex3', num:'奏3', name:'Etude No. 2',                method:'P', price:10,   diff:{m:2,w:1,b:1,p:1}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3c/Four-point-star-Ray.png/revision/latest/scale-to-width-down/24' },
-  { id:'ex4', num:'奏4', name:'Etude No. 3',                method:'P', price:10,   diff:{m:4,w:4,b:4,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3c/Four-point-star-Ray.png/revision/latest/scale-to-width-down/24' },
-  { id:'ex5', num:'奏5', name:'Etude No. 4', note:'ゲーム内表記は奏0', noteEn:'Shown in-game as 奏0', method:'P', price:5, diff:{m:1,w:2,b:1,p:3}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3c/Four-point-star-Ray.png/revision/latest/scale-to-width-down/24' },
-  { id:'e1', num:'E1', name:'歓喜の歌', nameEn:'Song of Joy', method:'D', price:10,  diff:{m:3,w:3,b:3,p:3}, key:'Dメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/4/4e/Days_of_Feast_Snow_Globe_icon.png/revision/latest/scale-to-width-down/24' },
-  { id:'e2', num:'E2', name:'ハッピーバースデー', nameEn:'Happy Birthday', method:'D', price:10, diff:{m:1,w:1,b:1,p:2}, key:'Gメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/0/08/Days_of_Sky_-_Small_cake-spell-icon-Morybel-0146.png/revision/latest/scale-to-width-down/24' },
-  { id:'e3', num:'E3', name:'愛しみの日々', nameEn:'Days of Love', method:'D', price:15, diff:{m:2,w:2,b:2,p:2}, key:'Bメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/54/Love-Heart-Plushie-icon.png/revision/latest/scale-to-width-down/24' },
-  { id:'e4', num:'E4', name:'Dragon Dance',                method:'D', price:8,   diff:{m:4,w:4,b:3,p:4}, key:'Bメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/f/fe/Fortune-Vertical-Poster-Prop-icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'1', season:'恒常精霊', spirit:'鳥の語り部', spiritEn:'Bird Whisperer',  num:'1',  name:'Bounding About',              method:'R', price:1,    diff:{m:4,w:2,b:4,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/f/f0/MusicSheetN-Ray.png/revision/latest/scale-to-width-down/51' },
+  { id:'2', season:'恒常精霊', spirit:'鯨の語り部', spiritEn:'Whale Whisperer',  num:'2',  name:'Boundaries',                  method:'R', price:2,    diff:{m:1,w:2,b:1,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/f/f7/MusicSheetW-Ray.png/revision/latest/scale-to-width-down/51' },
+  { id:'3', season:'恒常精霊', spirit:'マンタの語り部', spiritEn:'Manta Whisperer',  num:'3',  name:'Aperture',                    method:'R', price:3,    diff:{m:1,w:1,b:1,p:1}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/7/70/MusicSheetD-Ray.png/revision/latest/scale-to-width-down/51' },
+  { id:'4', season:'リズムが弾ける季節', spirit:'一座の進行役', spiritEn:'Troupe Greeter',  num:'4',  name:'Floating Bubbles',            method:'S', price:15,   diff:{m:2,w:2,b:2,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/2/25/4_Rhythm.png/revision/latest/scale-to-width-down/24' },
+  { id:'5', season:'リズムが弾ける季節', spirit:'祝祭の旋舞家', spiritEn:'Festival Spin Dancer',  num:'5',  name:'Spinning Thoughts',           method:'S', price:15,   diff:{m:2,w:2,b:1,p:1}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/2/25/4_Rhythm.png/revision/latest/scale-to-width-down/24' },
+  { id:'6', season:'リズムが弾ける季節', spirit:'うっとりするような旅役者', spiritEn:'Admiring Actor',  num:'6',  name:'Lighting the Way',            method:'S', price:15,   diff:{m:1,w:1,b:1,p:1}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/2/25/4_Rhythm.png/revision/latest/scale-to-width-down/24' },
+  { id:'7', season:'感謝の季節', spirit:'挑戦的な表現者', spiritEn:'Provoking Performer',  num:'7',  name:'Wide Stance',                 method:'S', price:15,   diff:{m:3,w:3,b:1,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/7/73/1_Gratitude.png/revision/latest/scale-to-width-down/24' },
+  { id:'8', season:'感謝の季節', spirit:'敬礼する守護者', spiritEn:'Saluting Protector',  num:'8',  name:'Waltzing in the Rain',        method:'S', price:15,   diff:{m:1,w:2,b:1,p:1}, key:'E♭メジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/7/73/1_Gratitude.png/revision/latest/scale-to-width-down/24' },
+  { id:'9', season:'光の探求者の季節', spirit:'くつろぐ開拓者', spiritEn:'Laidback Pioneer',  num:'9',  name:'Finding the Horizon',         method:'S', price:15,   diff:{m:2,w:2,b:2,p:1}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/51/2_Lightseekers.png/revision/latest/scale-to-width-down/24' },
+  { id:'10', season:'光の探求者の季節', spirit:'蟹の語り部', spiritEn:'Crab Whisperer', num:'10', name:'Relaxed Steps',               method:'S', price:15,   diff:{m:2,w:2,b:2,p:1}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/51/2_Lightseekers.png/revision/latest/scale-to-width-down/24' },
+  { id:'11', season:'想いを編む季節', spirit:'祖たる賢者', spiritEn:'Wise Grandparent', num:'11', name:'Support From Above',          method:'S', price:15,   diff:{m:1,w:4,b:1,p:1}, key:'B♭メジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/d/dc/3_Belonging.png/revision/latest/scale-to-width-down/24' },
+  { id:'12', season:'想いを編む季節', spirit:'ぽんぽんする若者', spiritEn:'Hairtousle Teen', num:'12', name:'Wavy Hair',                   method:'S', price:15,   diff:{m:2,w:2,b:2,p:1}, key:'E♭メジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/d/dc/3_Belonging.png/revision/latest/scale-to-width-down/24' },
+  { id:'13', season:'魔法の季節', spirit:'けんかごっこ好きの植物採集者', spiritEn:'Playfighting Herbalist', num:'13', name:'Drifting Over Sand',          method:'S', price:15,   diff:{m:3,w:1,b:1,p:1}, key:'E♭メジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/e/e8/5_Enchantment.png/revision/latest/scale-to-width-down/24' },
+  { id:'14', season:'楽園の季節', spirit:'海月の語り部', spiritEn:'Jelly Whisperer', num:'14', name:'Uneven Rhythms',              method:'S', price:15,   diff:{m:4,w:2,b:2,p:3}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/a/a4/6_Sanctuary.png/revision/latest/scale-to-width-down/24' },
+  { id:'15', season:'楽園の季節', spirit:'引っ込み思案な読書家', spiritEn:'Timid Bookworm', num:'15', name:'Back and Forth',              method:'S', price:15,   diff:{m:3,w:2,b:2,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/a/a4/6_Sanctuary.png/revision/latest/scale-to-width-down/24' },
+  { id:'16', season:'預言者の季節', spirit:'地の預言者', spiritEn:'Prophet of Earth', num:'16', name:'Soft Blanket',                method:'S', price:15,   diff:{m:2,w:2,b:2,p:2}, key:'Eメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/7/76/7_Prophecy.png/revision/latest/scale-to-width-down/24' },
+  { id:'17', season:'預言者の季節', spirit:'火の預言者', spiritEn:'Prophet of Fire', num:'17', name:'Disappearing Ashes',          method:'S', price:15,   diff:{m:3,w:1,b:1,p:1}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/7/76/7_Prophecy.png/revision/latest/scale-to-width-down/24' },
+  { id:'18', season:'夢かなう季節', spirit:'そっと覗く郵便屋', spiritEn:'Peeking Postman', num:'18', name:'Springing Step',              method:'S', price:15,   diff:{m:3,w:2,b:2,p:3}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/a/a7/8_Dreams.png/revision/latest/scale-to-width-down/24' },
+  { id:'19', season:'夢かなう季節', spirit:'ハグ好きの隠者', spiritEn:'Bearhug Hermit', num:'19', name:'Forgotten Dance',             method:'S', price:15,   diff:{m:4,w:4,b:4,p:4}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/a/a7/8_Dreams.png/revision/latest/scale-to-width-down/24' },
+  { id:'20', season:'大樹に集う季節', spirit:'夢見がちな森の民', spiritEn:'Daydream Forester', num:'20', name:'Forest Walk',                 method:'S', price:15,   diff:{m:2,w:3,b:1,p:3}, key:'Bメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/4/47/9_Assembly.png/revision/latest/scale-to-width-down/24' },
+  { id:'21', season:'大樹に集う季節', spirit:'臆病な見習い士官', spiritEn:'Scaredy Cadet', num:'21', name:'Keeping Myself Together',     method:'S', price:15,   diff:{m:2,w:2,b:1,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/4/47/9_Assembly.png/revision/latest/scale-to-width-down/24' },
+  { id:'22', season:'星の王子さまの季節', spirit:'ご満悦のうぬぼれ屋', spiritEn:'Gloating Narcissist', num:'22', name:'Looking Up to the Stars',     method:'S', price:15,   diff:{m:1,w:2,b:1,p:2}, key:'Fメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/2/20/10_Little_Prince.png/revision/latest/scale-to-width-down/24' },
+  { id:'23', season:'星の王子さまの季節', spirit:'うなだれる戦士', spiritEn:'Slouching Soldier', num:'23', name:'A Glimpse Within',            method:'S', price:15,   diff:{m:2,w:2,b:1,p:1}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/2/20/10_Little_Prince.png/revision/latest/scale-to-width-down/24' },
+  { id:'24', season:'羽ばたく季節', spirit:'快活な誘導手', spiritEn:'Lively Navigator', num:'24', name:'Everything Around Us',        method:'S', price:15,   diff:{m:3,w:3,b:3,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/4/41/11_Flight.png/revision/latest/scale-to-width-down/24' },
+  { id:'25', season:'羽ばたく季節', spirit:'腕利きの工匠', spiritEn:'Talented Builder', num:'25', name:'Flying Among the Stars',      method:'S', price:15,   diff:{m:1,w:3,b:1,p:3}, key:'Fメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/4/41/11_Flight.png/revision/latest/scale-to-width-down/24' },
+  { id:'26', season:'深淵の季節', spirit:'豪快に笑う砲手', spiritEn:'Cackling Cannoneer', num:'26', name:'Sowing Mischief',             method:'S', price:15,   diff:{m:4,w:4,b:2,p:4}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/1/15/Season-of-Abyss-Icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'27', season:'深淵の季節', spirit:'おっちょこちょいな水夫長', spiritEn:'Bumbling Boatswain', num:'27', name:'Without a Paddle',            method:'S', price:null, diff:{m:2,w:2,b:1,p:3}, key:'Fメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/1/15/Season-of-Abyss-Icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'28', season:'表現者たちの季節', spirit:'慎み深い踊り手', spiritEn:'Modest Dancer', num:'28', name:'Hidden Dance',                method:'S', price:15,   diff:{m:3,w:3,b:2,p:3}, key:'Dメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/1/16/13_SOPerformance_logo.png/revision/latest/scale-to-width-down/24' },
+  { id:'29', season:'表現者たちの季節', spirit:'一生懸命な舞台美術家', spiritEn:'Frantic Stagehand', num:'29', name:'Step by Step',                method:'S', price:22,   diff:{m:4,w:4,b:4,p:4}, key:'Fメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/1/16/13_SOPerformance_logo.png/revision/latest/scale-to-width-down/24' },
+  { id:'30', season:'砕ケル闇ノ季節', spirit:'万古の闇（蝕む闇）', spiritEn:'Ancient Darkness (Plants)', num:'30', name:'Earnest Looks',               method:'S', price:null, diff:{m:3,w:3,b:1,p:2}, key:'Aメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/d/d0/14_SOShattering.png/revision/latest/scale-to-width-down/24' },
+  { id:'31', season:'砕ケル闇ノ季節', spirit:'万古の光（マンタ）', spiritEn:'Ancient Light (Manta)', num:'31', name:'Searching for Questions',     method:'S', price:null, diff:{m:3,w:4,b:3,p:3}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/d/d0/14_SOShattering.png/revision/latest/scale-to-width-down/24' },
+  { id:'32', season:'AURORAの季節', spirit:'AURORAの季節の案内人', spiritEn:'AURORA Guide', num:'32', name:'Through the Eyes of a Child', method:'S', price:20,   diff:{m:3,w:3,b:1,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3a/15-Aurora.png/revision/latest/scale-to-width-down/24' },
+  { id:'33', season:'AURORAの季節', spirit:'希望の君', spiritEn:'Seed of Hope', num:'33', name:'The Seed',                    method:'S', price:15,   diff:{m:4,w:4,b:3,p:4}, key:'E♭メジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3a/15-Aurora.png/revision/latest/scale-to-width-down/24' },
+  { id:'34', season:'AURORAの季節', spirit:'AURORAの季節の案内人', spiritEn:'AURORA Guide', num:'34', name:'Queendom',                    method:'P', price:20,   diff:{m:3,w:3,b:3,p:3}, key:'D♭メジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3a/15-Aurora.png/revision/latest/scale-to-width-down/24' },
+  { id:'35', season:'AURORAの季節', spirit:'慈愛の戦士', spiritEn:'Warrior of Love', num:'35', name:'Warrior',                     method:'S', price:15,   diff:{m:4,w:4,b:1,p:3}, key:'Gメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3a/15-Aurora.png/revision/latest/scale-to-width-down/24' },
+  { id:'36', season:'AURORAの季節', spirit:'駆けゆく旅人', spiritEn:'Running Wayfarer', num:'36', name:'Runaway',                     method:'S', price:15,   diff:{m:4,w:2,b:1,p:2}, key:'Bメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3a/15-Aurora.png/revision/latest/scale-to-width-down/24' },
+  { id:'37', season:'瞬きの季節', spirit:'上機嫌な地質学者', spiritEn:'Jolly Geologist', num:'37', name:'Waltz of the Plains',         method:'S', price:15,   diff:{m:2,w:2,b:2,p:2}, key:'Dメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/5c/Season-of-Moments-icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'38', season:'復古の季節', spirit:'見捨てられた隠れ家の残響', spiritEn:'Echo of an Abandoned Refuge', num:'38', name:'A Quiet Walk',                method:'S', price:null, diff:{m:3,w:2,b:3,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/6/60/Season-of-Revival-icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'39', season:'九色の鹿の季節', spirit:'国王', spiritEn:'Feudal Lord', num:'39', name:'Deer Song',                   method:'S', price:null, diff:{m:2,w:3,b:3,p:3}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/5a/Season-of-The-Nine-Colored-Deer-icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'40', season:'重なる音色の季節', spirit:'音楽家たちの遺産', spiritEn:"The Musician's Legacy", num:'40', name:'Old Friends',                 method:'S', price:null, diff:{m:1,w:1,b:1,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3f/Season-of-Duets-icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'41', season:'ムーミンの季節', spirit:'冒険の心', spiritEn:'Spirit of Adventure', num:'41', name:'Worlds Between',              method:'S', price:null, diff:{m:2,w:2,b:2,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3a/Season-of-Moomin-icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'42', season:'ムーミンの季節', spirit:'自己の確立', spiritEn:'Sense of Self', num:'42', name:'Finding Happiness',           method:'S', price:null, diff:{m:2,w:2,b:4,p:3}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3a/Season-of-Moomin-icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'43', num:'43', name:'幸せの青い鳥', nameEn:'Blue Bird of Happiness', season:'青い鳥の季節', spirit:'木こりの訴えかける親', spiritEn:'Woodcutting Pleaful Parent', method:'S', price:null, diff:{m:2,w:2,b:2,p:3}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/6/63/Season-of-Blue-Bird-icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'44', num:'44', name:'生命と楽園', nameEn:'Life and Sanctuary', season:'ふたつの灯火の季節　前編', spirit:'厳格なマナティ飼い', spiritEn:'Stern Shepherd', method:'S', price:null, diff:{m:2,w:3,b:4,p:4}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/9/98/Season-of-the-Two-Embers-icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'45', season:'渡りの季節', spirit:'渡りの鐘職人', spiritEn:'Migrating Bellmaker', num:'45', name:'Ancient Echo',                method:'S', price:null, diff:{m:3,w:3,b:3,p:3}, key:'D♭メジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/59/Season-of-Migration-icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'46', season:'カーニバルの季節', spirit:'カーニバルの謎解き座長', spiritEn:'Carnival Puzzle Director', num:'46', name:'Airship',                     method:'S', price:19,   diff:{m:3,w:2,b:2,p:3}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/51/Season-of-Carnival-icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'ex1', season:'奏の音楽堂', spirit:null, spiritEn:null, num:'奏1', name:"Music's Embrace",           method:'P', price:10,   diff:{m:1,w:1,b:1,p:1}, key:'Dメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3c/Four-point-star-Ray.png/revision/latest/scale-to-width-down/24' },
+  { id:'ex2', season:'奏の音楽堂', spirit:null, spiritEn:null, num:'奏2', name:'Etude No. 1',                method:'P', price:10,   diff:{m:1,w:1,b:1,p:2}, key:'Gメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3c/Four-point-star-Ray.png/revision/latest/scale-to-width-down/24' },
+  { id:'ex3', season:'奏の音楽堂', spirit:null, spiritEn:null, num:'奏3', name:'Etude No. 2',                method:'P', price:10,   diff:{m:2,w:1,b:1,p:1}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3c/Four-point-star-Ray.png/revision/latest/scale-to-width-down/24' },
+  { id:'ex4', season:'奏の音楽堂', spirit:null, spiritEn:null, num:'奏4', name:'Etude No. 3',                method:'P', price:10,   diff:{m:4,w:4,b:4,p:2}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3c/Four-point-star-Ray.png/revision/latest/scale-to-width-down/24' },
+  { id:'ex5', season:'奏の音楽堂', spirit:null, spiritEn:null, num:'奏5', name:'Etude No. 4', note:'ゲーム内表記は奏0', noteEn:'Shown in-game as 奏0', method:'P', price:5, diff:{m:1,w:2,b:1,p:3}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3c/Four-point-star-Ray.png/revision/latest/scale-to-width-down/24' },
+  { id:'e1', season:'聖なる星の日々', spirit:null, spiritEn:null, num:'E1', name:'歓喜の歌', nameEn:'Song of Joy', method:'D', price:10,  diff:{m:3,w:3,b:3,p:3}, key:'Dメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/4/4e/Days_of_Feast_Snow_Globe_icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'e2', season:'Skyアニバーサリー', spirit:null, spiritEn:null, num:'E2', name:'ハッピーバースデー', nameEn:'Happy Birthday', method:'D', price:10, diff:{m:1,w:1,b:1,p:2}, key:'Gメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/0/08/Days_of_Sky_-_Small_cake-spell-icon-Morybel-0146.png/revision/latest/scale-to-width-down/24' },
+  { id:'e3', season:'愛しみの日々', spirit:null, spiritEn:null, num:'E3', name:'愛しみの日々', nameEn:'Days of Love', method:'D', price:15, diff:{m:2,w:2,b:2,p:2}, key:'Bメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/54/Love-Heart-Plushie-icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'e4', season:'来福の日々', spirit:null, spiritEn:null, num:'E4', name:'Dragon Dance',                method:'D', price:8,   diff:{m:4,w:4,b:3,p:4}, key:'Bメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/f/fe/Fortune-Vertical-Poster-Prop-icon.png/revision/latest/scale-to-width-down/24' },
 ];
 /* ========================================================================== */
 
 const METHOD_LABEL_JA = { R:'恒常精霊', P:'常時交換可能', S:'季節精霊', D:'日々イベント' };
 const METHOD_LABEL_EN = { R:'Realm Spirits', P:'Always Tradable', S:'Season Spirits', D:'Days Events' };
+
+// 季節・入手元の絞り込みセレクトに並べる順序。恒常精霊・奏の音楽堂は季節を問わない
+// 常設カテゴリのため先頭に固定し、以降は各カテゴリページ共通のEVENT_ORDERに準拠
+const SEASON_ORDER = [
+  '恒常精霊', '奏の音楽堂',
+  '感謝の季節', '光の探求者の季節', '想いを編む季節', 'リズムが弾ける季節', '魔法の季節',
+  '楽園の季節', '預言者の季節', '夢かなう季節', '大樹に集う季節', '星の王子さまの季節',
+  '羽ばたく季節', '深淵の季節', '表現者たちの季節', '砕ケル闇ノ季節', 'AURORAの季節',
+  '瞬きの季節', '復古の季節', '九色の鹿の季節', '重なる音色の季節', 'ムーミンの季節',
+  '青い鳥の季節', 'ふたつの灯火の季節　前編', '渡りの季節', 'カーニバルの季節',
+  '来福の日々', 'Skyアニバーサリー', '聖なる星の日々', '愛しみの日々'
+];
 
 const LS_KEY = nsKey('musicSheets');
 let userStates = { owned: {} };
@@ -428,8 +451,29 @@ let viewMode = localStorage.getItem(VIEW_MODE_KEY) || 'grid';
 document.addEventListener('DOMContentLoaded', () => {
   loadUserData();
   updateViewToggleUI();
+  buildSeasonFilter();
   filterAndRender();
 });
+
+// 重複のない季節・入手元の一覧を絞り込みセレクトに追加（SEASON_ORDER準拠、無い場合は末尾）
+function buildSeasonFilter() {
+  const seasons = [...new Set(MUSIC_SHEETS.map(s => s.season))];
+  seasons.sort((a, b) => {
+    const ia = SEASON_ORDER.indexOf(a);
+    const ib = SEASON_ORDER.indexOf(b);
+    if (ia === -1 && ib === -1) return 0;
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
+  const select = document.getElementById('filterSeason');
+  seasons.forEach(season => {
+    const opt = document.createElement('option');
+    opt.value = season;
+    opt.textContent = trEvent(season);
+    select.appendChild(opt);
+  });
+}
 
 function loadUserData() {
   try {
@@ -478,6 +522,12 @@ function sheetDisplayName(s) {
   return CURRENT_LANG === 'en' ? (s.nameEn || s.name) : s.name;
 }
 
+// 精霊名の表示（精霊がいない入手元＝奏の音楽堂・日々イベントの場合はnull）
+function spiritDisplayName(s) {
+  if (!s.spirit) return null;
+  return CURRENT_LANG === 'en' ? (s.spiritEn || s.spirit) : s.spirit;
+}
+
 function toggleOwned(id) {
   userStates.owned[id] = !userStates.owned[id];
   saveUserData();
@@ -512,6 +562,7 @@ function updateViewToggleUI() {
 function filterAndRender() {
   const fStatus = document.getElementById('filterStatus').value;
   const fMethod = document.getElementById('filterMethod').value;
+  const fSeason = document.getElementById('filterSeason').value;
   const sOrder = document.getElementById('sortOrder').value;
   const fName = document.getElementById('searchName').value.trim().toLowerCase();
   const en = CURRENT_LANG === 'en';
@@ -519,12 +570,13 @@ function filterAndRender() {
   let filtered = MUSIC_SHEETS.filter(s => {
     const isOwned = !!userStates.owned[s.id];
     if (fName) {
-      const hay = `${s.num} ${s.name} ${s.nameEn || ''}`.toLowerCase();
+      const hay = `${s.num} ${s.name} ${s.nameEn || ''} ${s.spirit || ''} ${s.spiritEn || ''} ${s.season}`.toLowerCase();
       if (!hay.includes(fName)) return false;
     }
     if (fStatus === 'owned' && !isOwned) return false;
     if (fStatus === 'notOwned' && isOwned) return false;
     if (fMethod !== 'all' && s.method !== fMethod) return false;
+    if (fSeason !== 'all' && s.season !== fSeason) return false;
     return true;
   });
 
@@ -532,6 +584,12 @@ function filterAndRender() {
     filtered.sort((a, b) => sheetDisplayName(a).localeCompare(sheetDisplayName(b), en ? 'en' : 'ja'));
   } else if (sOrder === 'priceDesc') {
     filtered.sort((a, b) => (b.price ?? -1) - (a.price ?? -1));
+  } else if (sOrder === 'season') {
+    filtered.sort((a, b) => {
+      const ia = SEASON_ORDER.indexOf(a.season), ib = SEASON_ORDER.indexOf(b.season);
+      if (ia !== ib) return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+      return Number(a.id.replace(/\D/g, '')) - Number(b.id.replace(/\D/g, ''));
+    });
   }
 
   const listEl = document.getElementById('itemList');
@@ -549,9 +607,12 @@ function filterAndRender() {
   const renderGrid = (s) => {
     const isOwned = !!userStates.owned[s.id];
     const dispName = sheetDisplayName(s);
+    const spiritName = spiritDisplayName(s);
     const tip = [
       `${en ? 'No.' : '№'}${s.num} ${dispName}`,
       en ? METHOD_LABEL_EN[s.method] : METHOD_LABEL_JA[s.method],
+      trEvent(s.season),
+      spiritName ? (en ? `Spirit: ${spiritName}` : `精霊: ${spiritName}`) : '',
       s.price === null ? (en ? 'Price unlisted on wiki' : '価格: Wiki未記載') : `🕯️${s.price}`,
       trKey(s.key),
       `${en ? 'Melody' : '旋律'}${s.diff.m} / ${en ? 'Wind' : '管楽器'}${s.diff.w} / ${en ? 'Bass' : '低音'}${s.diff.b} / ${en ? 'Percussion' : '打楽器'}${s.diff.p}`,
@@ -578,6 +639,7 @@ function filterAndRender() {
   const renderList = (s) => {
     const isOwned = !!userStates.owned[s.id];
     const dispName = sheetDisplayName(s);
+    const spiritName = spiritDisplayName(s);
     const wikiUrl = `https://www.google.com/search?q=${encodeURIComponent('Sky 星を紡ぐ子どもたち 楽譜 ' + s.name)}`;
     const diffText = `${en ? 'Melody' : '旋律'} ${s.diff.m} ／ ${en ? 'Wind' : '管楽器'} ${s.diff.w} ／ ${en ? 'Bass' : '低音'} ${s.diff.b} ／ ${en ? 'Percussion' : '打楽器'} ${s.diff.p}`;
 
@@ -600,6 +662,7 @@ function filterAndRender() {
               <span class="badge">${trKey(s.key)}</span>
               ${s.note ? `<span class="badge">${en ? (s.noteEn || s.note) : s.note}</span>` : ''}
             </div>
+            <div class="source-row">🌸 ${trEvent(s.season)}${spiritName ? ` ・ ${en ? 'Spirit' : '精霊'}: ${spiritName}` : ''}</div>
             <div class="diff-row">${diffText}</div>
           </div>
         </div>

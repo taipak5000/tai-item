@@ -75,6 +75,7 @@ const SEASON_NAME_EN = {
   '夏のキャンプ': 'Summer Camp',
   // ── その他の共通ソース表記 ──
   '恒常精霊': 'Realm Spirits',
+  '奏の音楽堂': 'Concert Hall',
   '恒常精霊・過去': 'Realm Spirits (Past)',
   '恒常究極': 'Realm Spirit (Ultimate)',
   '常駐精霊': 'Realm Spirits',
