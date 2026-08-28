@@ -286,10 +286,10 @@
         </select>
         <select class="select-box" id="filterMethod" onchange="filterAndRender()">
           <option value="all" data-i18n-en="All acquisition methods">すべての入手方法</option>
-          <option value="R" data-i18n-en="R: Realm Spirits">R: 恒常精霊</option>
-          <option value="P" data-i18n-en="P: Always Tradable">P: 常時交換可能</option>
-          <option value="S" data-i18n-en="S: Season Spirits">S: 季節精霊</option>
-          <option value="D" data-i18n-en="D: Days Events">D: 日々イベント</option>
+          <option value="R" data-i18n-en="Realm Spirits">恒常精霊</option>
+          <option value="P" data-i18n-en="Always Tradable">常時交換可能</option>
+          <option value="S" data-i18n-en="Season Spirits">季節精霊</option>
+          <option value="D" data-i18n-en="Days Events">日々イベント</option>
         </select>
       </div>
 
@@ -441,7 +441,7 @@ function updateMethodSummary() {
     const group = MUSIC_SHEETS.filter(s => s.method === m);
     const owned = group.filter(s => userStates.owned[s.id]).length;
     const label = en ? METHOD_LABEL_EN[m] : METHOD_LABEL_JA[m];
-    return `<span class="method-chip on-${m}"><span class="dot"></span>${m}: ${owned}/${group.length} ${label}</span>`;
+    return `<span class="method-chip on-${m}"><span class="dot"></span>${owned}/${group.length} ${label}</span>`;
   }).join('');
   document.getElementById('methodSummary').innerHTML = html;
 }
@@ -567,7 +567,7 @@ function filterAndRender() {
               ${dispName} 🔗
             </a>
             <div class="item-meta-row">
-              <span class="badge method-${s.method}">${s.method}: ${en ? METHOD_LABEL_EN[s.method] : METHOD_LABEL_JA[s.method]}</span>
+              <span class="badge method-${s.method}">${en ? METHOD_LABEL_EN[s.method] : METHOD_LABEL_JA[s.method]}</span>
               ${priceLabel(s)}
               <span class="badge">${trKey(s.key)}</span>
               ${s.note ? `<span class="badge">${en ? (s.noteEn || s.note) : s.note}</span>` : ''}
