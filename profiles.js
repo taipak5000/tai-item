@@ -1031,7 +1031,7 @@ function refreshTitlesUI() {
 /* ================================================================
    🗓️ ダッシュボード（今日・今週・今月）
    全サイト共通のボタン。データの本家はitem（アイテム所持管理）のindex.html
-   （REVISIT_SPIRIT_SCHEDULE・CURRENT_SEASON・EVENT_SCHEDULE・NEXT_UPDATE）。二重管理を
+   （REVISIT_SPIRIT_SCHEDULES・CURRENT_SEASON・EVENT_SCHEDULE・NEXT_UPDATE）。二重管理を
    避けるため、item自身のページも含めて常にitem/index.htmlをfetchして読む
    （横断検索機能と同じ考え方）。
    ================================================================ */
@@ -1210,26 +1210,42 @@ function pfDashSoonestFuture(dates) {
   return future.length ? future[0] : null;
 }
 
-// REVISIT_SPIRIT_SCHEDULE（2週間おきに4日間だけ来る旅の精霊）の現在の状態を求める。
-// item/index.htmlのisRevisitSpiritCurrentlyActive()と同じロジック（データはfetch経由のため再実装）。
+// REVISIT_SPIRIT_SCHEDULES内の1件（周期来訪 or 一回限りの来訪団）の現在の状態を求める。
+// item/index.htmlのisRevisitScheduleActive()と同じロジック（データはfetch経由のため再実装）。
 function pfDashRevisitStatus(schedule) {
-  if (!schedule || !schedule.anchorStart || !schedule.anchorEnd) return null;
-  const start0 = new Date(schedule.anchorStart);
-  const end0 = new Date(schedule.anchorEnd);
-  const intervalMs = schedule.intervalDays * 86400000;
+  if (!schedule) return null;
   const now = new Date();
-  const k = Math.floor((now - start0) / intervalMs);
-  const start = new Date(start0.getTime() + k * intervalMs);
-  const end = new Date(start.getTime() + (end0 - start0));
-  if (start <= now && now <= end) {
-    return { active: true, daysLeft: Math.ceil((end - now) / 86400000), target: end };
+  if (schedule.intervalDays) {
+    if (!schedule.anchorStart || !schedule.anchorEnd) return null;
+    const start0 = new Date(schedule.anchorStart);
+    const end0 = new Date(schedule.anchorEnd);
+    const intervalMs = schedule.intervalDays * 86400000;
+    const k = Math.floor((now - start0) / intervalMs);
+    const start = new Date(start0.getTime() + k * intervalMs);
+    const end = new Date(start.getTime() + (end0 - start0));
+    if (start <= now && now <= end) {
+      return { active: true, daysLeft: Math.ceil((end - now) / 86400000), target: end };
+    }
+    const nextStart = now < start ? start : new Date(start.getTime() + intervalMs);
+    return { active: false, daysUntil: Math.ceil((nextStart - now) / 86400000), target: nextStart };
   }
-  const nextStart = now < start ? start : new Date(start.getTime() + intervalMs);
-  return { active: false, daysUntil: Math.ceil((nextStart - now) / 86400000), target: nextStart };
+  // 一回限りの来訪（intervalDaysなし）：start/endで判定し、終了済みなら二度と表示しない
+  if (!schedule.start || !schedule.end) return null;
+  const start = new Date(schedule.start), end = new Date(schedule.end);
+  if (start <= now && now <= end) return { active: true, daysLeft: Math.ceil((end - now) / 86400000), target: end };
+  if (now < start) return { active: false, daysUntil: Math.ceil((start - now) / 86400000), target: start };
+  return null;
+}
+
+// 複数の来訪スケジュールがあるので、それぞれの状態をまとめて計算する
+function pfDashRevisitStatuses(schedules) {
+  return (schedules || [])
+    .map(schedule => ({ schedule, status: pfDashRevisitStatus(schedule) }))
+    .filter(x => x.status);
 }
 
 // 再訪精霊行からアイテムへ直接ジャンプ：ダッシュボードは精霊の固有名詞を伏せているが、
-// REVISIT_SPIRIT_SCHEDULE.items自体はカテゴリ・IDを把握済みのため、該当カテゴリの
+// 各スケジュールのitems自体はカテゴリ・IDを把握済みのため、該当カテゴリの
 // 一覧ページへのショートカットボタンだけは出す（横断検索と同じSRCH_ITEM_CATSのfileを使う）。
 // 複数カテゴリにまたがる場合はカテゴリごとに1つずつ、重複は1つにまとめて表示する。
 function pfDashRevisitShortcutHtml(items) {
@@ -1250,7 +1266,7 @@ async function pfDashLoadData() {
   const res = await fetch(`${SITE_ROOT}/tai-item/index.html`);
   const html = await res.text();
   return {
-    revisit: srchExtractArray(html, 'REVISIT_SPIRIT_SCHEDULE') || null,
+    revisitSchedules: srchExtractArray(html, 'REVISIT_SPIRIT_SCHEDULES') || [],
     season: srchExtractArray(html, 'CURRENT_SEASON') || null,
     eventSchedule: srchExtractArray(html, 'EVENT_SCHEDULE') || [],
     nextUpdate: srchExtractArray(html, 'NEXT_UPDATE') || null,
@@ -1316,14 +1332,15 @@ function pfDashBuildHtml(data) {
     const endDate = new Date(ev.end);
     bucketRows[pfDashBucketFor(endDate)].push(pfDashRow('🌟', `<b>${escapeHtmlPf(trEvent(ev.name))}</b> ${pfT('が開催中', 'is currently active')}<span class="dash-countdown">${pfT('終了まで', 'Ends in')} ${pfDashCountdown(endDate)}</span>`));
   });
-  const rv = pfDashRevisitStatus(data.revisit);
-  if (rv && data.revisit) {
+  // 複数の来訪(周期的な単独の旅の精霊・期間限定の来訪団など)が同時に進行することがあるため、
+  // それぞれ独立した行として表示する（1件にまとめると、片方の来訪が隠れてしまうため）
+  pfDashRevisitStatuses(data.revisitSchedules).forEach(({ schedule, status: rv }) => {
     // 再訪精霊は毎回違う精霊が来訪するため、固有名詞（誰が来るか）は表示しない
     const revisitLabel = rv.active
       ? `${pfT('再訪精霊', 'Revisit Spirit')}${pfT('が来訪中', ' is here now')}`
       : `${pfT('再訪精霊', 'Revisit Spirit')}${pfT('の次回来訪まで', ' returns in')}`;
-    bucketRows[pfDashBucketFor(rv.target)].push(pfDashRow('🕊️', `${revisitLabel}<span class="dash-countdown">${pfDashCountdown(rv.target)}</span>${pfDashRevisitShortcutHtml(data.revisit.items)}`));
-  }
+    bucketRows[pfDashBucketFor(rv.target)].push(pfDashRow('🕊️', `${revisitLabel}<span class="dash-countdown">${pfDashCountdown(rv.target)}</span>${pfDashRevisitShortcutHtml(schedule.items)}`));
+  });
   const edenTarget = pfDashNextEdenResetTarget();
   bucketRows[pfDashBucketFor(edenTarget)].push(pfDashRow('🌩️', `${pfT('原罪', 'Eye of Eden')}：${pfT('週間リセットまで', "Weekly reset in")}<span class="dash-countdown">${pfDashCountdown(edenTarget)}</span><span class="dash-note">${pfT('毎週日曜0時・太平洋時間', 'Every Sunday 00:00 Pacific Time')}</span>`));
   if (data.nextUpdate && data.nextUpdate.date) {
