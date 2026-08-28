@@ -1890,40 +1890,75 @@ const NEXT_UPDATE = {
 };
 // ▲▲▲ 次回アップデート予定日（手動更新） ▲▲▲
 
-// ▼▼▼ 再訪する精霊たち（2週間おきに4日間だけ来る旅の精霊）の周期スケジュール（手動更新） ▼▼▼
+// ▼▼▼ 再訪する精霊たち（旅の精霊・来訪団）の来訪スケジュール（手動更新） ▼▼▼
 // アイテム検索の「🌟 現在開催中の季節・イベントのみ」チェックで、来訪期間中だけその精霊のアイテムも表示されるようにする。
-// profile（自己紹介ページ）のrecurringVisitと同じ周期・考え方なので、直近1回分の開始・終了さえ
-// 合わせておけば、以降の来訪期間は自動で計算される（毎回手動で切り替える必要はない）。
-// 別の精霊の再訪に切り替わったら、items・anchorStart/anchorEndをその回に合わせて
-// 更新してください（profile側のrecurringVisitのanchorStart/anchorEndも同じタイミングで更新すること）。
-const REVISIT_SPIRIT_SCHEDULE = {
-  items: [
-    { catKey: 'mask', id: 'mask_006' },
-  ],
-  anchorStart: '2026-08-27T16:00:00+09:00',
-  anchorEnd: '2026-08-31T15:59:59+09:00',
-  intervalDays: 14,
-};
+// 複数の来訪（例: 2週間おきに4日間だけ来る単独の旅の精霊と、期間限定の来訪団）が同時に
+// 進行することがあるため、配列で複数スケジュールを管理する。各スケジュールは以下のどちらか:
+//   ・intervalDaysあり：anchorStart/anchorEndを起点に周期的に繰り返す（profile側のrecurringVisitと同じ考え方。
+//     直近1回分の開始・終了さえ合わせておけば、以降は自動計算されるので毎回の手動切り替えは不要）
+//   ・intervalDaysなし：start/endの一回限りの来訪期間
+// 来訪が入れ替わったら、該当スケジュールのitems・日時を更新するか、終了したスケジュールを削除し、
+// 新しい来訪があれば配列に追加してください。
+const REVISIT_SPIRIT_SCHEDULES = [
+  {
+    // 2週間おきに4日間だけ来る「飛び跳ねる舞踏家」の再訪周期
+    items: [
+      { catKey: 'mask', id: 'mask_006' },
+    ],
+    anchorStart: '2026-08-27T16:00:00+09:00',
+    anchorEnd: '2026-08-31T15:59:59+09:00',
+    intervalDays: 14,
+  },
+  {
+    // 九色の鹿の季節の来訪団（薬草採集人・狩人・国王・王女の4人）。一回限りの来訪期間
+    items: [
+      { catKey: 'outfit', id: 'outfit_024' },         // 薬草採集人　服
+      { catKey: 'outfit', id: 'outfit_025' },         // 王女　服
+      { catKey: 'outfit', id: 'outfit_091' },         // 狩人　服
+      { catKey: 'hairstyle', id: 'hairstyle_119' },   // 薬草採集者 ヘアスタイル
+      { catKey: 'hairstyle', id: 'hairstyle_120' },   // 王女 ヘアスタイル
+      { catKey: 'hairstyle', id: 'hairstyle_121' },   // 狩人 ヘアスタイル
+      { catKey: 'hair_accessory', id: 'hair_accessory_015' }, // 国王 ヘアアクセサリー
+      { catKey: 'mask', id: 'mask_075' },             // 王女　マスク
+      { catKey: 'mask', id: 'mask_076' },             // 国王　マスク
+      { catKey: 'small_placeable', id: 'small_placeable_022' }, // 薬草壺 設置アイテム
+      { catKey: 'cape', id: 'cape_092' },             // 王女 ケープ
+      { catKey: 'cape', id: 'cape_093' },             // 狩人 ケープ
+      { catKey: 'cape', id: 'cape_094' },             // 国王 ケープ
+    ],
+    start: '2026-08-28T16:00:00+09:00',
+    end: '2026-09-11T15:59:59+09:00',
+  },
+];
 
-// 今この瞬間がREVISIT_SPIRIT_SCHEDULEの来訪期間（4日間）内かどうかを、
-// 2週間周期で自動計算して判定する
-function isRevisitSpiritCurrentlyActive() {
-  const { anchorStart, anchorEnd, intervalDays } = REVISIT_SPIRIT_SCHEDULE;
-  const start0 = new Date(anchorStart);
-  const end0 = new Date(anchorEnd);
-  const intervalMs = intervalDays * 86400000;
+// 指定したスケジュールが今この瞬間、来訪期間内かどうかを判定する
+// （intervalDaysがあれば周期的に自動計算、無ければ一回限りのstart/endで判定）
+function isRevisitScheduleActive(schedule) {
   const now = new Date();
-  const k = Math.floor((now - start0) / intervalMs);
-  const start = new Date(start0.getTime() + k * intervalMs);
-  const end = new Date(start.getTime() + (end0 - start0));
-  return start <= now && now <= end;
+  if (schedule.intervalDays) {
+    const start0 = new Date(schedule.anchorStart);
+    const end0 = new Date(schedule.anchorEnd);
+    const intervalMs = schedule.intervalDays * 86400000;
+    const k = Math.floor((now - start0) / intervalMs);
+    const start = new Date(start0.getTime() + k * intervalMs);
+    const end = new Date(start.getTime() + (end0 - start0));
+    return start <= now && now <= end;
+  }
+  return new Date(schedule.start) <= now && now <= new Date(schedule.end);
 }
 
-// itemが現在設定中の再訪精霊のアイテムに該当するかどうか
-function isRevisitSpiritItem(item) {
-  return REVISIT_SPIRIT_SCHEDULE.items.some(i => i.catKey === item.catKey && i.id === item.id);
+// 現在、いずれかの来訪スケジュールが進行中かどうか
+function isRevisitSpiritCurrentlyActive() {
+  return REVISIT_SPIRIT_SCHEDULES.some(isRevisitScheduleActive);
 }
-// ▲▲▲ 再訪する精霊たちの周期スケジュール（手動更新） ▲▲▲
+
+// itemが「現在進行中」の来訪スケジュールのアイテムに該当するかどうか
+function isRevisitSpiritItem(item) {
+  return REVISIT_SPIRIT_SCHEDULES.some(schedule =>
+    isRevisitScheduleActive(schedule) && schedule.items.some(i => i.catKey === item.catKey && i.id === item.id)
+  );
+}
+// ▲▲▲ 再訪する精霊たちの来訪スケジュール（手動更新） ▲▲▲
 
 // 季節は実装順（登場した順）、日々は来福の日々を起点とした年間の開催順。
 // リストに無いイベント名（コラボ・単発イベント等）は、元の登場順のまま末尾に続く。
@@ -2166,7 +2201,7 @@ function getFilteredSearchItems() {
       && !(ITEM_YOMI[item.id] && normalizeSearchText(ITEM_YOMI[item.id]).includes(fName))) return false;
     if (fEvent !== 'all' && item.event !== fEvent) return false;
     if (fCurrentOnly) {
-      const isRevisitItem = isRevisitSpiritItem(item) && isRevisitSpiritCurrentlyActive();
+      const isRevisitItem = isRevisitSpiritItem(item);
       const isCurrentEventItem = currentEventNames.includes(item.event);
       if (!isCurrentEventItem && !isRevisitItem) return false;
       if (fCurrentType === 'revisit' && !isRevisitItem) return false;
