@@ -286,10 +286,10 @@
         </select>
         <select class="select-box" id="filterMethod" onchange="filterAndRender()">
           <option value="all" data-i18n-en="All acquisition methods">すべての入手方法</option>
-          <option value="R" data-i18n-en="R: Always available (Realm Spirits)">R: 常時入手可能（恒常精霊）</option>
-          <option value="P" data-i18n-en="P: Always available (Other permanent source)">P: 常時入手可能（恒常精霊以外）</option>
-          <option value="S" data-i18n-en="S: Rare (Past Season Spirit revisit/troupe only)">S: 稀に入手可能（再訪・来訪団のみ）</option>
-          <option value="D" data-i18n-en="D: Periodic (Future Days events)">D: 定期的に入手可能（日々イベント）</option>
+          <option value="R" data-i18n-en="R: Realm Spirits">R: 恒常精霊</option>
+          <option value="P" data-i18n-en="P: Always Tradable">P: 常時交換可能</option>
+          <option value="S" data-i18n-en="S: Season Spirits">S: 季節精霊</option>
+          <option value="D" data-i18n-en="D: Days Events">D: 日々イベント</option>
         </select>
       </div>
 
@@ -331,7 +331,7 @@
    出典: Sky Wiki「楽譜」ページ（https://sky-children-of-the-light.fandom.com/ja/wiki/楽譜）
    diff = { m:旋律, w:管楽器, b:低音, p:打楽器 }（各1〜4の難易度）
    price: キャンドル価格（Wikiに価格記載が無い項目は null）
-   method: R=常時(恒常精霊) / P=常時(その他永続) / S=稀(過去精霊の再訪・来訪団のみ) / D=定期(日々イベント)
+   method: R=恒常精霊 / P=常時交換可能 / S=季節精霊 / D=日々イベント
    ========================================================================== */
 const MUSIC_SHEETS = [
   { id:'1',  num:'1',  name:'Bounding About',              method:'R', price:1,    diff:{m:4,w:2,b:4,p:2}, key:'Cメジャー' },
@@ -392,8 +392,8 @@ const MUSIC_SHEETS = [
 ];
 /* ========================================================================== */
 
-const METHOD_LABEL_JA = { R:'常時（恒常精霊）', P:'常時（その他永続）', S:'稀（再訪・来訪団のみ）', D:'定期（日々イベント）' };
-const METHOD_LABEL_EN = { R:'Always (Realm Spirits)', P:'Always (Other permanent)', S:'Rare (Revisit/Troupe only)', D:'Periodic (Days event)' };
+const METHOD_LABEL_JA = { R:'恒常精霊', P:'常時交換可能', S:'季節精霊', D:'日々イベント' };
+const METHOD_LABEL_EN = { R:'Realm Spirits', P:'Always Tradable', S:'Season Spirits', D:'Days Events' };
 
 const LS_KEY = nsKey('musicSheets');
 let userStates = { owned: {} };
