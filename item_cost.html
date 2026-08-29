@@ -368,29 +368,6 @@
     .gift-include-toggle { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--text-2); white-space: nowrap; }
     .gift-remove-btn { color: var(--red); font-size: 16px; padding: 4px; flex-shrink: 0; }
     .gift-empty { text-align: center; color: var(--text-2); font-size: 12.5px; padding: 14px 0; }
-
-    /* ── 📊 月間予算・使用進捗（任意設定） ── */
-    .budget-card { background: var(--card); border-radius: var(--r); padding: 16px; margin-top: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
-    .budget-card .summary-title { color: var(--text); opacity: 1; margin-bottom: 0; }
-    .budget-month-label { color: var(--text-2); font-weight: 600; font-size: 12.5px; margin-left: 6px; }
-    .budget-input-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; }
-    .budget-input-label { font-size: 13px; color: var(--text-2); }
-    .budget-input-wrap {
-      display: flex; align-items: center; gap: 4px; background: var(--bg); border: 1px solid var(--sep);
-      border-radius: var(--r-sm); padding: 7px 10px; flex-shrink: 0;
-    }
-    .budget-input-wrap span { font-size: 13px; color: var(--text-2); }
-    .budget-input-wrap input {
-      width: 100px; border: none; background: none; font-family: inherit; font-size: 14px; font-weight: 700;
-      color: var(--text); text-align: right; outline: none;
-    }
-    .budget-progress-track { margin-top: 14px; height: 10px; border-radius: 999px; background: var(--bg); overflow: hidden; }
-    .budget-progress-fill { height: 100%; border-radius: 999px; background: var(--green); transition: width 0.25s ease, background-color 0.25s ease; }
-    .budget-progress-fill.warn { background: var(--orange); }
-    .budget-progress-fill.over { background: var(--red); }
-    .budget-progress-row { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; font-size: 12.5px; color: var(--text-2); }
-    .budget-progress-pct { font-weight: 800; color: var(--text); }
-    .budget-warning { margin-top: 10px; padding: 8px 10px; border-radius: var(--r-sm); background: var(--red-bg); color: var(--red); font-size: 12px; font-weight: 700; line-height: 1.5; }
   </style>
 </head>
 <body>
@@ -443,31 +420,6 @@
         <b id="summaryCandleMoney">¥0</b>
       </div>
       <div class="summary-hint" id="summaryHint">読み込み中…</div>
-    </div>
-
-    <div class="budget-card" id="budgetCard">
-      <div class="summary-title"><span data-i18n-en="📊 Monthly Budget (optional)">📊 月間予算（任意）</span><span class="budget-month-label" id="budgetMonthLabel"></span></div>
-      <div class="budget-input-row">
-        <span class="budget-input-label" data-i18n-en="Set a budget for this month">今月の予算を設定</span>
-        <div class="budget-input-wrap">
-          <span>¥</span>
-          <input type="number" id="budgetInput" min="0" step="100" inputmode="numeric"
-                 data-i18n-en-placeholder="Not set" placeholder="未設定"
-                 onchange="onBudgetInputChange(this.value)">
-        </div>
-      </div>
-      <div id="budgetProgressWrap" style="display:none;">
-        <div class="budget-progress-track">
-          <div class="budget-progress-fill" id="budgetProgressFill"></div>
-        </div>
-        <div class="budget-progress-row">
-          <span id="budgetSpentText">¥0</span>
-          <span class="budget-progress-pct" id="budgetPctText">0%</span>
-          <span id="budgetTotalText">¥0</span>
-        </div>
-        <div class="budget-warning" id="budgetWarning" style="display:none;"></div>
-      </div>
-      <div class="summary-hint" id="budgetHint" style="color:var(--text-2); border-top-color:var(--sep);" data-i18n-en="This month's spend is estimated from purchase dates in your Gift Purchase History / Candle Purchases, and from the Acquisition Log's timestamps for other real-money items you've checked as owned. Items owned before those records existed can't be attributed to a month, so they aren't counted here.">今月の支出は、課金アイテムプレゼント履歴・キャンドル課金の購入日と、所持チェック時に記録される「アイテム獲得ログ」の日時から算出した概算です。記録より前に所持登録した実額アイテムは月を特定できないため、この集計には含まれません。</div>
     </div>
 
     <div class="summary-card remaining">
@@ -1523,7 +1475,7 @@ function shareGiftHistoryOnTwitter() {
    📊 月間/年間の支出振り返り画像シェア
    index.html（入手ログ）の月間/今年の振り返りシェア機能と同じ考え方で、
    実額支出を振り返りカードとして画像シェアできるようにする。
-   集計対象・除外ルールはrenderSummary()の月間予算算出（monthMoneySum）と同じだが、
+   集計対象・除外ルールはrenderSummary()の実額集計（moneySum）と同じ考え方だが、
    月・年どちらの期間でも判定できるよう一般化している（アイテム獲得ログ・
    プレゼント履歴・キャンドル課金ログのいずれも日付が無いものは対象外）。
    ================================================================ */
@@ -1557,7 +1509,7 @@ function getCostRecapEntries(scope) {
     const acquireRec = acquireLog[item.id];
     if (!acquireRec || acquireRec.catKey !== item.catKey || !inScopeIso(acquireRec.at)) return; // 記録が無い/期間外は対象外
 
-    // renderSummary()のmonthMoneySum算出と同じく、チケット交換アイテムで「復刻で入手」扱いのものは
+    // renderSummary()の実額集計と同じく、チケット交換アイテムで「復刻で入手」扱いのものは
     // revisitCost（復刻時の実際のコスト）を見る
     const cost = item.isTicketItem ? (item.revisitCost || {}) : item.cost;
     if ((cost.type === 'candle' || cost.type === 'starCandle') && item.candleMoneyMode === 'paidCandle' && item.candleMoneyYen > 0) {
@@ -1963,29 +1915,6 @@ function renderSummary(items) {
   let paidCandleCount = 0, paidCandleMoneySum = 0;
   const countedSetIds = new Set();
 
-  // 📊 月間予算バー用：今月の実額支出だけを別途集計する。
-  // アイテム別コスト自体にはいつ入手したかの記録が無いため、共有のアイテム獲得ログ
-  // （itemAcquireLog_v1。各カテゴリページで所持チェックON時にprofiles.jsが記録）の
-  // タイムスタンプで「今月入手したか」を判定する。ログが無い（この機能が実装される前に
-  // 所持登録した等）場合は月を特定できないため、今月の集計には含めない
-  const acquireLog = getItemAcquireLog();
-  const budgetNow = new Date();
-  const budgetY = budgetNow.getFullYear(), budgetM = budgetNow.getMonth();
-  const isThisMonthIso = iso => {
-    if (!iso) return false;
-    const d = new Date(iso);
-    return !isNaN(d.getTime()) && d.getFullYear() === budgetY && d.getMonth() === budgetM;
-  };
-  // "YYYY-MM-DD"形式（プレゼント履歴・キャンドル課金の日付入力欄由来）はUTCとして
-  // 解釈されるとタイムゾーンによって日付がずれるため、年月日を直接指定してローカル日時として扱う
-  const isThisMonthDateStr = str => {
-    if (!str) return false;
-    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str);
-    if (m) return Number(m[1]) === budgetY && (Number(m[2]) - 1) === budgetM;
-    return isThisMonthIso(str);
-  };
-  let monthMoneySum = 0;
-
   items.forEach(item => {
     if (!item.owned) return;
     ownedCount++;
@@ -1996,15 +1925,11 @@ function renderSummary(items) {
     else if (cost.type === 'starCandle' && typeof cost.value === 'number') starCandleSum += cost.value;
     else if (cost.type === 'heart' && typeof cost.value === 'number') heartSum += cost.value;
 
-    const acquireRec = acquireLog[item.id];
-    const acquiredThisMonth = !!acquireRec && acquireRec.catKey === item.catKey && isThisMonthIso(acquireRec.at);
-
     // 課金で購入したキャンドルで入手したと申告されたアイテムは、キャンドル本数の集計は変えず、
     // 申告された実額も別途「実額」の集計に加算する
     if ((cost.type === 'candle' || cost.type === 'starCandle') && item.candleMoneyMode === 'paidCandle' && item.candleMoneyYen > 0) {
       paidCandleCount++;
       paidCandleMoneySum += item.candleMoneyYen;
-      if (acquiredThisMonth) monthMoneySum += item.candleMoneyYen;
     }
     if (cost.type === 'money' && typeof cost.value === 'number') {
       if (cost.setId) {
@@ -2017,41 +1942,36 @@ function renderSummary(items) {
         return; // ギフトでもらった分は自分の課金額の集計から除外
       }
       moneySum += cost.value;
-      if (acquiredThisMonth) monthMoneySum += cost.value;
     }
   });
 
-  // 課金アイテムプレゼント履歴：実額に含める設定のものだけ加算（購入日が今月なら月間支出にも計上）
+  // 課金アイテムプレゼント履歴：実額に含める設定のものだけ加算
   const giftHistory = loadGiftHistory().filter(g => g.include);
-  let giftGivenMoneySum = 0, giftGivenMoneySumThisMonth = 0;
+  let giftGivenMoneySum = 0;
   giftHistory.forEach(g => {
     const it = getGiftPickableItem(g.catKey, g.itemId);
     if (it && it.cost && it.cost.type === 'money' && typeof it.cost.value === 'number') {
       giftGivenMoneySum += it.cost.value;
-      if (isThisMonthDateStr(g.date || g.createdAt)) giftGivenMoneySumThisMonth += it.cost.value;
     }
   });
   const giftDisplayMode = loadGiftDisplayMode(); // 'combined'（合計に含める） or 'separate'（別枠で表示）
   if (giftDisplayMode === 'combined') {
     moneySum += giftGivenMoneySum;
-    monthMoneySum += giftGivenMoneySumThisMonth;
   }
   moneySum += paidCandleMoneySum;
 
-  // キャンドル課金の購入ログ：実額に含める設定のものだけ加算（購入日が今月なら月間支出にも計上）
+  // キャンドル課金の購入ログ：実額に含める設定のものだけ加算
   const candlePurchases = loadCandlePurchases().filter(p => p.include !== false);
-  let candlePurchaseMoneySum = 0, candlePurchaseMoneySumThisMonth = 0;
+  let candlePurchaseMoneySum = 0;
   candlePurchases.forEach(p => {
     const pack = candlePackByKey(p.packKey);
     if (pack) {
       candlePurchaseMoneySum += pack.price;
-      if (isThisMonthDateStr(p.date || p.createdAt)) candlePurchaseMoneySumThisMonth += pack.price;
     }
   });
   const candleDisplayMode = loadCandleDisplayMode(); // 'combined'（合計に含める） or 'separate'（別枠で表示）
   if (candleDisplayMode === 'combined') {
     moneySum += candlePurchaseMoneySum;
-    monthMoneySum += candlePurchaseMoneySumThisMonth;
   }
 
   const en = CURRENT_LANG === 'en';
@@ -2118,96 +2038,10 @@ function renderSummary(items) {
   localStorage.setItem(nsKey(MONEY_SPENT_KEY), String(moneySum));
   if (typeof refreshTitlesUI === 'function') refreshTitlesUI();
 
-  renderBudgetCard(monthMoneySum);
 }
 
-/* ================================================================
-   📊 月間予算・使用進捗（任意設定）
-   ユーザーが手入力した月間予算に対して、今月の実額支出（renderSummary()内で
-   算出したmonthMoneySum）がどれくらい進んでいるかを表示する。
-   予算は未設定（0円 or 未入力）がデフォルトで、その間は進捗バー自体を隠す。
-   ================================================================ */
-const MONTHLY_BUDGET_KEY = 'monthlyBudget_v1';
-function loadMonthlyBudget() {
-  const v = Number(localStorage.getItem(nsKey(MONTHLY_BUDGET_KEY)));
-  return (v > 0) ? v : 0;
-}
-function saveMonthlyBudget(v) {
-  if (v > 0) localStorage.setItem(nsKey(MONTHLY_BUDGET_KEY), String(v));
-  else localStorage.removeItem(nsKey(MONTHLY_BUDGET_KEY));
-}
-function onBudgetInputChange(rawValue) {
-  const v = Math.max(0, Math.floor(Number(rawValue) || 0));
-  saveMonthlyBudget(v);
-  const inputEl = document.getElementById('budgetInput');
-  if (inputEl) inputEl.value = v > 0 ? v : '';
-  renderBudgetCard(lastMonthMoneySum);
-  showToast(v > 0
-    ? (CURRENT_LANG === 'en' ? 'Budget saved' : '予算を保存しました')
-    : (CURRENT_LANG === 'en' ? 'Budget cleared' : '予算をクリアしました'));
-}
-
+// 支出振り返りカード（getCostRecapEntries等）の月名表示で使用
 const BUDGET_MONTH_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-
-// 直近のrenderSummary()が算出した「今月の実額支出」を保持しておく
-// （予算入力の変更時など、renderSummary()を再実行せずに進捗バーだけ再描画したい場合に使う）
-let lastMonthMoneySum = 0;
-
-function renderBudgetCard(monthMoneySum) {
-  lastMonthMoneySum = monthMoneySum;
-  const en = CURRENT_LANG === 'en';
-  const now = new Date();
-
-  const monthLabelEl = document.getElementById('budgetMonthLabel');
-  if (monthLabelEl) {
-    monthLabelEl.textContent = en
-      ? `(${BUDGET_MONTH_EN[now.getMonth()]} ${now.getFullYear()})`
-      : `（${now.getFullYear()}年${now.getMonth() + 1}月）`;
-  }
-
-  const budget = loadMonthlyBudget();
-  const inputEl = document.getElementById('budgetInput');
-  // 入力中（フォーカス中）の値を上書きしないようにする
-  if (inputEl && document.activeElement !== inputEl) {
-    inputEl.value = budget > 0 ? budget : '';
-  }
-
-  const wrap = document.getElementById('budgetProgressWrap');
-  if (!wrap) return;
-  if (budget <= 0) {
-    wrap.style.display = 'none';
-    return;
-  }
-  wrap.style.display = 'block';
-
-  const ratio = monthMoneySum / budget;
-  const pct = Math.round(ratio * 100);
-
-  const fillEl = document.getElementById('budgetProgressFill');
-  fillEl.style.width = `${Math.min(ratio, 1) * 100}%`;
-  fillEl.classList.remove('warn', 'over');
-  if (ratio >= 1) fillEl.classList.add('over');
-  else if (ratio >= 0.7) fillEl.classList.add('warn');
-
-  document.getElementById('budgetSpentText').textContent = `¥${monthMoneySum.toLocaleString()}`;
-  document.getElementById('budgetTotalText').textContent = `¥${budget.toLocaleString()}`;
-  document.getElementById('budgetPctText').textContent = `${pct}%`;
-
-  const warnEl = document.getElementById('budgetWarning');
-  if (ratio >= 1) {
-    warnEl.style.display = 'block';
-    warnEl.textContent = en
-      ? `⚠️ You've exceeded this month's budget by ¥${(monthMoneySum - budget).toLocaleString()}.`
-      : `⚠️ 今月の予算を¥${(monthMoneySum - budget).toLocaleString()}オーバーしています。`;
-  } else if (ratio >= 0.7) {
-    warnEl.style.display = 'block';
-    warnEl.textContent = en
-      ? `⚠️ You've used ${pct}% of this month's budget.`
-      : `⚠️ 今月の予算の${pct}%を使用しています。`;
-  } else {
-    warnEl.style.display = 'none';
-  }
-}
 
 function renderRemainingSummary(items) {
   let candleSum = 0, starCandleSum = 0, heartSum = 0, moneySum = 0, remainCount = 0;
