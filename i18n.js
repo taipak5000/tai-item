@@ -178,6 +178,9 @@ function applyStaticI18n() {
   document.querySelectorAll('[data-i18n-en-title]').forEach(el => {
     el.setAttribute('title', el.getAttribute('data-i18n-en-title'));
   });
+  document.querySelectorAll('[data-i18n-en-aria-label]').forEach(el => {
+    el.setAttribute('aria-label', el.getAttribute('data-i18n-en-aria-label'));
+  });
 }
 
 document.addEventListener('DOMContentLoaded', applyStaticI18n);

@@ -380,7 +380,7 @@
     <div class="list-header-row">
       <p class="sec-label" id="listLabel" data-i18n-en="Item List">アイテム一覧</p>
       <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-        <select class="grid-cols-select" id="gridColsSelect" onchange="setGridCols(this.value)" title="グリッドの列数" aria-label="グリッドの列数" data-i18n-en-title="Grid columns">
+        <select class="grid-cols-select" id="gridColsSelect" onchange="setGridCols(this.value)" title="グリッドの列数" aria-label="グリッドの列数" data-i18n-en-title="Grid columns" data-i18n-en-aria-label="Grid columns">
           <option value="auto" data-i18n-en="Columns: Auto">列数: 自動</option>
           <option value="2" data-i18n-en="2 columns">2列</option>
           <option value="3" data-i18n-en="3 columns">3列</option>
@@ -388,7 +388,7 @@
           <option value="5" data-i18n-en="5 columns">5列</option>
           <option value="6" data-i18n-en="6 columns">6列</option>
         </select>
-        <div class="view-toggle" role="group" aria-label="表示切替">
+        <div class="view-toggle" role="group" aria-label="表示切替" data-i18n-en-aria-label="View mode">
           <button type="button" class="view-toggle-btn" id="viewBtnGrid" onclick="setViewMode('grid')" aria-pressed="true" data-i18n-en="▦ Grid">▦ グリッド</button>
           <button type="button" class="view-toggle-btn" id="viewBtnList" onclick="setViewMode('list')" aria-pressed="false" data-i18n-en="☰ List">☰ リスト</button>
         </div>
