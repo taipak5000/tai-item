@@ -662,6 +662,8 @@ function pfInjectStyle() {
        WCAG AA(4.5:1)未達のため、このリンクの文字色だけ明度を落とした専用トークンを
        使う（ダークモードは既に十分なコントラストがあるため--orange-dのまま） */
     .pf-drawer-link.current { background: var(--orange-bg); color: var(--orange-current); font-weight: 700; }
+    /* 精度に不安がある新機能であることを示す小さな注記（例: 楽譜づくり） */
+    .pf-drawer-badge-test { font-size: 9px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.3px; }
 
     /* ── 🏆 称号（実績）パネル。既存の.badgeピル型チップと同じ見た目言語に揃える ── */
     .titles-panel { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -2304,6 +2306,7 @@ function pfInit() {
     { icon: '🕯️', ja: '星のキャンドル計算機', en: 'Star Candle Calculator', href: 'https://taipak5000.github.io/star-candle/' },
     { icon: '✨', ja: '精霊同行ツール', en: 'Spirit Companion Tool', href: 'https://taipak5000.github.io/companion/' },
     { icon: '🪽', ja: '羽トラッカー', en: 'Wing Tracker', href: 'https://taipak5000.github.io/wings/' },
+    { icon: '🎵', ja: '楽譜づくり', en: 'Sheet Music Maker', href: 'https://taipak5000.github.io/tai-score/', badgeTest: true },
     { icon: '🔄', ja: 'データ引継ぎ', en: 'Data Transfer', href: 'https://taipak5000.github.io/tai-transfer/' },
     { icon: '⚙️', ja: '設定・更新情報', en: 'Settings & Updates', href: 'https://taipak5000.github.io/tai-info/' },
   ];
@@ -2314,7 +2317,7 @@ function pfInit() {
     </div>
     <div class="pf-drawer-nav">
       ${SITE_LINKS.map(s => `
-        <a class="pf-drawer-link${s.current ? ' current' : ''}" href="${s.href}">${s.icon} ${pfT(s.ja, s.en)}</a>`).join('')}
+        <a class="pf-drawer-link${s.current ? ' current' : ''}" href="${s.href}">${s.badgeTest ? `<span class="pf-drawer-badge-test">${pfT('test', 'test')}</span>` : ''}${s.icon} ${pfT(s.ja, s.en)}</a>`).join('')}
     </div>`;
   document.body.appendChild(toolsDrawer);
 
