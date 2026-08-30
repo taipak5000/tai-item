@@ -447,11 +447,36 @@ function closeTopmostOpenModal() {
   }
 }
 
+// ⌨️←→ グリッド／リスト表示のタイル間をキーボードで移動する（music_sheet.htmlおよび12カテゴリ
+// ページ共通：#itemList 内、role="button"のタイルをDOM順に辿るだけのシンプルな実装。tai-score
+// （姉妹サイト）の音マス間ナビゲーションと同じ考え方だが、音声再生は不要なため見た目のフォーカス
+// 移動＋scrollIntoViewのみで済ませている。item_cost.html等、タイルにrole="button"を持たない
+// ページでは対象0件のため何も起きない（＝新しいセレクタを追加するだけで自然に無効化される）。
+function navigateItemTiles(step) {
+  const list = document.getElementById('itemList');
+  if (!list) return false;
+  const tiles = Array.from(list.querySelectorAll('[role="button"]'));
+  if (tiles.length === 0) return false;
+  let idx = tiles.indexOf(document.activeElement);
+  idx = idx === -1 ? (step > 0 ? 0 : tiles.length - 1) : idx + step;
+  idx = Math.max(0, Math.min(tiles.length - 1, idx));
+  const target = tiles[idx];
+  target.focus();
+  target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  return true;
+}
+
+// モーダル／ドロワーが開いている間は、その裏に隠れているタイルへフォーカスが飛んで
+// 混乱するのを防ぐため、矢印キーでのタイル移動をここで止める（Escでの閉じる操作とは無関係）。
+function pfIsInteractionBlocked() {
+  return !!document.querySelector('.modal-overlay.open, .pf-modal-overlay.open, .pf-drawer-overlay.open');
+}
+
 // ⌨️ 全ページ共通のキーボードショートカット（?＝表示設定を開く／d,D＝テーマ切替（ライト→ダーク→システム）／
-// Esc＝開いているモーダルを閉じる）。Escはテキスト入力中でも常に有効（ダイアログを閉じる
-// のはユーザーの期待に沿う、既存のクリックアウトサイドで閉じる挙動と同種の基本UXのため）
-// かつ sky_shortcuts_enabled の対象外。?とdは、テキスト入力中は通常の文字入力として使える
-// ようにガードする。
+// ←→＝アイテム一覧のタイル間移動／Esc＝開いているモーダルを閉じる）。Escはテキスト入力中でも常に
+// 有効（ダイアログを閉じるのはユーザーの期待に沿う、既存のクリックアウトサイドで閉じる挙動と同種の
+// 基本UXのため）かつ sky_shortcuts_enabled の対象外。他のキーは、テキスト入力中は通常の文字入力
+// として使えるようにガードする。
 function handleGlobalKeydown(e) {
   if (e.repeat) return;
   if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -468,6 +493,10 @@ function handleGlobalKeydown(e) {
 
   if (e.key === '?') { e.preventDefault(); settingsOpen(); return; }
   if (e.key === 'd' || e.key === 'D') { e.preventDefault(); toggleTheme(); return; }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+    if (!pfIsInteractionBlocked() && navigateItemTiles(e.key === 'ArrowRight' ? 1 : -1)) e.preventDefault();
+    return;
+  }
 }
 
 /* ── UI: プロフィールバー + 切替モーダル（自己完結CSSを注入） ── */
@@ -679,6 +708,10 @@ function pfInjectStyle() {
        継承されてしまう（英語表示時にUNLOCKEDと大文字化される等）ため、明示的に打ち消す */
     .titles-count { font-size: 12px; font-weight: 700; color: var(--text-2);
       text-transform: none; letter-spacing: normal; margin-left: 8px; }
+
+    /* ⌨️ 左右矢印キーでのタイル間移動用フォーカスリング（music_sheet.html・12カテゴリページ
+       共通の#itemList内タイル）。各ページ固有のCSSに追加しなくて済むようここに1箇所だけ定義する */
+    #itemList [role="button"]:focus { outline: 2px solid var(--blue); outline-offset: 2px; }
   `;
   document.head.appendChild(style);
 }

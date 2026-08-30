@@ -116,6 +116,7 @@ const CAT_NAME_EN = {
   '持ち物アイテム': 'Props',
   '小さい設置アイテム': 'Small Placeable Items',
   '大きい設置アイテム': 'Large Placeable Items',
+  '楽譜': 'Music Sheets',
 };
 
 // 季節・日々・イベント名を現在の言語に変換する（英語表記が無ければ日本語のまま返す）

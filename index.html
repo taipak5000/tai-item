@@ -2439,6 +2439,32 @@ function toggleFavFromSearch(catKey, itemId, btnEl) {
 // wish_<catKey> の実体（getWishIds/isWishItem/toggleWishItem）は
 // カテゴリ一覧ページ（cape.html等）とも共有するため profiles.js 側に定義されている。
 
+// 🎼 楽譜（Music Sheets）：12カテゴリ（CATS）とは別枠の独立したcatKeyだが、wish_<catKey>・
+// gameItems_<catKey>ともに全く同じ命名規則で保存されているため、同じウィッシュリスト計算機に
+// 合流させられる。楽譜自体のマスターデータ（価格・季節等）はmusic_sheet.htmlのMUSIC_SHEETSに
+// 一本化されているため、二重管理を避けて必要な時にそのページ自身を取得する
+// （item_cost.htmlの同名関数・ITEM_IMG_CAT_FILES系の画像取得と同じ考え方）。
+const MUSIC_SHEET_CAT = { key: 'music_sheet', name: '楽譜', icon: '🎼' };
+let musicSheetsCache = null;
+let musicSheetsLoadingPromise = null;
+function loadMusicSheetsOnce() {
+  if (musicSheetsCache) return Promise.resolve(musicSheetsCache);
+  if (musicSheetsLoadingPromise) return musicSheetsLoadingPromise;
+  musicSheetsLoadingPromise = fetch('music_sheet.html', { cache: 'no-store' })
+    .then(res => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.text();
+    })
+    .then(text => (musicSheetsCache = srchExtractArray(text, 'MUSIC_SHEETS') || []))
+    .catch(err => {
+      console.warn('ウィッシュリスト: music_sheet.html からの楽譜データ読み込みに失敗しました', err);
+      musicSheetsCache = [];
+      return musicSheetsCache;
+    })
+    .finally(() => { musicSheetsLoadingPromise = null; });
+  return musicSheetsLoadingPromise;
+}
+
 function toggleWishFromSearch(catKey, itemId, btnEl) {
   const added = toggleWishItem(catKey, itemId);
   if (added === null) {
@@ -2481,11 +2507,11 @@ function saveWishOwnCurrency() {
 async function openWishList() {
   openModal('wishModal');
   const body = document.getElementById('wishListBody');
-  if (!allItemsCache) {
+  if (!allItemsCache || !musicSheetsCache) {
     body.innerHTML = CURRENT_LANG === 'en'
       ? `<div class="empty-msg">Loading…</div>`
       : `<div class="empty-msg">読み込み中…</div>`;
-    try { await loadAllItemsOnce(); } catch (e) {
+    try { await Promise.all([loadAllItemsOnce(), loadMusicSheetsOnce()]); } catch (e) {
       console.error(e);
       body.innerHTML = CURRENT_LANG === 'en'
         ? `<div class="empty-msg">Failed to load. Please open this on the published site.</div>`
@@ -2526,6 +2552,21 @@ function renderWishList() {
       rows.push({ cat, item, owned: !!getState(cat.key).owned[id], cost: getItemCost(cat.key, id) });
     });
   });
+
+  // 🎼 楽譜（Music Sheets）：CATS（12カテゴリ）とは別枠だが、同じ wish_<catKey> 方式で
+  // 登録されているため、同じ一覧・合計に合流させる
+  if (musicSheetsCache) {
+    getWishIds(MUSIC_SHEET_CAT.key).forEach(id => {
+      const sheet = musicSheetsCache.find(s => s.id === id);
+      if (!sheet) return;
+      rows.push({
+        cat: MUSIC_SHEET_CAT,
+        item: { id: sheet.id, name: sheet.name, nameEn: sheet.nameEn, event: sheet.season, img: sheet.img },
+        owned: !!getState(MUSIC_SHEET_CAT.key).owned[sheet.id],
+        cost: typeof sheet.price === 'number' ? { type: 'candle', value: sheet.price } : null
+      });
+    });
+  }
 
   if (rows.length === 0) {
     body.innerHTML = CURRENT_LANG === 'en'

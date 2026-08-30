@@ -205,6 +205,26 @@
     }
     .sheet-frame.is-owned .tile-owned-check { opacity: 1; transform: scale(1); }
 
+    /* お気に入り／ウィッシュリストボタン（カテゴリページと共通の見た目・配置） */
+    .tile-fav-btn {
+      position: absolute; top: 3px; right: 3px; z-index: 2;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: rgba(255,255,255,0.9); box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; color: var(--text-3); transition: transform 0.1s;
+    }
+    .tile-fav-btn:active { transform: scale(1.15); }
+    .tile-fav-btn.is-fav { color: #FF9500; }
+    .tile-wish-btn {
+      position: absolute; top: 29px; right: 3px; z-index: 2;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: rgba(255,255,255,0.9); box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; color: var(--text-3); transition: transform 0.1s;
+    }
+    .tile-wish-btn:active { transform: scale(1.15); }
+    .tile-wish-btn.is-wish { color: var(--blue); background: rgba(0,122,255,0.15); }
+
     .item-tile-name {
       font-size: 10.5px; line-height: 1.3; text-align: center; color: var(--text-2);
       display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
@@ -263,6 +283,14 @@
     .badge.method-D { background: var(--purple-bg); color: var(--purple); }
     .badge.price-unknown { color: var(--text-3); }
 
+    /* お気に入り／ウィッシュリストボタン（リスト表示。カテゴリページと共通の見た目） */
+    .fav-btn { font-size: 20px; color: var(--text-3); padding: 4px; transition: transform 0.1s; flex-shrink: 0; }
+    .fav-btn:active { transform: scale(1.2); }
+    .fav-btn.is-fav { color: #FFCC00; text-shadow: 0 0 2px rgba(255,180,0,0.4); }
+    .wish-btn { font-size: 18px; color: var(--text-3); padding: 4px; transition: transform 0.1s; flex-shrink: 0; }
+    .wish-btn:active { transform: scale(1.2); }
+    .wish-btn.is-wish { color: var(--blue); }
+
     .empty-message { grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-2); font-size: 14px; background: var(--card); border-radius: var(--r); }
   </style>
 </head>
@@ -307,6 +335,10 @@
           <option value="owned" data-i18n-en="Owned only">所持中のみ</option>
           <option value="notOwned" data-i18n-en="Not owned only">未所持のみ</option>
         </select>
+        <select class="select-box" id="filterFav" onchange="filterAndRender()">
+          <option value="all" data-i18n-en="All favorites">すべてのお気に入り</option>
+          <option value="fav" data-i18n-en="★ Favorites only">★ お気に入り指定のみ</option>
+        </select>
         <select class="select-box" id="filterMethod" onchange="filterAndRender()">
           <option value="all" data-i18n-en="All acquisition methods">すべての入手方法</option>
           <option value="R" data-i18n-en="Realm Spirits">恒常精霊</option>
@@ -325,6 +357,24 @@
         </select>
       </div>
 
+      <!-- 難易度絞り込み（パート別・しきい値以下のみ表示） -->
+      <div class="control-row">
+        <span class="control-label" data-i18n-en="Difficulty">難易度</span>
+        <select class="select-box" id="filterDiffPart" onchange="filterAndRender()">
+          <option value="all" data-i18n-en="All parts">すべてのパート</option>
+          <option value="m" data-i18n-en="Melody">旋律</option>
+          <option value="w" data-i18n-en="Wind">管楽器</option>
+          <option value="b" data-i18n-en="Bass">低音</option>
+          <option value="p" data-i18n-en="Percussion">打楽器</option>
+        </select>
+        <select class="select-box" id="filterDiffMax" onchange="filterAndRender()">
+          <option value="all" data-i18n-en="Any difficulty">難易度指定なし</option>
+          <option value="1" data-i18n-en="1 or below (Easiest)">1以下（最も簡単）</option>
+          <option value="2" data-i18n-en="2 or below">2以下</option>
+          <option value="3" data-i18n-en="3 or below">3以下</option>
+        </select>
+      </div>
+
       <!-- 並び替え -->
       <div class="control-row">
         <span class="control-label" data-i18n-en="Sort">並び替え</span>
@@ -333,6 +383,7 @@
           <option value="nameAsc" data-i18n-en="Name (A-Z)">名前（昇順）</option>
           <option value="priceDesc" data-i18n-en="Price (High to Low)">価格（高い順）</option>
           <option value="season" data-i18n-en="By Season/Source">季節・入手元順</option>
+          <option value="diffAsc" data-i18n-en="Difficulty (Easy to Hard)">難易度（易しい順）</option>
         </select>
       </div>
 
@@ -442,8 +493,15 @@ const SEASON_ORDER = [
   '来福の日々', 'Skyアニバーサリー', '聖なる星の日々', '愛しみの日々'
 ];
 
-const LS_KEY = nsKey('musicSheets');
-let userStates = { owned: {} };
+// カテゴリページ共通の gameItems_<catKey> 命名規則に合わせたキー。お気に入り／ウィッシュリストの
+// 共有ヘルパー（isItemOwned/isItemFav/toggleWishItem 等 in profiles.js）はこの形のキーを前提に
+// 読み書きするため、楽譜もこの命名に揃えている
+const CAT_KEY = 'music_sheet';
+const LS_KEY = nsKey('gameItems_' + CAT_KEY);
+// 🔄 移行用: お気に入り機能を追加する前（〜2026-08-29）はこのキーに保存していたため、
+// 新キーにまだ何も無ければここから所持データを引き継ぐ（読み込みだけで旧キー自体は消さない）
+const LEGACY_LS_KEY = nsKey('musicSheets');
+let userStates = { owned: {}, fav: {} };
 
 const VIEW_MODE_KEY = 'musicSheets_viewMode';
 let viewMode = localStorage.getItem(VIEW_MODE_KEY) || 'grid';
@@ -453,6 +511,10 @@ document.addEventListener('DOMContentLoaded', () => {
   updateViewToggleUI();
   buildSeasonFilter();
   filterAndRender();
+  // 🔄 旧保存キー（musicSheets）からの移行、および総合メニュー・アイテム別コスト・
+  // ウィッシュリスト計算機（gameItems_music_sheet を参照）へ即座に反映させるため、
+  // 表示のたびに新キーへ保存し直す（カテゴリページのsaveUserData()と同じ考え方）
+  saveUserData();
 });
 
 // 重複のない季節・入手元の一覧を絞り込みセレクトに追加（SEASON_ORDER準拠、無い場合は末尾）
@@ -477,10 +539,11 @@ function buildSeasonFilter() {
 
 function loadUserData() {
   try {
-    const saved = localStorage.getItem(LS_KEY);
+    const saved = localStorage.getItem(LS_KEY) || localStorage.getItem(LEGACY_LS_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
       userStates.owned = parsed.itemOwned || {};
+      userStates.fav = parsed.itemFav || {};
     }
   } catch (e) {
     console.error('データ読み込み失敗:', e);
@@ -490,7 +553,7 @@ function loadUserData() {
 function saveUserData() {
   const total = MUSIC_SHEETS.length;
   const ownedCount = MUSIC_SHEETS.filter(s => userStates.owned[s.id]).length;
-  localStorage.setItem(LS_KEY, JSON.stringify({ total, owned: ownedCount, itemOwned: userStates.owned }));
+  localStorage.setItem(LS_KEY, JSON.stringify({ total, owned: ownedCount, itemOwned: userStates.owned, itemFav: userStates.fav }));
   updateHeaderScore(ownedCount, total);
   updateMethodSummary();
 }
@@ -531,12 +594,38 @@ function spiritDisplayName(s) {
 function toggleOwned(id) {
   userStates.owned[id] = !userStates.owned[id];
   saveUserData();
+  // 所持済みになった場合、自動でウィッシュリストから外す（カテゴリページと同じ挙動）
+  if (userStates.owned[id]) removeWishItem(CAT_KEY, id);
+
   const card = document.getElementById(`card_${id}`);
   if (card) {
     card.classList.toggle('is-owned', userStates.owned[id]);
     const toggleEl = card.matches('[role="button"]') ? card : card.querySelector('[role="button"]');
     if (toggleEl) toggleEl.setAttribute('aria-pressed', String(userStates.owned[id]));
+    // 所持済みになった場合、自動でウィッシュリストから外れるためボタンの見た目も同期する
+    if (userStates.owned[id]) {
+      const wishBtn = card.querySelector('.tile-wish-btn, .wish-btn');
+      if (wishBtn) wishBtn.classList.remove('is-wish');
+    }
   }
+}
+
+// お気に入りチェックの切り替え
+function toggleFav(id, btn) {
+  userStates.fav[id] = !userStates.fav[id];
+  saveUserData();
+  btn.classList.toggle('is-fav', userStates.fav[id]);
+  btn.textContent = userStates.fav[id] ? '★' : '☆';
+}
+
+// ウィッシュリストの切り替え（profiles.js の toggleWishItem を利用する共通処理）
+function toggleWishBtn(id, btn) {
+  const added = toggleWishItem(CAT_KEY, id);
+  if (added === null) {
+    showToast(CURRENT_LANG === 'en' ? 'Owned items cannot be added to the wishlist' : '所持済みのアイテムはウィッシュリストに追加できません');
+    return;
+  }
+  btn.classList.toggle('is-wish', added);
 }
 
 function setViewMode(mode) {
@@ -561,24 +650,33 @@ function updateViewToggleUI() {
 
 function filterAndRender() {
   const fStatus = document.getElementById('filterStatus').value;
+  const fFav = document.getElementById('filterFav').value;
   const fMethod = document.getElementById('filterMethod').value;
   const fSeason = document.getElementById('filterSeason').value;
+  const fDiffPart = document.getElementById('filterDiffPart').value;
+  const fDiffMax = document.getElementById('filterDiffMax').value;
   const sOrder = document.getElementById('sortOrder').value;
   const fName = document.getElementById('searchName').value.trim().toLowerCase();
   const en = CURRENT_LANG === 'en';
 
   let filtered = MUSIC_SHEETS.filter(s => {
     const isOwned = !!userStates.owned[s.id];
+    const isFav = !!userStates.fav[s.id];
     if (fName) {
       const hay = `${s.num} ${s.name} ${s.nameEn || ''} ${s.spirit || ''} ${s.spiritEn || ''} ${s.season}`.toLowerCase();
       if (!hay.includes(fName)) return false;
     }
     if (fStatus === 'owned' && !isOwned) return false;
     if (fStatus === 'notOwned' && isOwned) return false;
+    if (fFav === 'fav' && !isFav) return false;
     if (fMethod !== 'all' && s.method !== fMethod) return false;
     if (fSeason !== 'all' && s.season !== fSeason) return false;
+    if (fDiffPart !== 'all' && fDiffMax !== 'all' && s.diff[fDiffPart] > Number(fDiffMax)) return false;
     return true;
   });
+
+  // パート未指定時は4パート合計、パート指定時はそのパートの値で難易度を評価する
+  const diffScore = (s) => fDiffPart !== 'all' ? s.diff[fDiffPart] : (s.diff.m + s.diff.w + s.diff.b + s.diff.p);
 
   if (sOrder === 'nameAsc') {
     filtered.sort((a, b) => sheetDisplayName(a).localeCompare(sheetDisplayName(b), en ? 'en' : 'ja'));
@@ -590,6 +688,8 @@ function filterAndRender() {
       if (ia !== ib) return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
       return Number(a.id.replace(/\D/g, '')) - Number(b.id.replace(/\D/g, ''));
     });
+  } else if (sOrder === 'diffAsc') {
+    filtered.sort((a, b) => diffScore(a) - diffScore(b));
   }
 
   const listEl = document.getElementById('itemList');
@@ -606,6 +706,8 @@ function filterAndRender() {
 
   const renderGrid = (s) => {
     const isOwned = !!userStates.owned[s.id];
+    const isFav = !!userStates.fav[s.id];
+    const isWish = isWishItem(CAT_KEY, s.id);
     const dispName = sheetDisplayName(s);
     const spiritName = spiritDisplayName(s);
     const tip = [
@@ -623,6 +725,9 @@ function filterAndRender() {
     return `
       <div class="item-tile">
         <div class="sheet-frame ${isOwned ? 'is-owned' : ''}" id="card_${s.id}" title="${escapeHtml(tip)}" onclick="toggleOwned('${s.id}')" tabindex="0" role="button" aria-pressed="${isOwned}" onkeydown="if(event.target===event.currentTarget&&(event.key==='Enter'||event.key===' ')){event.preventDefault();toggleOwned('${s.id}');}">
+          <!-- お気に入り／ウィッシュリストボタン（タイル選択とバブリングしないようストップ） -->
+          <button class="tile-fav-btn ${isFav ? 'is-fav' : ''}" onclick="event.stopPropagation(); toggleFav('${s.id}', this)" aria-label="${en ? 'Favorite' : 'お気に入り'}">${isFav ? '★' : '☆'}</button>
+          <button class="tile-wish-btn ${isWish ? 'is-wish' : ''}" onclick="event.stopPropagation(); toggleWishBtn('${s.id}', this)" aria-label="${en ? 'Wishlist' : 'ウィッシュリスト'}" title="${en ? 'Add to wishlist' : 'ウィッシュリストに追加'}">🛒</button>
           <div class="sheet-img-wrap">
             <img src="${s.img}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('img-fallback')">
             <span class="sheet-note-icon">🎵</span>
@@ -638,6 +743,8 @@ function filterAndRender() {
 
   const renderList = (s) => {
     const isOwned = !!userStates.owned[s.id];
+    const isFav = !!userStates.fav[s.id];
+    const isWish = isWishItem(CAT_KEY, s.id);
     const dispName = sheetDisplayName(s);
     const spiritName = spiritDisplayName(s);
     const wikiUrl = `https://www.google.com/search?q=${encodeURIComponent('Sky 星を紡ぐ子どもたち 楽譜 ' + s.name)}`;
@@ -666,6 +773,9 @@ function filterAndRender() {
             <div class="diff-row">${diffText}</div>
           </div>
         </div>
+        <!-- お気に入り／ウィッシュリストボタン -->
+        <button class="fav-btn ${isFav ? 'is-fav' : ''}" onclick="toggleFav('${s.id}', this)">${isFav ? '★' : '☆'}</button>
+        <button class="wish-btn ${isWish ? 'is-wish' : ''}" onclick="toggleWishBtn('${s.id}', this)" aria-label="${en ? 'Wishlist' : 'ウィッシュリスト'}" title="${en ? 'Add to wishlist' : 'ウィッシュリストに追加'}">🛒</button>
       </div>
     `;
   };
