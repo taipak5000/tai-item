@@ -520,6 +520,16 @@ function pfInjectStyle() {
     .pf-search-btn { background: var(--bg); border: 1px solid var(--sep); color: var(--text-2);
       border-radius: 6px; padding: 5px 10px; font-size: 14px; cursor: pointer; flex-shrink: 0; line-height: 1; }
     .pf-search-btn:hover { background: var(--sep); }
+
+    /* 💡 初回訪問ヒントバナー：.pf-barと同じ横幅・余白で揃えつつ、青枠で「案内」であることを示す */
+    .pf-hint-banner { max-width: 600px; margin: 8px auto 0; background: var(--card); border: 1px solid var(--blue);
+      border-radius: var(--r-sm); padding: 9px 12px; font-size: 12.5px; color: var(--text-2);
+      display: flex; align-items: flex-start; gap: 8px; line-height: 1.5; }
+    .pf-hint-banner-text { flex: 1; min-width: 0; }
+    .pf-hint-banner-close { background: none; border: none; font-size: 18px; line-height: 1; color: var(--text-2);
+      cursor: pointer; padding: 0 2px; flex-shrink: 0; }
+    .pf-hint-banner-close:hover { color: var(--text); }
+
     .pf-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
       z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
     .pf-modal-overlay.open { display: flex; }
@@ -610,6 +620,15 @@ function pfInjectStyle() {
       border: 1px solid var(--sep); border-radius: 999px; font-size: 11.5px; font-weight: 700; color: var(--blue);
       text-decoration: none; }
     .dash-shortcut-btn:active { opacity: 0.7; }
+
+    /* 📈 達成率の推移（completionHistory_v1）：ミニスパークライン＋直近数件の一覧 */
+    .dash-trend-svg { width: 100%; height: 40px; display: block; margin-bottom: 8px; }
+    .dash-trend-line { fill: none; stroke: var(--blue); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .dash-trend-dot { fill: var(--orange); }
+    .dash-history-list { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+    .dash-history-item { display: flex; flex-direction: column; align-items: center; gap: 2px;
+      font-size: 11px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+    .dash-history-item b { font-size: 13px; font-weight: 700; color: var(--text); }
 
     .srch-modal-card { max-width: 420px; }
     .srch-input { width: 100%; box-sizing: border-box; background: var(--bg); border: 1px solid var(--sep);
@@ -740,6 +759,44 @@ function pfRenderBar() {
 
 function escapeHtmlPf(str) {
   return String(str).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+
+/* ================================================================
+   💡 初回訪問ヒントバナー
+   共有リンク経由で初めて訪れた人は、プロフィール切替（複数の保存枠）や
+   データ引継ぎ（クラウド不要で他端末へ移行）の存在に気付きにくいため、
+   一度だけ簡単に紹介する。フラグはnsKey()を使わない素のグローバルキー
+   （「このプロフィールで見たか」ではなく「この端末・ブラウザで見たか」を
+   記録するため、プロフィールを切り替えても再表示されない）。
+   ================================================================ */
+const FIRST_VISIT_HINT_KEY = 'sky_first_visit_hint_shown_v1';
+
+function pfFirstVisitHintShown() {
+  try { return localStorage.getItem(FIRST_VISIT_HINT_KEY) === '1'; }
+  catch (e) { return true; } // localStorageに書けない環境では、二度と消せないバナーを出し続けないよう表示自体を諦める
+}
+function pfMarkFirstVisitHintShown() {
+  try { localStorage.setItem(FIRST_VISIT_HINT_KEY, '1'); } catch (e) { /* private browsing等 */ }
+}
+function pfDismissFirstVisitHint() {
+  pfMarkFirstVisitHintShown();
+  const el = document.getElementById('firstVisitHintBanner');
+  if (el) el.remove();
+}
+// pf-bar（プロフィールバー）の直後にバナーを差し込む。既に一度でも表示済み（＝フラグが
+// 立っている）場合は何もしない＝二度と生成されないため確実に「初回のみ」となる。
+function pfRenderFirstVisitHint(afterEl) {
+  if (pfFirstVisitHintShown()) return;
+  const hint = document.createElement('div');
+  hint.className = 'pf-hint-banner';
+  hint.id = 'firstVisitHintBanner';
+  hint.innerHTML = `
+    <span class="pf-hint-banner-text">💡 ${pfT(
+      '共有リンクから来た方へ：🗂️ プロフィール切替で複数の保存枠を使い分けたり、🔄 データ引継ぎでクラウド不要のまま別端末にデータを移せます。',
+      'New here from a shared link? 🗂️ Switch between multiple save-slot profiles, and use 🔄 Data Transfer to move your data to another device — no cloud account needed.'
+    )}</span>
+    <button type="button" class="pf-hint-banner-close" onclick="pfDismissFirstVisitHint()" aria-label="${pfT('閉じる', 'Dismiss')}">×</button>`;
+  afterEl.insertAdjacentElement('afterend', hint);
 }
 
 /* ================================================================
@@ -968,6 +1025,87 @@ const MONEY_SPENT_KEY = 'itemCostMoneySum_v1';
 function titleMoneySpentStat() {
   const v = Number(localStorage.getItem(nsKey(MONEY_SPENT_KEY)));
   return isFinite(v) && v > 0 ? v : 0;
+}
+
+/* ================================================================
+   📈 達成率の推移スナップショット
+   称号システム（TITLE_CAT_KEYS × titleCatStats）と同じ集計方法で「今この瞬間の
+   総合達成率」を計算し、1日1件だけlocalStorageに積み上げていく。称号側のhwm
+   （ハイウォーターマーク＝過去最高値に丸める）とは別物で、こちらは実際の値を
+   そのまま記録する（所持を外して下がった場合も、その日の記録は下がった値になる）。
+   localStorage キー: completionHistory_v1 = [{date:'YYYY-MM-DD', pct}, ...]
+   （日付昇順・1日1件・nsKeyでプロフィールごとに分離・直近180件＝約6か月分まで）
+   ================================================================ */
+const COMPLETION_HISTORY_KEY = 'completionHistory_v1';
+const COMPLETION_HISTORY_MAX = 180; // 毎日1件ペースで約6か月分
+
+// 称号のoverallPct判定と全く同じ集計（TITLE_CAT_KEYS×titleCatStats）だが、
+// hwm（最高値）ではなく「現在の実値」を返す
+function pfCurrentOverallPct() {
+  let sumOwned = 0, sumTotal = 0;
+  TITLE_CAT_KEYS.forEach(catKey => {
+    const stats = titleCatStats(catKey);
+    if (!stats) return;
+    sumOwned += stats.owned;
+    sumTotal += stats.total;
+  });
+  return sumTotal > 0 ? Math.round((sumOwned / sumTotal) * 100) : 0;
+}
+
+// Sky公式のリセット基準（太平洋時間）ではなく、端末のローカルカレンダー日をそのまま使う
+// （「今日この端末を開いたか」の記録であり、ダッシュボードの各種カウントダウンとは別軸のため）
+function pfTodayLocalDateStr() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function loadCompletionHistory() {
+  try {
+    const arr = JSON.parse(localStorage.getItem(nsKey(COMPLETION_HISTORY_KEY)));
+    return Array.isArray(arr) ? arr.filter(e => e && typeof e.date === 'string' && typeof e.pct === 'number') : [];
+  } catch (e) { return []; }
+}
+
+function saveCompletionHistory(list) {
+  localStorage.setItem(nsKey(COMPLETION_HISTORY_KEY), JSON.stringify(list));
+}
+
+// 姉妹サイトtai-cardの「入手推移グラフ(TREND_GRAPHS)」機構は、対象ツールのlocalStorageを
+// 「現在値({current})」＋「差分履歴（新しい順・{time,amount}の配列）」という形で直接読み、
+// 現在値から差分を順に遡って各時点の値を逆算する（getTrendSeriesFromTool参照・ノマキャン
+// 計算機／星のキャンドル計算機と同方式）。completionHistory_v1自体はこの形と異なる
+// （時系列の絶対値スナップショット）ため、tai-card側が将来TREND_GRAPHSにこのツールを
+// 追加できるよう、同じ形のミラーもおまけで保存しておく（本体はあくまでcompletionHistory_v1で、
+// こちらはこのファイル内の他コードから読まれない・将来の連携用の下準備）。
+const COMPLETION_TREND_CURRENT_KEY = 'completionRateCalc_v1';
+const COMPLETION_TREND_HISTORY_KEY = 'completionRateCalc_history_v1';
+
+function mirrorCompletionTrendCompat(hist) {
+  if (!hist.length) return;
+  const current = hist[hist.length - 1].pct;
+  const deltaHistory = [];
+  for (let i = hist.length - 1; i >= 1; i--) {
+    deltaHistory.push({ time: Date.parse(hist[i].date) || Date.now(), amount: hist[i].pct - hist[i - 1].pct });
+  }
+  localStorage.setItem(nsKey(COMPLETION_TREND_CURRENT_KEY), JSON.stringify({ current }));
+  localStorage.setItem(nsKey(COMPLETION_TREND_HISTORY_KEY), JSON.stringify(deltaHistory));
+}
+
+// 起動のたび（pfInit経由・全ページ共通）に呼ぶ。今日の日付の記録がまだ無い場合だけ
+// 1件追記する（同じ日に何度ページを開いても重複追加はされない＝1日1件の冪等処理）。
+function recordCompletionSnapshot() {
+  const today = pfTodayLocalDateStr();
+  let hist = loadCompletionHistory();
+  if (!hist.some(e => e.date === today)) {
+    hist.push({ date: today, pct: pfCurrentOverallPct() });
+    if (hist.length > COMPLETION_HISTORY_MAX) hist = hist.slice(hist.length - COMPLETION_HISTORY_MAX);
+    saveCompletionHistory(hist);
+  }
+  mirrorCompletionTrendCompat(hist);
+  return hist;
 }
 
 // 現在の所持データからハイウォーターマークを更新し、新規解禁分の称号一覧を返す
@@ -1323,6 +1461,40 @@ function pfDashRow(icon, html) {
   return `<div class="dash-row"><span class="dash-row-icon">${icon}</span><span class="dash-row-text">${html}</span></div>`;
 }
 
+// 📈 達成率の推移：completionHistory_v1（1日1件の絶対値スナップショット）から、
+// 簡易スパークライン（折れ線のみ、軸やグリッドは省略）と直近数件の日付・達成率の
+// 一覧を組み立てる。フルのチャートライブラリは使わず、SVGを直接生成するだけに留める。
+function pfHistorySparklineSvg(entries) {
+  if (entries.length < 2) return '';
+  const w = 280, h = 40, pad = 4;
+  const values = entries.map(e => e.pct);
+  const min = Math.min(...values), max = Math.max(...values);
+  const range = (max - min) || 1;
+  const stepX = (w - pad * 2) / (values.length - 1);
+  const pts = values.map((v, i) => [
+    pad + i * stepX,
+    h - pad - ((v - min) / range) * (h - pad * 2),
+  ]);
+  const linePath = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+  const last = pts[pts.length - 1];
+  return `
+    <svg viewBox="0 0 ${w} ${h}" class="dash-trend-svg" preserveAspectRatio="none" role="img" aria-label="${pfT('達成率の推移グラフ', 'Completion rate trend graph')}">
+      <path d="${linePath}" class="dash-trend-line"></path>
+      <circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.5" class="dash-trend-dot"></circle>
+    </svg>`;
+}
+function pfHistorySectionHtml() {
+  const hist = loadCompletionHistory();
+  if (!hist.length) {
+    return `<div class="dash-empty">${pfT('まだ記録がありません（このサイトを開くたびに1日1件、自動で記録されます）', 'No history yet (a snapshot is recorded automatically once per day whenever you visit this site)')}</div>`;
+  }
+  const recent = hist.slice(-30); // スパークラインには直近30件（最大約1か月）だけ使う
+  const svg = pfHistorySparklineSvg(recent);
+  const listItems = hist.slice(-5).reverse()
+    .map(e => `<span class="dash-history-item">${e.date}<b>${e.pct}%</b></span>`).join('');
+  return `${svg}<div class="dash-history-list">${listItems}</div>`;
+}
+
 function pfDashBuildHtml(data) {
   const dailyRows = [];
   const shard = pfDashShardInfo();
@@ -1402,6 +1574,10 @@ function pfDashBuildHtml(data) {
   const monthHtml = monthParts.length ? monthParts.join('') : bucketEmptyMsg;
 
   return `
+    <div class="dash-section">
+      <p class="dash-section-label">📈 ${pfT('達成率の推移', 'Completion Trend')}</p>
+      ${pfHistorySectionHtml()}
+    </div>
     <div class="dash-section">
       <p class="dash-section-label">${pfT('デイリー', 'Daily')}</p>
       ${dailyHtml}
@@ -2042,6 +2218,7 @@ function pfInit() {
   pfInjectStyle();
   pfApplyThemeColor(getActiveProfile().color);
   refreshTitlesUI(); // 🏆 全ページ共通：起動のたびに称号判定＆パネル描画（navが無いページでも動くようここで実行）
+  recordCompletionSnapshot(); // 📈 全ページ共通：起動のたびに今日分の達成率スナップショットを記録（同日2回目以降は何もしない）
 
   const tint = document.createElement('div');
   tint.className = 'pf-tint-overlay';
@@ -2074,6 +2251,7 @@ function pfInit() {
   bar.id = 'pfBar';
   nav.insertAdjacentElement('afterend', bar);
   pfRenderBar();
+  pfRenderFirstVisitHint(bar);
 
   const overlay = document.createElement('div');
   overlay.className = 'pf-modal-overlay';
