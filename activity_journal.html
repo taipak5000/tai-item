@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    // 🌓 描画前にテーマを確定させ、ダークモード時に一瞬でも明るい背景が
+    // 表示されてしまう「ちらつき」を防止する（CSSが解釈される前に同期実行）
+    (function () {
+      try {
+        var saved = localStorage.getItem('sky_app_theme');
+        var isDark = (saved === 'light' || saved === 'dark') ? (saved === 'dark') : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/app-icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Sky所持率管理">
+  <meta name="theme-color" content="#FF9500">
+  <title>Sky Life活動日記 - Sky所持率管理</title>
+  <script src="i18n.js"></script>
+  <script src="profiles.js"></script>
+  <script>if (CURRENT_LANG === 'en') document.title = 'Sky Life Activity Journal - Item Collection Tracker';</script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ── Design tokens（総合メニューと完全統一） ──────────────── */
+    :root {
+      --bg:        #F2F2F7;
+      --card:      #FFFFFF;
+      --sep:       rgba(60,60,67,0.12);
+      --orange:    #FF9500;
+      --orange-d:  #FF6200;
+      --orange-bg: rgba(255,149,0,0.10);
+      --blue:      #007AFF;
+      --blue-bg:   rgba(0,122,255,0.08);
+      --green:     #34C759;
+      --green-bg:  rgba(52,199,89,0.10);
+      --purple:    #AF52DE;
+      --purple-bg: rgba(175,82,222,0.10);
+      --text:      #1C1C1E;
+      --text-2:    #8E8E93;
+      --text-3:    #C7C7CC;
+      --r:         16px;
+      --r-sm:      10px;
+    }
+    [data-theme="dark"] {
+      --bg:        #000000;
+      --card:      #1C1C1E;
+      --sep:       rgba(255,255,255,0.14);
+      --orange:    #FF9F0A;
+      --orange-d:  #FF8A00;
+      --orange-bg: rgba(255,159,10,0.16);
+      --blue:      #0A84FF;
+      --blue-bg:   rgba(10,132,255,0.16);
+      --green:     #30D158;
+      --green-bg:  rgba(48,209,88,0.16);
+      --purple:    #BF5AF2;
+      --purple-bg: rgba(191,90,242,0.16);
+      --text:      #F2F2F7;
+      --text-2:    #98989D;
+      --text-3:    #636366;
+    }
+    [data-theme="dark"] nav { background: rgba(0,0,0,0.88); }
+
+    /* ── Reset & Body ─────────────────────────────────── */
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    a { text-decoration:none; color:inherit; -webkit-tap-highlight-color:transparent; }
+    button { cursor:pointer; border:none; background:none; font-family:inherit; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+      background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: calc(76px + env(safe-area-inset-bottom));
+    }
+
+    /* ── Navigation bar ────────────────────────── */
+    nav {
+      position: sticky; top: 0; z-index: 20;
+      background: rgba(242,242,247,0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-bottom: 0.5px solid var(--sep); padding: 14px 20px 12px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-title { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
+    .nav-back { color: var(--blue); font-size: 15px; font-weight: 500; display: flex; align-items: center; gap: 4px; }
+    .nav-action {
+      background: var(--card); border: 1px solid var(--sep); border-radius: var(--r-sm);
+      padding: 6px 12px; font-size: 13px; font-weight: 600; color: var(--text);
+    }
+
+    /* ── Layout ───────────────────────── */
+    .wrap { max-width: 720px; margin: 0 auto; padding: 0 16px; }
+    @media (min-width: 850px) { .wrap { max-width: 960px; } }
+
+    .sec-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-2); padding: 22px 4px 8px; }
+    .sec-label:first-of-type { padding-top: 16px; }
+
+    /* ── Intro hint ───────────────────────── */
+    .hint {
+      margin-top: 10px; background: var(--blue-bg); border-radius: var(--r-sm);
+      padding: 12px 14px; font-size: 12px; color: var(--blue); line-height: 1.65; display: flex; gap: 6px;
+    }
+
+    /* ── Source legend chips ───────────────────────── */
+    .journal-legend { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .journal-legend-chip {
+      display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600;
+      padding: 5px 10px; border-radius: 999px; background: var(--card); color: var(--text-2);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .journal-refresh-row { display: flex; justify-content: flex-end; margin-top: 10px; }
+    .journal-refresh-btn {
+      background: var(--bg); border: none; padding: 8px 14px; border-radius: var(--r-sm);
+      font-size: 12.5px; font-weight: 600; color: var(--blue); transition: background 0.15s;
+    }
+    .journal-refresh-btn:active { background: var(--sep); }
+
+    /* ── Timeline card ───────────────────────── */
+    .journal-card {
+      background: var(--card); border-radius: var(--r); padding: 6px 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07); margin-top: 6px;
+    }
+    .journal-date-label {
+      font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+      color: var(--text-2); padding: 12px 0 6px;
+    }
+    .journal-date-label:first-child { padding-top: 12px; }
+    .journal-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 0.5px solid var(--sep); }
+    .journal-row:last-child { border-bottom: none; }
+    .journal-icon {
+      width: 32px; height: 32px; background: var(--bg); border-radius: 9px;
+      display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; margin-top: 1px;
+    }
+    .journal-info { flex: 1; min-width: 0; }
+    .journal-desc { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.4; word-break: break-word; }
+    .journal-meta { font-size: 10.5px; color: var(--text-2); margin-top: 2px; }
+
+    /* ── Empty / loading ──────────────────────────── */
+    .empty-msg { text-align: center; color: var(--text-2); font-size: 13px; line-height: 1.8; padding: 28px 0; }
+  </style>
+</head>
+<body>
+
+<!-- ▸ Navigation bar -->
+<nav>
+  <a href="index.html" class="nav-back" data-i18n-en="◀ Main Menu">◀ 総合メニュー</a>
+  <div class="nav-title" data-i18n-en="Sky Life Activity Journal">Sky Life活動日記</div>
+  <button class="nav-action" onclick="toggleLang()" id="langToggleBtn" data-i18n-en="日本語">EN</button>
+</nav>
+
+<div class="wrap">
+
+  <p class="sec-label" data-i18n-en="Cross-tool Activity Timeline">ツール横断タイムライン</p>
+
+  <div class="hint">
+    <span>💡</span>
+    <span data-i18n-en="This page reads records already saved in this browser by other Sky tools (Emote Tracker, Candle Calculator, Star Candle Calculator, Spirit Companion Tool) and shows them together in one timeline, newest first. Nothing is sent anywhere — it only reads local data on this device.">
+      このページは、同じブラウザに保存されているほかのSkyツール（エモート所持率管理・ノマキャン計算機・星のキャンドル計算機・精霊同行ツール）の記録をまとめて、新しい順の1本のタイムラインとして表示します。データはどこにも送信されず、この端末に保存された内容を読むだけです。
+    </span>
+  </div>
+
+  <div class="journal-legend" id="journalLegend"><!-- JS --></div>
+
+  <div class="journal-refresh-row">
+    <button type="button" class="journal-refresh-btn" onclick="journalLoad()">
+      🔄 <span data-i18n-en="Refresh">最新の状態に更新</span>
+    </button>
+  </div>
+
+  <div class="journal-card">
+    <div id="journalBody"><div class="empty-msg" data-i18n-en="Loading…">読み込み中…</div></div>
+  </div>
+
+</div><!-- /wrap -->
+
+<script>
+/* ==========================================================================
+   🗓️ Sky Life活動日記
+   同一オリジン（taipak5000.github.io）配下の姉妹ツールが、それぞれ自分の
+   localStorageへ保存している「いつ・何をしたか」の記録を、直接読み出して
+   1本のタイムラインへマージする。フェッチが必要なのはエモートの表示名解決
+   （EMOTES_DATA、profiles.js内の横断検索と同じsrchExtractArray()を再利用）
+   だけで、それ以外は全て同一オリジンのlocalStorageを直接読むだけで完結する。
+
+   対象データ源（読み込み専用。書き込み・削除は一切行わない）：
+     - エモート所持率管理: emoteAcquireLog_v1（emote/index.htmlのACQUIRE_LOG_KEY）
+     - ノマキャン計算機　: skyNomacanCalc_history_v1（獲得履歴）
+     - ノマキャン計算機　: dailyQuestLog_v1（デイリークエスト自由記述ログ）
+     - 星のキャンドル計算機: skyStarCandleCalc_history_v1（獲得履歴）
+     - 精霊同行ツール　　: sky_companion_v4_data(__<id>)のwalkLog（連れ歩き記録）
+   いずれも現在アクティブなプロフィール（nsKey）のデータだけを対象にする
+   （このサイト・姉妹サイト共通のプロフィール切り替えと挙動を揃えるため）。
+   ========================================================================== */
+
+// ── ノマキャン計算機の獲得履歴：labelKeyは表示のたびにtai-nomacan側のt()で
+// 翻訳される文言なので、ここでは実際に使われている4種類だけを直接埋め込む
+// （tai-nomacan/index.html 内の同名キーのja/enと同じ文言）
+const JOURNAL_NOMACAN_LABELS = {
+  'history.entryFillCurrent':  { ja: '所持通貨から反映',       en: 'Filled from owned currency' },
+  'history.entrySurvey':       { ja: 'アンケート回答',         en: 'Survey answered' },
+  'history.entryFinishToday':  { ja: '今日の分を集め終わった', en: "Finished today's collection" },
+  'history.entryManualEdit':   { ja: '本数を直接入力',         en: 'Entered amount directly' },
+};
+
+function journalSafeParse(raw) {
+  try { return JSON.parse(raw); } catch (e) { return null; }
+}
+
+// 'YYYY-MM-DD' 文字列を、時刻情報のないその日の0時としてDate化する
+// （企業同行ツールのwalkLog・デイリークエストログのように日付単位でしか
+// 記録されないデータの並び替え・グルーピング用）
+function journalDateOnlyToTime(dateStr) {
+  const d = new Date(String(dateStr) + 'T00:00:00');
+  return isNaN(d.getTime()) ? null : d.getTime();
+}
+
+// ── データ源 1: エモート所持率管理の入手ログ ──
+// emoteNameMapは journalBuildEmoteNameMap() が解決した { emoteId: {name, nameEn} }。
+// 解決できなかった（未取得・フェッチ失敗）場合は素直にIDをそのまま表示する。
+function journalReadEmoteLog(emoteNameMap) {
+  const log = journalSafeParse(localStorage.getItem(nsKey('emoteAcquireLog_v1')));
+  if (!log || typeof log !== 'object') return [];
+  return Object.keys(log).map(key => {
+    const rec = log[key];
+    if (!rec || !rec.at || !rec.emoteId) return null;
+    const t = new Date(rec.at).getTime();
+    if (isNaN(t)) return null;
+    const info = emoteNameMap[rec.emoteId];
+    const nameJa = info ? info.name : rec.emoteId;
+    const nameEn = info ? (info.nameEn || info.name) : rec.emoteId;
+    const level = rec.level !== undefined ? rec.level : '?';
+    return {
+      time: t,
+      dateOnly: false,
+      icon: '🎭',
+      tool: { ja: 'エモート所持率管理', en: 'Emote Collection Tracker' },
+      text: {
+        ja: `「${nameJa}」Lv.${level} を入手`,
+        en: `Unlocked "${nameEn}" Lv.${level}`,
+      },
+    };
+  }).filter(Boolean);
+}
+
+// ── データ源 2: ノマキャン計算機の獲得履歴（増減の記録） ──
+function journalReadNomacanHistory() {
+  const list = journalSafeParse(localStorage.getItem(nsKey('skyNomacanCalc_history_v1')));
+  if (!Array.isArray(list)) return [];
+  return list.map(e => {
+    if (!e || typeof e.time !== 'number') return null;
+    const label = JOURNAL_NOMACAN_LABELS[e.labelKey] || { ja: '記録', en: 'Recorded' };
+    const amount = typeof e.amount === 'number' ? e.amount : 0;
+    const sign = amount >= 0 ? '+' : '−';
+    const n = Math.abs(amount);
+    return {
+      time: e.time,
+      dateOnly: false,
+      icon: '🕯️',
+      tool: { ja: 'ノマキャン計算機', en: 'Candle Calculator' },
+      text: {
+        ja: `${label.ja}（${sign}${n}）`,
+        en: `${label.en} (${sign}${n})`,
+      },
+    };
+  }).filter(Boolean);
+}
+
+// ── データ源 3: ノマキャン計算機のデイリークエスト自由記述ログ ──
+function journalReadNomacanQuestLog() {
+  const list = journalSafeParse(localStorage.getItem(nsKey('dailyQuestLog_v1')));
+  if (!Array.isArray(list)) return [];
+  return list.map(e => {
+    if (!e || !e.text) return null;
+    const t = typeof e.time === 'number' ? e.time : (e.date ? journalDateOnlyToTime(e.date) : null);
+    if (t === null || isNaN(t)) return null;
+    return {
+      time: t,
+      dateOnly: false,
+      icon: '📜',
+      tool: { ja: 'ノマキャン計算機（デイリークエスト）', en: 'Candle Calculator (Daily Quest)' },
+      text: {
+        ja: e.text,
+        en: e.text,
+      },
+    };
+  }).filter(Boolean);
+}
+
+// ── データ源 4: 星のキャンドル計算機の獲得履歴 ──
+function journalFormatDayKey(dayKey) {
+  if (!dayKey) return '';
+  const p = String(dayKey).split('-');
+  if (p.length !== 3) return dayKey;
+  const d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+  if (isNaN(d.getTime())) return dayKey;
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+function journalReadStarCandleHistory() {
+  const list = journalSafeParse(localStorage.getItem(nsKey('skyStarCandleCalc_history_v1')));
+  if (!Array.isArray(list)) return [];
+  return list.map(e => {
+    if (!e || typeof e.time !== 'number') return null;
+    const amount = typeof e.amount === 'number' ? e.amount : 0;
+    const sign = amount >= 0 ? '+' : '−';
+    const n = Math.abs(amount);
+    let textJa, textEn;
+    if (e.source === 'shard') {
+      const dayLabel = journalFormatDayKey(e.dayKey);
+      textJa = `赤闇${dayLabel ? `（${dayLabel}）` : ''}（${sign}${n}）`;
+      textEn = `Red Shard${dayLabel ? ` (${dayLabel})` : ''} (${sign}${n})`;
+    } else {
+      textJa = `羽を追加（${sign}${n}）`;
+      textEn = `Added feathers (${sign}${n})`;
+    }
+    return {
+      time: e.time,
+      dateOnly: false,
+      icon: '🕯️✨',
+      tool: { ja: '星のキャンドル計算機', en: 'Star Candle Calculator' },
+      text: { ja: textJa, en: textEn },
+    };
+  }).filter(Boolean);
+}
+
+// ── データ源 5: 精霊同行ツールの連れ歩き記録（walkLog） ──
+// 保存キーはprofiles.js既存のpfCompanionDataKey()と完全に同じ命名規則
+// （companion/index.html の dataKeyForRecord() 参照）。精霊名はwalkLogの
+// spiritIdだけでは分からないため、同じキーに保存されているspirits配列から引く。
+// companion自身のSPIRIT_NAME_EN（companion/index.html）と同じ対応表。既定の4体の
+// 「思い出」名だけが対象で、companionは名前をユーザーが自由に改名できるため、
+// この表に無い名前（＝改名済み）はcompanion自身のspiritName()と同じくJA原文の
+// ままフォールバック表示する（英訳が存在しないカスタム名を誤訳しないため）。
+const JOURNAL_COMPANION_SPIRIT_NAME_EN = {
+  'オランダの思い出': 'Dutch Memory',
+  '素朴な思い出': 'Rustic Memory',
+  '芸術の思い出': 'Artistic Memory',
+  '喜びの思い出': 'Joyful Memory',
+};
+function journalReadCompanionWalkLog() {
+  let raw;
+  try { raw = localStorage.getItem(pfCompanionDataKey()); } catch (e) { raw = null; }
+  if (raw === null) return [];
+  const data = journalSafeParse(raw);
+  if (!data || typeof data !== 'object') return [];
+  const spirits = Array.isArray(data.spirits) ? data.spirits : [];
+  const walkLog = Array.isArray(data.walkLog) ? data.walkLog : [];
+  return walkLog.map(e => {
+    if (!e || !e.date) return null;
+    const t = journalDateOnlyToTime(e.date);
+    if (t === null) return null;
+    const sp = spirits.find(s => s && s.id === e.spiritId);
+    const nameJa = (sp && sp.name) ? sp.name : (e.spiritId || '?');
+    const nameEn = JOURNAL_COMPANION_SPIRIT_NAME_EN[nameJa] || nameJa;
+    return {
+      time: t,
+      dateOnly: true, // companionは日付単位でしか記録しないため、時刻は表示しない
+      icon: '✨',
+      tool: { ja: '精霊同行ツール', en: 'Spirit Companion Tool' },
+      text: { ja: `「${nameJa}」と連れ歩き`, en: `Walked with "${nameEn}"` },
+    };
+  }).filter(Boolean);
+}
+
+// ── エモートの表示名解決：profiles.js横断検索と同じsrchExtractArray()を再利用し、
+// tai-emote/index.htmlのEMOTES_DATAを取得する。まだ公開されていない/オフライン等で
+// 取得に失敗した場合はconsole.warnだけ残し、呼び出し側はIDそのまま表示にフォールバックする
+async function journalBuildEmoteNameMap() {
+  const map = {};
+  try {
+    const res = await fetch(`${SITE_ROOT}/tai-emote/index.html`, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const html = await res.text();
+    const data = srchExtractArray(html, 'EMOTES_DATA') || [];
+    data.forEach(em => { if (em && em.id) map[em.id] = { name: em.name, nameEn: em.nameEn }; });
+  } catch (e) {
+    console.warn('activity_journal: エモート表示名の解決に失敗しました（IDをそのまま表示します）', e);
+  }
+  return map;
+}
+
+function journalDateKeyLocal(d) {
+  return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+}
+function journalFormatDateHeader(d) {
+  if (CURRENT_LANG === 'en') {
+    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', weekday: 'short' });
+  }
+  const wd = ['日', '月', '火', '水', '木', '金', '土'][d.getDay()];
+  return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}（${wd}）`;
+}
+function journalFormatTime(d) {
+  return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+}
+
+function journalRowHtml(e) {
+  const toolLabel = pfT(e.tool.ja, e.tool.en);
+  const desc = pfT(e.text.ja, e.text.en);
+  const timeStr = e.dateOnly ? '' : journalFormatTime(new Date(e.time));
+  const metaParts = [escapeHtml(toolLabel)];
+  if (timeStr) metaParts.push(timeStr);
+  return `<div class="journal-row">
+    <div class="journal-icon">${e.icon}</div>
+    <div class="journal-info">
+      <div class="journal-desc">${escapeHtml(desc)}</div>
+      <div class="journal-meta">${metaParts.join(' ・ ')}</div>
+    </div>
+  </div>`;
+}
+
+const JOURNAL_LEGEND = [
+  { icon: '🎭', ja: 'エモート所持率管理', en: 'Emote Collection Tracker' },
+  { icon: '🕯️', ja: 'ノマキャン計算機', en: 'Candle Calculator' },
+  { icon: '🕯️✨', ja: '星のキャンドル計算機', en: 'Star Candle Calculator' },
+  { icon: '✨', ja: '精霊同行ツール', en: 'Spirit Companion Tool' },
+];
+function journalRenderLegend() {
+  const el = document.getElementById('journalLegend');
+  if (!el) return;
+  el.innerHTML = JOURNAL_LEGEND.map(s =>
+    `<span class="journal-legend-chip">${s.icon} ${escapeHtml(pfT(s.ja, s.en))}</span>`
+  ).join('');
+}
+
+let journalEmoteNameMap = {};
+async function journalLoad() {
+  const body = document.getElementById('journalBody');
+  body.innerHTML = `<div class="empty-msg">${pfT('読み込み中…', 'Loading…')}</div>`;
+  journalEmoteNameMap = await journalBuildEmoteNameMap();
+  journalRender();
+}
+
+function journalRender() {
+  const entries = [
+    ...journalReadEmoteLog(journalEmoteNameMap),
+    ...journalReadNomacanHistory(),
+    ...journalReadNomacanQuestLog(),
+    ...journalReadStarCandleHistory(),
+    ...journalReadCompanionWalkLog(),
+  ];
+  entries.sort((a, b) => b.time - a.time);
+
+  const body = document.getElementById('journalBody');
+  if (!entries.length) {
+    body.innerHTML = `<div class="empty-msg">${pfT(
+      'まだ記録がありません。他のSkyツール（エモート所持率管理・ノマキャン計算機・星のキャンドル計算機・精霊同行ツール）を使うと、ここに自動でまとまって表示されます。',
+      'No activity yet. Once you use the other Sky tools (Emote Tracker, Candle Calculator, Star Candle Calculator, Spirit Companion Tool), their records will automatically show up here.'
+    )}</div>`;
+    return;
+  }
+
+  let html = '';
+  let lastDateKey = null;
+  entries.forEach(e => {
+    const d = new Date(e.time);
+    const dateKey = journalDateKeyLocal(d);
+    if (dateKey !== lastDateKey) {
+      html += `<div class="journal-date-label">${escapeHtml(journalFormatDateHeader(d))}</div>`;
+      lastDateKey = dateKey;
+    }
+    html += journalRowHtml(e);
+  });
+  body.innerHTML = html;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  journalRenderLegend();
+  journalLoad();
+});
+</script>
+
+<footer style="text-align:center; padding:24px 16px; color:var(--text-2); font-size:13px; border-top:1px solid var(--sep); margin-top:40px; line-height:1.6;">
+  <span data-i18n-en="This is an unofficial fan site for Sky: Children of the Light. thatgamecompany is not involved in any way.">このサイトはSky 星を紡ぐ子どもたちの非公式ファンサイトです。thatgamecompanyは一切関与していません。</span><br>
+  <span data-i18n-en-html='Created by / feedback: <a href="https://x.com/Skyzztai" target="_blank" rel="noopener noreferrer" style="color:var(--blue); text-decoration:none; font-weight:bold;">@Skyzztai</a>&nbsp;&nbsp;/&nbsp;&nbsp;<a href="https://odaibako.net/u/Skyzztai" target="_blank" rel="noopener noreferrer" style="color:var(--blue); text-decoration:none; font-weight:bold;">Request form</a>'>
+  作成・ご意見: <a href="https://x.com/Skyzztai" target="_blank" rel="noopener noreferrer" style="color:var(--blue); text-decoration:none; font-weight:bold;">@Skyzztai</a>　／　<a href="https://odaibako.net/u/Skyzztai" target="_blank" rel="noopener noreferrer" style="color:var(--blue); text-decoration:none; font-weight:bold;">リクエストフォーム</a>
+  </span>
+</footer>
+
+</body>
+</html>

@@ -518,8 +518,15 @@ function pfInjectStyle() {
     .pf-bar b { color: var(--blue); font-weight: 700; }
     .pf-bar-text { flex: 1; min-width: 0; cursor: pointer; }
     .pf-search-btn { background: var(--bg); border: 1px solid var(--sep); color: var(--text-2);
-      border-radius: 6px; padding: 5px 10px; font-size: 14px; cursor: pointer; flex-shrink: 0; line-height: 1; }
+      border-radius: 6px; padding: 5px 10px; font-size: 14px; cursor: pointer; flex-shrink: 0; line-height: 1;
+      position: relative; }
     .pf-search-btn:hover { background: var(--sep); }
+
+    /* 🔴 ダッシュボードボタンの「まもなく終了」ドット（サイトドック・プロフィールバー共通）。
+       新規データが無い限りJSでdisplay:noneのまま維持される（初期状態もnoneにしておくことで、
+       JS実行前・実行失敗時に誤って常時表示されてしまうのを防ぐ） */
+    .pf-dash-urgent-dot { display: none; position: absolute; top: -2px; right: -4px;
+      width: 8px; height: 8px; border-radius: 50%; background: #FF3B30; box-shadow: 0 0 0 2px var(--card); }
 
     /* 💡 初回訪問ヒントバナー：.pf-barと同じ横幅・余白で揃えつつ、青枠で「案内」であることを示す */
     .pf-hint-banner { max-width: 600px; margin: 8px auto 0; background: var(--card); border: 1px solid var(--blue);
@@ -686,7 +693,7 @@ function pfInjectStyle() {
       padding: 6px 0; min-height: 52px; border-radius: 12px; font-family: inherit;
     }
     .site-dock button:active { background: var(--sep); }
-    .site-dock .site-dock-icon { font-size: 20px; line-height: 1; }
+    .site-dock .site-dock-icon { font-size: 20px; line-height: 1; position: relative; display: inline-block; }
     .site-dock .site-dock-label { font-size: 10px; font-weight: 700; color: var(--text-2);
       max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -746,7 +753,7 @@ function pfRenderBar() {
   if (bar) {
     bar.innerHTML = `
       <span class="pf-bar-text" onclick="pfOpenModal()">🗂️ <b>${escapeHtmlPf(displayName)}</b> ${pfT('に切替中（タップで切替）', 'active (tap to switch)')}</span>
-      <button type="button" class="pf-search-btn" onclick="pfDashOpen()" title="${pfT('今日・今週・今月ダッシュボード', 'Today / this week / this month')}">🗓️</button>
+      <button type="button" class="pf-search-btn" onclick="pfDashOpen()" title="${pfT('今日・今週・今月ダッシュボード', 'Today / this week / this month')}">🗓️<span class="pf-dash-urgent-dot" aria-hidden="true" title="${pfT('季節・イベントの終了が近づいています', 'A season or event is ending soon')}"></span></button>
       <button type="button" class="pf-search-btn" onclick="srchOpen()" title="${pfT('横断検索（アイテム・エモート・精霊・季節）', 'Cross-site search')}">🔍</button>
       <button type="button" class="pf-search-btn" onclick="settingsOpen()" title="${pfT('⚙️ 表示設定', '⚙️ Display Settings')}">⚙️</button>`;
   }
@@ -1461,6 +1468,38 @@ function pfDashRow(icon, html) {
   return `<div class="dash-row"><span class="dash-row-icon">${icon}</span><span class="dash-row-text">${html}</span></div>`;
 }
 
+/* ================================================================
+   🔴 サイトドック「まもなく終了」ドット
+   pfDashCacheに既に入っている（＝ダッシュボードを開いた時・通知リマインダーが
+   動いた時にだけ取得される）シーズン/期間限定イベントの終了日時のうち、
+   3日以内に迫っているものが1件でもあればtrueにする。新規のfetchは一切
+   追加しない（=ここではpfDashLoadData()を呼ばない）ため、まだ一度も
+   ダッシュボードを取得していないページ読み込み直後は何も表示されない。
+   デイリーリセット・週間リセットのような「毎回必ず3日以内に来る」項目は
+   対象外（pfDashReminderTargets()はそれらも含むため、ここでは専用に絞り込む）。
+   他ツールの未公開データ源には一切依存しない。
+   ================================================================ */
+const PF_DASH_URGENT_THRESHOLD_MS = 3 * 24 * 60 * 60 * 1000;
+function pfDashUrgentSoon(data) {
+  if (!data) return false;
+  const now = new Date();
+  const ends = [];
+  if (data.season && data.season.endDate) ends.push(new Date(data.season.endDate));
+  pfDashActiveScheduledEvents(data.eventSchedule).forEach(ev => ends.push(new Date(ev.end)));
+  return ends.some(end => {
+    const msLeft = end - now;
+    return msLeft > 0 && msLeft <= PF_DASH_URGENT_THRESHOLD_MS;
+  });
+}
+// サイトドック／プロフィールバー、両方のダッシュボードボタンにあるドットの表示・
+// 非表示をまとめて切り替える（同じクラス名を持つ要素が複数箇所にあるため一括更新）
+function pfDashUpdateUrgentBadge() {
+  const urgent = pfDashUrgentSoon(pfDashCache);
+  document.querySelectorAll('.pf-dash-urgent-dot').forEach(el => {
+    el.style.display = urgent ? 'block' : 'none';
+  });
+}
+
 // 📈 達成率の推移：completionHistory_v1（1日1件の絶対値スナップショット）から、
 // 簡易スパークライン（折れ線のみ、軸やグリッドは省略）と直近数件の日付・達成率の
 // 一覧を組み立てる。フルのチャートライブラリは使わず、SVGを直接生成するだけに留める。
@@ -1616,7 +1655,7 @@ async function pfDashOpen() {
   document.getElementById('dashModalOverlay').classList.add('open');
   pfSyncReminderUI(); // ブラウザ側の通知許可状態が変わっている可能性があるため開くたびに再同期
   const body = document.getElementById('dashBody');
-  if (pfDashCache) { body.innerHTML = pfDashBuildHtml(pfDashCache); pfDashStartTimer(); return; }
+  if (pfDashCache) { body.innerHTML = pfDashBuildHtml(pfDashCache); pfDashStartTimer(); pfDashUpdateUrgentBadge(); return; }
   body.innerHTML = `<div class="pf-hint">${pfT('読み込み中…', 'Loading…')}</div>`;
   try {
     if (!pfDashLoading) pfDashLoading = pfDashLoadData();
@@ -1624,6 +1663,7 @@ async function pfDashOpen() {
     pfDashCache = data;
     body.innerHTML = pfDashBuildHtml(data);
     pfDashStartTimer();
+    pfDashUpdateUrgentBadge(); // 🔴 取得したデータで「まもなく終了」ドットを更新（新規fetchは追加しない）
   } catch (e) {
     console.error('pfDashOpen', e);
     body.innerHTML = `<div class="dash-empty">${pfT('読み込みに失敗しました', 'Failed to load')}</div>`;
@@ -1699,6 +1739,7 @@ async function pfReminderCheckNow() {
     if (!pfDashCache) {
       if (!pfDashLoading) pfDashLoading = pfDashLoadData();
       pfDashCache = await pfDashLoading;
+      pfDashUpdateUrgentBadge(); // 🔴 通知リマインダー経由で取得できた場合もドットへ反映する
     }
   } catch (e) { console.error('pfReminderCheckNow', e); return; }
 
@@ -2436,7 +2477,7 @@ function pfInit() {
       <span class="site-dock-label" id="siteDockProfileLabel">${pfT('プロフィール', 'Profiles')}</span>
     </button>
     <button type="button" onclick="pfDashOpen()">
-      <span class="site-dock-icon">🗓️</span>
+      <span class="site-dock-icon">🗓️<span class="pf-dash-urgent-dot" aria-hidden="true" title="${pfT('季節・イベントの終了が近づいています', 'A season or event is ending soon')}"></span></span>
       <span class="site-dock-label">${pfT('ダッシュボード', 'Dashboard')}</span>
     </button>
     <button type="button" onclick="pfToolsOpen()">
@@ -2541,6 +2582,10 @@ function pfInit() {
   // 🔔 通知リマインダー：既にオプトイン＆許可済みの場合だけ静かに再開する
   // （新規の許可リクエストはここでは絶対に発生しない）
   pfReminderInit();
+
+  // 🔴 ドックのダッシュボードボタン：pfDashCacheがこの時点で既に何か入っていれば
+  // （通常は無いが念のため）ドットへ反映しておく。新規fetchはここでも行わない
+  pfDashUpdateUrgentBadge();
 }
 
 /* ================================================================
@@ -2659,6 +2704,21 @@ function dmConfirmWipe() {
 }
 
 document.addEventListener('DOMContentLoaded', pfInit);
+
+/* ================================================================
+   📴 PWAオフライン対応：Service Workerの登録
+   全ページが<script src="profiles.js">を読み込むため、ここ1箇所に書くだけで
+   全ページ共通の登録になる（ページごとに個別追加する必要はない）。
+   file://など登録できない環境やSW未対応ブラウザでは静かに諦めるだけで、
+   通常のオンライン読み込み自体は一切妨げない。
+   ================================================================ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(err => {
+      console.error('Service Worker registration failed', err);
+    });
+  });
+}
 
 /* ================================================================
    🔍 横断検索（アイテム所持管理サイト内のどのページからでも開ける）
