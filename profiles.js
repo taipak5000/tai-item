@@ -3044,6 +3044,7 @@ function migrateItemCategoryMove(oldCat, oldId, newCat, newId, itemMeta) {
     const oldKey = nsKey('gameItems_' + oldCat);
     const oldData = JSON.parse(localStorage.getItem(oldKey));
     if (oldData && oldData.itemOwned && Object.prototype.hasOwnProperty.call(oldData.itemOwned, oldId)) {
+      const wasOwned = !!oldData.itemOwned[oldId];
       const newKey = nsKey('gameItems_' + newCat);
       let newData;
       try { newData = JSON.parse(localStorage.getItem(newKey)) || {}; } catch { newData = {}; }
@@ -3057,12 +3058,23 @@ function migrateItemCategoryMove(oldCat, oldId, newCat, newId, itemMeta) {
         if (newData.itemOwned[newId] && !newData.ownedItems.some(i => i.id === newId)) {
           newData.ownedItems.push({ id: newId, ...itemMeta });
         }
+        // 総合メニューが直接参照するtotal/ownedキャッシュも、移動先カタログが1件増える分だけ同期しておく
+        // （該当カテゴリページを開き直すまで達成率表示がズレたままになるのを防ぐ）
+        if (typeof newData.total === 'number') {
+          newData.total += 1;
+          if (newData.itemOwned[newId]) newData.owned = (typeof newData.owned === 'number' ? newData.owned : 0) + 1;
+        }
         localStorage.setItem(newKey, JSON.stringify(newData));
       }
 
       delete oldData.itemOwned[oldId];
       if (oldData.itemFav) delete oldData.itemFav[oldId];
       if (Array.isArray(oldData.ownedItems)) oldData.ownedItems = oldData.ownedItems.filter(i => i.id !== oldId);
+      // 移動元カタログは1件減る分だけ同期する
+      if (typeof oldData.total === 'number') {
+        oldData.total = Math.max(0, oldData.total - 1);
+        if (wasOwned && typeof oldData.owned === 'number') oldData.owned = Math.max(0, oldData.owned - 1);
+      }
       localStorage.setItem(oldKey, JSON.stringify(oldData));
     }
   } catch { /* 壊れたデータはそのまま放置（他の処理と同様、無視して次に進む） */ }

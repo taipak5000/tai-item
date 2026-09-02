@@ -2159,7 +2159,7 @@ function toggleAdvancedSearchFilters() {
 // 絞り込み結果を並び替え欄の指定に従って並び替える
 function sortFilteredItems(items, sortMode, getState) {
   if (sortMode === 'name') {
-    return [...items].sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+    return [...items].sort((a, b) => trItem(a).localeCompare(trItem(b), CURRENT_LANG === 'en' ? 'en' : 'ja'));
   }
   if (sortMode === 'eventOrder') {
     return [...items].sort((a, b) => {
@@ -4272,7 +4272,7 @@ function buildOverallExportCardEl(opts = {}) {
   const { own, tot, p } = getOverallStats();
   const pctTxt = p !== null ? p + '%' : '--%';
   const theme = SHARE_THEMES[opts.theme] ? opts.theme : 'orange';
-  const selectedCats = opts.cats && opts.cats.length ? CATS.filter(c => opts.cats.includes(c.key)) : CATS;
+  const selectedCats = opts.cats ? CATS.filter(c => opts.cats.includes(c.key)) : CATS;
   const comment = opts.comment || '';
 
   const cells = selectedCats.map(cat => {
