@@ -993,11 +993,11 @@
        👇 下の .welcome-text の文章を書き換えてください。今は例文が入っています。 -->
   <div class="welcome-card">
     <div class="welcome-title" onclick="toggleWelcomeCard()">
-      <span class="welcome-title-label" data-i18n-en="🔰 For First-Time Visitors">🔰 はじめての方へ</span>
+      <span class="welcome-title-label" data-i18n-en="For First-Time Visitors">はじめての方へ</span>
       <span class="welcome-toggle-icon" id="welcomeToggleIcon">▶</span>
     </div>
-    <div class="welcome-text" id="welcomeText" style="display:none;" data-i18n-en-html="This tool lets you track your Sky dress-up item collection by category.<br>Use the 🎲 Random Coord feature to discover new combinations, save favorites with 👗 My Coord, and share your completion rate as an image on X.<br>Start by registering items in a category you're interested in!<br>Clicking an item's name searches for &quot;item name + Sky&quot; automatically, so give it a try!<br>Please report any bugs or issues to @Skyzztai!">
-      このツールでは、Skyのドレスアップアイテムの所持状況をカテゴリ別にチェックできます。<br>🎲ランダムコーデ機能で新しい組み合わせを発見したり、👗マイコーデでお気に入りを保存したりできるほか、達成率を画像にしてXでシェアすることも可能です。<br>まずは気になるカテゴリからアイテムを登録してみてください！<br>アイテムの名前をクリックすると、「アイテム名+Sky」で自動で検索できますので活用してみてください！<br>不具合やミスは@Skyzztaiまでお知らせください！
+    <div class="welcome-text" id="welcomeText" style="display:none;" data-i18n-en-html="This tool lets you track your Sky dress-up item collection by category.<br>Use the Random Coord feature to discover new combinations, save favorites with My Coord, and share your completion rate as an image on X.<br>Start by registering items in a category you're interested in!<br>Clicking an item's name searches for &quot;item name + Sky&quot; automatically, so give it a try!<br>Please report any bugs or issues to @Skyzztai!">
+      このツールでは、Skyのドレスアップアイテムの所持状況をカテゴリ別にチェックできます。<br>ランダムコーデ機能で新しい組み合わせを発見したり、マイコーデでお気に入りを保存したりできるほか、達成率を画像にしてXでシェアすることも可能です。<br>まずは気になるカテゴリからアイテムを登録してみてください！<br>アイテムの名前をクリックすると、「アイテム名+Sky」で自動で検索できますので活用してみてください！<br>不具合やミスは@Skyzztaiまでお知らせください！
     </div>
   </div>
 
@@ -1036,7 +1036,7 @@
   </div>
 
   <!-- ▸ 称号（🏆 実績） -->
-  <p class="sec-label" data-i18n-en="🏆 Titles">🏆 称号</p>
+  <p class="sec-label" data-i18n-en="Titles">称号</p>
   <div class="titles-panel" id="titlesPanel"></div>
 
   <!-- ▸ Category cards -->
@@ -1086,7 +1086,7 @@
   <!-- ▸ 達成率シェア -->
   <p class="sec-label" data-i18n-en="Share Your Completion Rate">達成率をシェア</p>
   <button class="feature-btn twitter" onclick="shareOverallOnTwitter()">
-    <span class="feature-icon">📤🖼️</span>
+    <span class="feature-icon">📤</span>
     <span class="feature-label" data-i18n-en="Share Image on X">Xで画像を共有</span>
     <span class="feature-desc" data-i18n-en="Turn your completion rate into an image and post it on X (the image is also ready to save)">達成率を画像にしてXへ投稿できます（画像の保存も同時にできます）</span>
   </button>
@@ -1130,7 +1130,7 @@
 <div class="modal-overlay" id="randomModal" onclick="if(event.target===this)closeModal('randomModal')">
   <div class="modal-card">
     <div class="modal-header">
-      <span class="modal-title" data-i18n-en="🎲 Random Coord">🎲 ランダムコーデ</span>
+      <span class="modal-title" data-i18n-en="Random Coord">ランダムコーデ</span>
       <button class="modal-close" onclick="closeModal('randomModal')">✕</button>
     </div>
 
@@ -1142,32 +1142,32 @@
     </div>
 
     <div class="action-row">
-      <button class="action-btn secondary" onclick="shuffleOutfit()" data-i18n-en="🔀 Shuffle Again">🔀 もう一度</button>
-      <button class="action-btn secondary" id="favOnlyBtn" onclick="toggleFavOnlyMode()">⭐ お気に入りのみ</button>
+      <button class="action-btn secondary" onclick="shuffleOutfit()" data-i18n-en="Shuffle Again">もう一度</button>
+      <button class="action-btn secondary" id="favOnlyBtn" onclick="toggleFavOnlyMode()">お気に入りのみ</button>
     </div>
     <div class="action-row">
-      <button class="action-btn primary full" onclick="toggleSaveRow()" data-i18n-en="💾 Save">💾 保存する</button>
+      <button class="action-btn primary full" onclick="toggleSaveRow()" data-i18n-en="Save">保存する</button>
     </div>
     <div class="coord-share-style-toggle">
-      <button type="button" class="coord-share-style-btn" onclick="setCoordShareStyle('polaroid')" data-i18n-en="🖼️ Polaroid">🖼️ ポラロイド風</button>
-      <button type="button" class="coord-share-style-btn" onclick="setCoordShareStyle('grid')" data-i18n-en="🎮 Icon Grid">🎮 アイコングリッド</button>
+      <button type="button" class="coord-share-style-btn" onclick="setCoordShareStyle('polaroid')" data-i18n-en="Polaroid">ポラロイド風</button>
+      <button type="button" class="coord-share-style-btn" onclick="setCoordShareStyle('grid')" data-i18n-en="Icon Grid">アイコングリッド</button>
     </div>
     <div class="coord-share-id-row">
       <input type="text" class="coord-share-id-input" maxlength="40" data-i18n-en-placeholder="Your ID (optional, shown on the photo)" placeholder="自分のID（任意・写真に表示されます）" oninput="setShareUserId(this.value)">
     </div>
     <div class="coord-grid-photo-row">
       <label class="fav-bg-file-btn">
-        <span data-i18n-en="🖼️ Choose Photo">🖼️ 写真を選ぶ</span>
+        <span data-i18n-en="Choose Photo">写真を選ぶ</span>
         <input type="file" accept="image/*" style="display:none;" onchange="onRandomCoordPhotoSelected(event)">
       </label>
       <span id="randomCoordPhotoStatus" style="font-size:12px; color:var(--text-2);" data-i18n-en="Not selected">未選択</span>
       <span id="randomCoordPhotoClearBtn" style="display:none; color:var(--blue); font-weight:600; font-size:12px; cursor:pointer;" onclick="clearRandomCoordPhoto()" data-i18n-en="Remove">削除</span>
     </div>
     <div class="action-row">
-      <button class="action-btn twitter full" onclick="shareRandomOnTwitter()" data-i18n-en="📤🖼️ Share Image on X">📤🖼️ Xで画像を共有</button>
+      <button class="action-btn twitter full" onclick="shareRandomOnTwitter()" data-i18n-en="Share Image on X">Xで画像を共有</button>
     </div>
     <div class="action-row">
-      <button class="action-btn secondary full" onclick="shareRandomCoordLink()" data-i18n-en="🔗 Share as Link (this combo, what do you think?)">🔗 リンクで共有（この組み合わせどう？）</button>
+      <button class="action-btn secondary full" onclick="shareRandomCoordLink()" data-i18n-en="Share as Link (this combo, what do you think?)">リンクで共有（この組み合わせどう？）</button>
     </div>
   </div>
 </div>
@@ -1179,7 +1179,7 @@
     <!-- リスト表示 -->
     <div id="myCoordListView">
       <div class="modal-header">
-        <span class="modal-title" data-i18n-en="👗 My Coord">👗 マイコーデ</span>
+        <span class="modal-title" data-i18n-en="My Coord">マイコーデ</span>
         <button class="modal-close" onclick="closeModal('myCoordModal')">✕</button>
       </div>
       <div id="myCoordList"><!-- JS --></div>
@@ -1215,7 +1215,7 @@
     <!-- リスト表示 -->
     <div id="closetListView">
       <div class="modal-header">
-        <span class="modal-title" data-i18n-en="🖼️ Closet Collage">🖼️ クローゼットコラージュ</span>
+        <span class="modal-title" data-i18n-en="Closet Collage">クローゼットコラージュ</span>
         <button class="modal-close" onclick="closeModal('closetModal')">✕</button>
       </div>
       <div id="closetList"><!-- JS --></div>
@@ -1258,7 +1258,7 @@
 
       <div class="form-field">
         <label class="form-label" data-i18n-en="Caption (optional)">コメント（任意）</label>
-        <input type="text" class="form-input" id="closetCaptionInput" maxlength="60" data-i18n-en-placeholder="e.g. My favorite coords this season 🌸" placeholder="例: 今季のお気に入りまとめ🌸" />
+        <input type="text" class="form-input" id="closetCaptionInput" maxlength="60" data-i18n-en-placeholder="e.g. My favorite coords this season" placeholder="例: 今季のお気に入りまとめ" />
       </div>
 
       <button class="action-btn primary full" onclick="saveClosetCollage()" data-i18n-en="Save This Collage">このコラージュを保存</button>
@@ -1271,21 +1271,21 @@
 <div class="modal-overlay" id="closetCellModal" onclick="if(event.target===this)closeModal('closetCellModal')">
   <div class="modal-card">
     <div class="modal-header">
-      <span class="modal-title" data-i18n-en="🧩 Choose Cell Content">🧩 マスの内容を選ぶ</span>
+      <span class="modal-title" data-i18n-en="Choose Cell Content">マスの内容を選ぶ</span>
       <button class="modal-close" onclick="closeModal('closetCellModal')">✕</button>
     </div>
 
     <div class="action-row">
       <label class="action-btn secondary full" style="display:flex; align-items:center; justify-content:center;">
-        <span data-i18n-en="📷 Add a Photo">📷 写真を追加</span>
+        <span data-i18n-en="Add a Photo">写真を追加</span>
         <input type="file" accept="image/*" style="display:none;" onchange="onClosetPhotoSelected(event)">
       </label>
     </div>
 
-    <label class="form-label" style="margin-top:16px;" data-i18n-en="Choose from Owned Items">🧥 所持アイテムから選ぶ</label>
+    <label class="form-label" style="margin-top:16px;" data-i18n-en="Choose from Owned Items">所持アイテムから選ぶ</label>
     <div id="closetItemPicks"><!-- JS --></div>
 
-    <button class="action-btn full" id="closetClearCellBtn" style="margin-top:14px; color:var(--red);" onclick="clearClosetCell()" data-i18n-en="🗑 Clear This Cell">🗑 このマスを空にする</button>
+    <button class="action-btn full" id="closetClearCellBtn" style="margin-top:14px; color:var(--red);" onclick="clearClosetCell()" data-i18n-en="Clear This Cell">このマスを空にする</button>
   </div>
 </div>
 
@@ -1293,12 +1293,12 @@
 <div class="modal-overlay" id="sharedCoordModal" onclick="if(event.target===this)closeSharedCoordModal()">
   <div class="modal-card">
     <div class="modal-header">
-      <span class="modal-title" data-i18n-en="🔗 Shared Coord">🔗 共有されたコーデ</span>
+      <span class="modal-title" data-i18n-en="Shared Coord">共有されたコーデ</span>
       <button class="modal-close" onclick="closeSharedCoordModal()">✕</button>
     </div>
     <div id="sharedCoordBody"><!-- JS --></div>
     <div class="action-row" style="margin-top:12px;">
-      <button class="action-btn primary full" onclick="saveSharedCoordToMyCoord()" data-i18n-en="💾 Save to My Coord">💾 マイコーデに保存</button>
+      <button class="action-btn primary full" onclick="saveSharedCoordToMyCoord()" data-i18n-en="Save to My Coord">マイコーデに保存</button>
     </div>
   </div>
 </div>
@@ -1307,7 +1307,7 @@
 <div class="modal-overlay" id="itemSearchModal" onclick="if(event.target===this)closeModal('itemSearchModal')">
   <div class="modal-card">
     <div class="modal-header">
-      <span class="modal-title" data-i18n-en="🔍 Item Search">🔍 アイテム検索</span>
+      <span class="modal-title" data-i18n-en="Item Search">アイテム検索</span>
       <button class="modal-close" onclick="closeModal('itemSearchModal')">✕</button>
     </div>
 
@@ -1318,7 +1318,7 @@
       <div class="gs-control-row">
         <label class="gs-current-toggle">
           <input type="checkbox" id="gsCurrentOnly" onchange="renderGlobalSearch()">
-          <span data-i18n-en="🌟 Currently available only">🌟 現在開催中の季節・イベントのみ</span>
+          <span data-i18n-en="Currently available only">現在開催中の季節・イベントのみ</span>
         </label>
       </div>
       <div class="gs-control-row" id="gsCurrentTypeRow" style="display:none;">
@@ -1342,7 +1342,7 @@
         </select>
         <select class="cat-sel" id="gsFav" onchange="renderGlobalSearch()">
           <option value="all" data-i18n-en="All Favorites">すべてのお気に入り</option>
-          <option value="fav" data-i18n-en="★ Favorites Only">★ お気に入り指定のみ</option>
+          <option value="fav" data-i18n-en="Favorites Only">お気に入り指定のみ</option>
         </select>
       </div>
       <div class="gs-control-row" id="gsRegularAreaRow" style="display:none;">
@@ -1351,12 +1351,12 @@
         </select>
         <label class="gs-current-toggle">
           <input type="checkbox" id="gsElderOnly" onchange="renderGlobalSearch()">
-          <span data-i18n-en="🏛️ Elders' items only">🏛️ 大精霊のアイテムのみ</span>
+          <span data-i18n-en="Elders' items only">大精霊のアイテムのみ</span>
         </label>
       </div>
       <div class="gs-control-row">
         <button type="button" class="gs-advanced-toggle-btn" id="gsAdvancedToggleBtn" onclick="toggleAdvancedSearchFilters()">
-          <span data-i18n-en="🔧 More Filters &amp; Sort">🔧 詳細な絞り込み・並び替え</span>
+          <span data-i18n-en="More Filters &amp; Sort">詳細な絞り込み・並び替え</span>
           <span class="gs-advanced-icon" id="gsAdvancedIcon">▾</span>
         </button>
       </div>
@@ -1388,7 +1388,7 @@
       </div>
       <div class="gs-control-row">
         <button type="button" class="gs-advanced-toggle-btn" onclick="resetFilterPanel('.gs-control-panel', renderGlobalSearch)">
-          <span data-i18n-en="🧹 Clear All Filters">🧹 フィルターを全てクリア</span>
+          <span data-i18n-en="Clear All Filters">フィルターを全てクリア</span>
         </button>
       </div>
     </div>
@@ -1416,7 +1416,7 @@
 <div class="modal-overlay" id="wishModal" onclick="if(event.target===this)closeModal('wishModal')">
   <div class="modal-card">
     <div class="modal-header">
-      <span class="modal-title" data-i18n-en="🛒 Wishlist &amp; Cost Calculator">🛒 ウィッシュリスト・必要コスト計算</span>
+      <span class="modal-title" data-i18n-en="Wishlist &amp; Cost Calculator">ウィッシュリスト・必要コスト計算</span>
       <button class="modal-close" onclick="closeModal('wishModal')">✕</button>
     </div>
 
@@ -1433,7 +1433,7 @@
 <div class="modal-overlay" id="acquireLogModal" onclick="if(event.target===this)closeModal('acquireLogModal')">
   <div class="modal-card">
     <div class="modal-header">
-      <span class="modal-title" data-i18n-en="📅 Acquisition Log">📅 アイテム獲得ログ</span>
+      <span class="modal-title" data-i18n-en="Acquisition Log">アイテム獲得ログ</span>
       <button class="modal-close" onclick="closeModal('acquireLogModal')">✕</button>
     </div>
 
@@ -1450,7 +1450,7 @@
 <div class="modal-overlay" id="imagePreviewModal" onclick="if(event.target===this)closeModal('imagePreviewModal')">
   <div class="modal-card">
     <div class="modal-header">
-      <span class="modal-title" id="previewModalTitle" data-i18n-en="🖼️ Save Image">🖼️ 画像を保存</span>
+      <span class="modal-title" id="previewModalTitle" data-i18n-en="Save Image">画像を保存</span>
       <button class="modal-close" onclick="closeModal('imagePreviewModal')">✕</button>
     </div>
 
@@ -1462,10 +1462,10 @@
     <img id="previewImg" class="preview-img" src="" alt="保存用の画像" />
 
     <div class="action-row">
-      <a id="previewDownloadLink" class="action-btn primary full" href="" download="" data-i18n-en="⬇️ Download">⬇️ ダウンロード</a>
+      <a id="previewDownloadLink" class="action-btn primary full" href="" download="" data-i18n-en="Download">ダウンロード</a>
     </div>
     <div class="action-row" id="previewTwitterRow" style="display:none;">
-      <a id="previewTwitterLink" class="action-btn twitter full" href="" target="_blank" rel="noopener noreferrer" data-i18n-en="📤 Open X Post Screen">📤 Xの投稿画面を開く</a>
+      <a id="previewTwitterLink" class="action-btn twitter full" href="" target="_blank" rel="noopener noreferrer" data-i18n-en="Open X Post Screen">Xの投稿画面を開く</a>
     </div>
   </div>
 </div>
@@ -1474,7 +1474,7 @@
 <div class="modal-overlay" id="customizeModal" onclick="if(event.target===this)closeModal('customizeModal')">
   <div class="modal-card">
     <div class="modal-header">
-      <span class="modal-title" data-i18n-en="🎨 Customize Image">🎨 画像をカスタマイズ</span>
+      <span class="modal-title" data-i18n-en="Customize Image">画像をカスタマイズ</span>
       <button class="modal-close" onclick="closeModal('customizeModal')">✕</button>
     </div>
 
@@ -1488,7 +1488,7 @@
     <textarea id="customizeComment" class="customize-comment-input" maxlength="120" data-i18n-en-placeholder="e.g. Player name: XX (default text is used if left blank)" placeholder="例）プレイヤーネーム：〇〇（未入力の場合は通常の文言になります）"></textarea>
 
     <div class="action-row" style="margin-top:16px;">
-      <button class="action-btn twitter full" onclick="shareOverallOnTwitter(true)" data-i18n-en="📤🖼️ Share Image on X with These Settings">📤🖼️ この設定でXへ画像を共有</button>
+      <button class="action-btn twitter full" onclick="shareOverallOnTwitter(true)" data-i18n-en="Share Image on X with These Settings">この設定でXへ画像を共有</button>
     </div>
   </div>
 </div>
@@ -1497,7 +1497,7 @@
 <div class="modal-overlay" id="favShareModal" onclick="if(event.target===this)closeModal('favShareModal')">
   <div class="modal-card">
     <div class="modal-header">
-      <span class="modal-title" data-i18n-en="⭐ Share Favorites">⭐ お気に入りを共有</span>
+      <span class="modal-title" data-i18n-en="Share Favorites">お気に入りを共有</span>
       <button class="modal-close" onclick="closeModal('favShareModal')">✕</button>
     </div>
 
@@ -1508,8 +1508,8 @@
 
     <div class="customize-section-label" data-i18n-en="Display Style">表示スタイル</div>
     <div class="action-row" style="margin-top:0;">
-      <button type="button" class="action-btn secondary" id="favStyleDetailBtn" onclick="setFavDisplayStyle('detail')" data-i18n-en="📋 Detailed View">📋 詳細表示</button>
-      <button type="button" class="action-btn secondary" id="favStyleIconBtn" onclick="setFavDisplayStyle('icon')" data-i18n-en="🔳 Icons Only">🔳 アイコンのみ</button>
+      <button type="button" class="action-btn secondary" id="favStyleDetailBtn" onclick="setFavDisplayStyle('detail')" data-i18n-en="Detailed View">詳細表示</button>
+      <button type="button" class="action-btn secondary" id="favStyleIconBtn" onclick="setFavDisplayStyle('icon')" data-i18n-en="Icons Only">アイコンのみ</button>
     </div>
 
     <div class="customize-section-label" data-i18n-en="Background Theme">背景テーマ</div>
@@ -1518,7 +1518,7 @@
     <div class="customize-section-label" data-i18n-en="Background Image (optional)">背景画像（任意）</div>
     <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
       <label class="fav-bg-file-btn">
-        <span data-i18n-en="🖼️ Choose Image">🖼️ 画像を選ぶ</span>
+        <span data-i18n-en="Choose Image">画像を選ぶ</span>
         <input type="file" accept="image/*" id="favBgImageInput" style="display:none;" onchange="onFavBgImageSelected(event)">
       </label>
       <span id="favBgImageStatus" style="font-size:12px; color:var(--text-2);" data-i18n-en="Not selected (using theme color)">未選択（テーマの色を使用）</span>
@@ -1546,7 +1546,7 @@
     <textarea id="favShareComment" class="customize-comment-input" maxlength="120" data-i18n-en-placeholder="e.g. Things I want, items I often use for XX style, etc." placeholder="例）今欲しいもの、〇〇系でよく使うアイテムなど"></textarea>
 
     <div class="action-row" style="margin-top:16px;">
-      <button class="action-btn twitter full" onclick="shareFavOnTwitter()" data-i18n-en="📤🖼️ Share Image on X">📤🖼️ Xで画像を共有</button>
+      <button class="action-btn twitter full" onclick="shareFavOnTwitter()" data-i18n-en="Share Image on X">Xで画像を共有</button>
     </div>
   </div>
 </div>
@@ -1555,7 +1555,7 @@
 <div class="modal-overlay" id="coordPhotoModal" onclick="if(event.target===this)closeModal('coordPhotoModal')">
   <div class="modal-card">
     <div class="modal-header">
-      <span class="modal-title" data-i18n-en="📷 Attach a Photo">📷 写真を添付</span>
+      <span class="modal-title" data-i18n-en="Attach a Photo">写真を添付</span>
       <button class="modal-close" onclick="closeModal('coordPhotoModal')">✕</button>
     </div>
 
@@ -1565,7 +1565,7 @@
 
     <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:12px;">
       <label class="fav-bg-file-btn">
-        <span data-i18n-en="🖼️ Choose Photo">🖼️ 写真を選ぶ</span>
+        <span data-i18n-en="Choose Photo">写真を選ぶ</span>
         <input type="file" accept="image/*" id="coordPhotoInput" style="display:none;" onchange="onCoordPhotoSelected(event)">
       </label>
       <span id="coordPhotoStatus" style="font-size:12px; color:var(--text-2);" data-i18n-en="Not selected">未選択</span>
@@ -1574,8 +1574,8 @@
 
     <div class="hint" data-i18n-en="Image style (applies to Random Coord too)">画像のスタイル（ランダムコーデにも共通で適用されます）</div>
     <div class="coord-share-style-toggle">
-      <button type="button" class="coord-share-style-btn" onclick="setCoordShareStyle('polaroid')" data-i18n-en="🖼️ Polaroid">🖼️ ポラロイド風</button>
-      <button type="button" class="coord-share-style-btn" onclick="setCoordShareStyle('grid')" data-i18n-en="🎮 Icon Grid">🎮 アイコングリッド</button>
+      <button type="button" class="coord-share-style-btn" onclick="setCoordShareStyle('polaroid')" data-i18n-en="Polaroid">ポラロイド風</button>
+      <button type="button" class="coord-share-style-btn" onclick="setCoordShareStyle('grid')" data-i18n-en="Icon Grid">アイコングリッド</button>
     </div>
     <div class="coord-share-id-row">
       <input type="text" class="coord-share-id-input" maxlength="40" data-i18n-en-placeholder="Your ID (optional, shown on the photo)" placeholder="自分のID（任意・写真に表示されます）" oninput="setShareUserId(this.value)">
@@ -1591,7 +1591,7 @@
 <div class="modal-overlay" id="photoCropModal" onclick="if(event.target===this)cancelPhotoCrop()">
   <div class="modal-card">
     <div class="modal-header">
-      <span class="modal-title" data-i18n-en="🖼️ Adjust Photo Position">🖼️ 写真の位置を調整</span>
+      <span class="modal-title" data-i18n-en="Adjust Photo Position">写真の位置を調整</span>
       <button class="modal-close" onclick="cancelPhotoCrop()">✕</button>
     </div>
 
@@ -2052,9 +2052,9 @@ function buildEventFilterOptions(selectId = 'gsEvent', items = allItemsCache) {
   const opts = list => list.map(ev => `<option value="${escapeHtml(ev)}">${escapeHtml(trEvent(ev))}</option>`).join('');
 
   select.innerHTML = `<option value="all">${CURRENT_LANG === 'en' ? 'All Seasons/Events' : 'すべての季節・イベント'}</option>`
-    + (seasonEvents.length ? `<optgroup label="${CURRENT_LANG === 'en' ? '🍁 Seasons' : '🍁 季節'}">${opts(seasonEvents)}</optgroup>` : '')
-    + (dayEvents.length    ? `<optgroup label="${CURRENT_LANG === 'en' ? '☀️ Days' : '☀️ 日々'}">${opts(dayEvents)}</optgroup>`    : '')
-    + (otherEvents.length  ? `<optgroup label="${CURRENT_LANG === 'en' ? '✨ Other' : '✨ その他'}">${opts(otherEvents)}</optgroup>`  : '');
+    + (seasonEvents.length ? `<optgroup label="${CURRENT_LANG === 'en' ? 'Seasons' : '季節'}">${opts(seasonEvents)}</optgroup>` : '')
+    + (dayEvents.length    ? `<optgroup label="${CURRENT_LANG === 'en' ? 'Days' : '日々'}">${opts(dayEvents)}</optgroup>`    : '')
+    + (otherEvents.length  ? `<optgroup label="${CURRENT_LANG === 'en' ? 'Other' : 'その他'}">${opts(otherEvents)}</optgroup>`  : '');
 }
 
 // 指定カテゴリの所持状況（itemOwned マップ）をlocalStorageから読み出す
@@ -2133,9 +2133,9 @@ function syncCurrentTypeFilterUI() {
   const select = document.getElementById('gsCurrentType');
   const prevValue = select.value;
   select.innerHTML = `<option value="all">${en ? 'All (Season/Day/Revisit)' : 'すべて（季節・日々・再訪）'}</option>`
-    + (hasSeason  ? `<option value="season">${en ? '🍁 Season Only' : '🍁 季節のみ'}</option>` : '')
-    + (hasDay     ? `<option value="day">${en ? '☀️ Day Event Only' : '☀️ 日々のみ'}</option>` : '')
-    + (hasRevisit ? `<option value="revisit">${en ? '🔁 Revisit Spirit Only' : '🔁 再訪のみ'}</option>` : '');
+    + (hasSeason  ? `<option value="season">${en ? 'Season Only' : '季節のみ'}</option>` : '')
+    + (hasDay     ? `<option value="day">${en ? 'Day Event Only' : '日々のみ'}</option>` : '')
+    + (hasRevisit ? `<option value="revisit">${en ? 'Revisit Spirit Only' : '再訪のみ'}</option>` : '');
   if ([...select.options].some(o => o.value === prevValue)) select.value = prevValue;
 }
 
@@ -2729,10 +2729,10 @@ function renderAcquireLog() {
       <div class="wish-total-row"><span>🗓️ ${en ? 'Acquired this year' : '今年の入手数'}</span><b>${yearCount}${en ? '' : ' 件'}</b></div>
     </div>
     <div class="action-row" style="margin-top:12px;">
-      <button class="action-btn twitter full" onclick="shareRecapOnTwitter('month')">${en ? '📤🖼️ Share This Month’s Recap' : '📤🖼️ 今月の振り返りを画像でシェア'}</button>
+      <button class="action-btn twitter full" onclick="shareRecapOnTwitter('month')">${en ? 'Share This Month’s Recap' : '今月の振り返りを画像でシェア'}</button>
     </div>
     <div class="action-row" style="margin-top:8px;">
-      <button class="action-btn twitter full" onclick="shareRecapOnTwitter('year')">${en ? '📅🖼️ Share This Year’s Recap' : '📅🖼️ 今年の振り返りを画像でシェア'}</button>
+      <button class="action-btn twitter full" onclick="shareRecapOnTwitter('year')">${en ? 'Share This Year’s Recap' : '今年の振り返りを画像でシェア'}</button>
     </div>`;
 }
 
@@ -2803,8 +2803,8 @@ function buildRecapTweetText(scope) {
     ? (en ? `in ${year}` : `${year}年は`)
     : (en ? `in ${RECAP_MONTH_EN[month]} ${year}` : `${year}年${month + 1}月は`);
   return en
-    ? `I acquired ${count} new item(s) ${periodTxt}! ✨\nHow many did you get? 🎁\n\n${SITE_URL}\n${RECAP_SHARE_HASHTAG}`
-    : `${periodTxt}新しく${count}件のアイテムを入手しました！✨\nあなたは何個入手した？🎁\n\n${SITE_URL}\n${RECAP_SHARE_HASHTAG}`;
+    ? `I acquired ${count} new item(s) ${periodTxt}!\nHow many did you get?\n\n${SITE_URL}\n${RECAP_SHARE_HASHTAG}`
+    : `${periodTxt}新しく${count}件のアイテムを入手しました！\nあなたは何個入手した？\n\n${SITE_URL}\n${RECAP_SHARE_HASHTAG}`;
 }
 
 // 今月/今年の振り返りを画像として保存・Xへ共有する
@@ -2914,8 +2914,8 @@ function updateFavOnlyBtn() {
   if (!btn) return;
   btn.classList.toggle('fav-active', favOnlyMode);
   btn.textContent = CURRENT_LANG === 'en'
-    ? (favOnlyMode ? '⭐ Favorites Mode' : '⭐ Favorites Only')
-    : (favOnlyMode ? '⭐ お気に入り中' : '⭐ お気に入りのみ');
+    ? (favOnlyMode ? 'Favorites Mode' : 'Favorites Only')
+    : (favOnlyMode ? 'お気に入り中' : 'お気に入りのみ');
 }
 
 // お気に入りがあればそこから、なければ全所持アイテムから返す
@@ -2979,7 +2979,7 @@ function shuffleOutfit() {
   let anyFavExists = !favOnlyMode; // 通常モードなら常に true
   if (favOnlyMode) {
     anyFavExists = CATS.some(c => getFavIds(c.key).length > 0);
-    if (!anyFavExists) showToast(CURRENT_LANG === 'en' ? '⭐ No favorites set. Picking randomly from all items' : '⭐ お気に入りが未設定です。全アイテムからランダムします');
+    if (!anyFavExists) showToast(CURRENT_LANG === 'en' ? 'No favorites set. Picking randomly from all items' : 'お気に入りが未設定です。全アイテムからランダムします');
   }
 
   CATS.forEach(cat => {
@@ -3004,7 +3004,7 @@ function renderCurrentRandom() {
   const hasAny = Object.keys(currentRandom).length > 0;
 
   if (currentRandomFavOnly && hasAny) {
-    html += `<div class="fav-mode-bar">${CURRENT_LANG === 'en' ? '⭐ Picking randomly from favorite items only' : '⭐ お気に入りアイテムのみでランダム中'}</div>`;
+    html += `<div class="fav-mode-bar">${CURRENT_LANG === 'en' ? 'Picking randomly from favorite items only' : 'お気に入りアイテムのみでランダム中'}</div>`;
   }
 
   CATS.forEach(cat => {
@@ -3132,11 +3132,11 @@ function renderMyCoordList() {
     return `
       <div class="coord-card">
         <div class="coord-header">
-          <div class="coord-title">👗 ${escapeHtml(set.name)}</div>
+          <div class="coord-title">${escapeHtml(set.name)}</div>
           <div class="coord-actions">
             ${set.photoDataUrl ? `<img class="coord-photo-thumb" src="${set.photoDataUrl}" alt="" onclick="openCoordPhotoModal(${set.id})" title="${CURRENT_LANG === 'en' ? 'Change Photo' : '写真を変更'}">` : ''}
             <button class="coord-icon-btn" onclick="openCoordPhotoModal(${set.id})" title="${CURRENT_LANG === 'en' ? 'Attach a Photo' : '写真を添付'}">📷</button>
-            <button class="coord-icon-btn" onclick="shareMyCoordOnTwitter(${set.id})" title="${CURRENT_LANG === 'en' ? 'Share Image on X' : 'Xで画像を共有'}">📤🖼️</button>
+            <button class="coord-icon-btn" onclick="shareMyCoordOnTwitter(${set.id})" title="${CURRENT_LANG === 'en' ? 'Share Image on X' : 'Xで画像を共有'}">📤</button>
             <button class="coord-icon-btn" onclick="shareMyCoordLink(${set.id})" title="${CURRENT_LANG === 'en' ? 'Share as Link' : 'リンクで共有'}">🔗</button>
             <button class="coord-icon-btn coord-del" onclick="deleteCoord(${set.id})" title="${CURRENT_LANG === 'en' ? 'Delete' : '削除'}">🗑</button>
           </div>
@@ -3489,10 +3489,10 @@ function renderClosetList() {
     return `
       <div class="coord-card">
         <div class="coord-header">
-          <div class="coord-title">🖼️ ${escapeHtml(set.name)}</div>
+          <div class="coord-title">${escapeHtml(set.name)}</div>
           <div class="coord-actions">
             <button class="coord-icon-btn" onclick="editClosetCollage(${set.id})" title="${CURRENT_LANG === 'en' ? 'Edit' : '編集'}">✏️</button>
-            <button class="coord-icon-btn" onclick="shareClosetOnTwitter(${set.id})" title="${CURRENT_LANG === 'en' ? 'Share Image on X' : 'Xで画像を共有'}">📤🖼️</button>
+            <button class="coord-icon-btn" onclick="shareClosetOnTwitter(${set.id})" title="${CURRENT_LANG === 'en' ? 'Share Image on X' : 'Xで画像を共有'}">📤</button>
             <button class="coord-icon-btn coord-del" onclick="deleteClosetCollage(${set.id})" title="${CURRENT_LANG === 'en' ? 'Delete' : '削除'}">🗑</button>
           </div>
         </div>
@@ -3693,8 +3693,8 @@ function shareClosetOnTwitter(id) {
   const set = getClosetCollages().find(s => s.id === id);
   if (!set) return;
   const shareText = CURRENT_LANG === 'en'
-    ? `🖼️ My "${set.name}" closet collage!\n\n${SITE_URL}\n${CLOSET_SHARE_HASHTAG}`
-    : `🖼️「${set.name}」のクローゼットコラージュ！\n\n${SITE_URL}\n${CLOSET_SHARE_HASHTAG}`;
+    ? `My "${set.name}" closet collage!\n\n${SITE_URL}\n${CLOSET_SHARE_HASHTAG}`
+    : `「${set.name}」のクローゼットコラージュ！\n\n${SITE_URL}\n${CLOSET_SHARE_HASHTAG}`;
   return exportElementAsImage(() => buildClosetExportCardEl(set), set.name, {
     shareText,
     successToast: CURRENT_LANG === 'en' ? 'Shared!' : '共有しました！'
@@ -3904,7 +3904,7 @@ function openImagePreview(dataUrl, filename, shareText) {
   const title = document.getElementById('previewModalTitle');
 
   if (shareText) {
-    title.textContent = CURRENT_LANG === 'en' ? '🖼️ Save Image & Post to X' : '🖼️ 画像を保存してXへ投稿';
+    title.textContent = CURRENT_LANG === 'en' ? 'Save Image & Post to X' : '画像を保存してXへ投稿';
     hint.textContent = CURRENT_LANG === 'en'
       ? '① Save the image with "Download" below → ② Tap "Open X Post Screen" and attach the saved image to your post'
       : '① 下の「ダウンロード」で画像を保存 → ② 「Xの投稿画面を開く」を押して、保存した画像を添付して投稿してください';
@@ -3912,7 +3912,7 @@ function openImagePreview(dataUrl, filename, shareText) {
       'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText);
     twRow.style.display = '';
   } else {
-    title.textContent = CURRENT_LANG === 'en' ? '🖼️ Save Image' : '🖼️ 画像を保存';
+    title.textContent = CURRENT_LANG === 'en' ? 'Save Image' : '画像を保存';
     hint.textContent = CURRENT_LANG === 'en'
       ? 'Long-press the image (right-click on PC) and choose "Save Image"'
       : '画像を長押し（PCの場合は右クリック）して「画像を保存」を選んでください';
@@ -3975,19 +3975,19 @@ function shareCoordImageOnX(title, items, filenameBase, shareText, photoDataUrl)
 // コーデ共有時のコメント文（アイテムの列挙はしない。内容は画像側で見せる）
 function buildRandomShareText() {
   return CURRENT_LANG === 'en'
-    ? `🎲 Here's my random coord!\n\n${SITE_URL}\n${RANDOM_SHARE_HASHTAG}`
-    : `🎲 ランダムコーデが決まりました！\n\n${SITE_URL}\n${RANDOM_SHARE_HASHTAG}`;
+    ? `Here's my random coord!\n\n${SITE_URL}\n${RANDOM_SHARE_HASHTAG}`
+    : `ランダムコーデが決まりました！\n\n${SITE_URL}\n${RANDOM_SHARE_HASHTAG}`;
 }
 
 function buildMyCoordShareText(label) {
   return CURRENT_LANG === 'en'
-    ? `👗 My "${label}" coord\n\n${SITE_URL}\n${COORD_SHARE_HASHTAG}`
-    : `👗「${label}」のコーデ\n\n${SITE_URL}\n${COORD_SHARE_HASHTAG}`;
+    ? `My "${label}" coord\n\n${SITE_URL}\n${COORD_SHARE_HASHTAG}`
+    : `「${label}」のコーデ\n\n${SITE_URL}\n${COORD_SHARE_HASHTAG}`;
 }
 
 // ── ランダムコーデ: Xシェア（画像を生成して共有） ──────────
 function shareRandomOnTwitter() {
-  return shareCoordImageOnX(CURRENT_LANG === 'en' ? '🎲 Random Coord' : '🎲 ランダムコーデ', currentRandom, 'random-coord', buildRandomShareText(), randomCoordPhotoDataUrl);
+  return shareCoordImageOnX(CURRENT_LANG === 'en' ? 'Random Coord' : 'ランダムコーデ', currentRandom, 'random-coord', buildRandomShareText(), randomCoordPhotoDataUrl);
 }
 
 function onRandomCoordPhotoSelected(event) {
@@ -4022,7 +4022,7 @@ function renderRandomCoordPhotoStatus() {
 function shareMyCoordOnTwitter(id) {
   const set = getSavedCoords().find(s => s.id === id);
   if (!set) return;
-  return shareCoordImageOnX(`👗 ${set.name}`, set.items, set.name, buildMyCoordShareText(set.name), set.photoDataUrl);
+  return shareCoordImageOnX(set.name, set.items, set.name, buildMyCoordShareText(set.name), set.photoDataUrl);
 }
 
 /* ================================================================
@@ -4088,7 +4088,7 @@ function openCoordLinkPreview(url) {
     overlay.innerHTML = `
       <div class="modal-card">
         <div class="modal-header">
-          <span class="modal-title">🔗 ${CURRENT_LANG === 'en' ? 'Share Link' : '共有リンク'}</span>
+          <span class="modal-title">${CURRENT_LANG === 'en' ? 'Share Link' : '共有リンク'}</span>
           <button class="modal-close" onclick="document.getElementById('coordLinkPreviewOverlay').classList.remove('open')">✕</button>
         </div>
         <textarea class="form-input" id="coordLinkPreviewText" readonly
@@ -4163,7 +4163,7 @@ function renderSharedCoordModal() {
   }).join('');
   document.getElementById('sharedCoordBody').innerHTML = `
     <div class="coord-card">
-      <div class="coord-header"><div class="coord-title">👗 ${escapeHtml(sharedCoordCache.name)}</div></div>
+      <div class="coord-header"><div class="coord-title">${escapeHtml(sharedCoordCache.name)}</div></div>
       <div class="coord-rows">${rows || `<div class="empty-msg">${CURRENT_LANG === 'en' ? 'No items could be loaded.' : 'アイテムを読み込めませんでした。'}</div>`}</div>
     </div>
     <div class="hint" style="margin-top:8px;">✅ ${CURRENT_LANG === 'en' ? '= you already own this' : '＝ 所持済み'}</div>
@@ -4320,8 +4320,8 @@ function buildOverallTweetText(comment) {
   const { own, tot, p } = getOverallStats();
   const pctTxt = p !== null ? p + '%' : '--%';
   return CURRENT_LANG === 'en'
-    ? `My item completion rate is ${pctTxt}!\n(Owned ${own} / Total ${tot})\nHow much do you have? ✨\n\n${SITE_URL}\n${SHARE_HASHTAG}`
-    : `アイテム所持率は${pctTxt}でした！\n（所持中 ${own} ／ 総アイテム数 ${tot}）\nあなたは何%持ってる？✨\n\n${SITE_URL}\n${SHARE_HASHTAG}`;
+    ? `My item completion rate is ${pctTxt}!\n(Owned ${own} / Total ${tot})\nHow much do you have?\n\n${SITE_URL}\n${SHARE_HASHTAG}`
+    : `アイテム所持率は${pctTxt}でした！\n（所持中 ${own} ／ 総アイテム数 ${tot}）\nあなたは何%持ってる？\n\n${SITE_URL}\n${SHARE_HASHTAG}`;
 }
 
 function shareOverallOnTwitter(fromCustomize) {
@@ -4530,7 +4530,7 @@ function buildFavExportCardEl(items, comment, style, theme, bgImageDataUrl) {
   }
   card.innerHTML = `
     <div class="exp-brand">${CURRENT_LANG === 'en' ? '🗂️ Item Collection Tracker' : '🗂️ アイテム所持率管理'}</div>
-    <div class="exp-title">${CURRENT_LANG === 'en' ? '⭐ Favorite Items' : '⭐ お気に入りアイテム'}</div>
+    <div class="exp-title">${CURRENT_LANG === 'en' ? 'Favorite Items' : 'お気に入りアイテム'}</div>
     ${comment ? `<div class="exp-comment">${escapeHtml(comment)}</div>` : ''}
     ${bodyHtml}
   `;
@@ -4542,8 +4542,8 @@ function buildFavExportCardEl(items, comment, style, theme, bgImageDataUrl) {
 function buildFavShareText(comment) {
   if (comment) return `${comment}\n\n${SITE_URL}\n${FAV_SHARE_HASHTAG}`;
   return CURRENT_LANG === 'en'
-    ? `⭐ My favorite items\n\n${SITE_URL}\n${FAV_SHARE_HASHTAG}`
-    : `⭐ お気に入りアイテムまとめ\n\n${SITE_URL}\n${FAV_SHARE_HASHTAG}`;
+    ? `My favorite items\n\n${SITE_URL}\n${FAV_SHARE_HASHTAG}`
+    : `お気に入りアイテムまとめ\n\n${SITE_URL}\n${FAV_SHARE_HASHTAG}`;
 }
 
 function shareFavOnTwitter() {
@@ -4588,7 +4588,7 @@ function showToast(msg) {
     <a href=&quot;https://sky-children-of-the-light.fandom.com/wiki/Cosmetics&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot; style=&quot;color: var(--blue);&quot;>Cosmetics (Sky Wiki English)</a>
         </span><br>
         <span style=&quot;color: var(--text-2); font-size: 12px; margin-top: 4px; display: inline-block;&quot;>
-            <a href=&quot;https://taipak5000.github.io/tai-info/&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot; style=&quot;color: var(--blue);&quot;>⚙️ Settings / What's New / Credits / Privacy Policy</a>
+            <a href=&quot;https://taipak5000.github.io/tai-info/&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot; style=&quot;color: var(--blue);&quot;>Settings / What's New / Credits / Privacy Policy</a>
         </span>">
   このサイトはSky 星を紡ぐ子どもたちの非公式ファンサイトです。thatgamecompanyは一切関与していません。<br>
    作成・ご意見: <a href="https://x.com/Skyzztai" target="_blank" rel="noopener noreferrer" style="color: var(--blue); text-decoration: none; font-weight: bold;">@Skyzztai</a>　／　<a href="https://odaibako.net/u/Skyzztai" target="_blank" rel="noopener noreferrer" style="color: var(--blue); text-decoration: none; font-weight: bold;">リクエストフォーム</a><br>
@@ -4599,7 +4599,7 @@ function showToast(msg) {
     <a href="https://sky-children-of-the-light.fandom.com/wiki/Cosmetics" target="_blank" rel="noopener noreferrer" style="color: var(--blue);">Cosmetics (Sky Wiki 英語)</a>
         </span><br>
         <span style="color: var(--text-2); font-size: 12px; margin-top: 4px; display: inline-block;">
-            <a href="https://taipak5000.github.io/tai-info/" target="_blank" rel="noopener noreferrer" style="color: var(--blue);">⚙️ 設定・更新情報・クレジット・プライバシーポリシー</a>
+            <a href="https://taipak5000.github.io/tai-info/" target="_blank" rel="noopener noreferrer" style="color: var(--blue);">設定・更新情報・クレジット・プライバシーポリシー</a>
         </span>
     </footer>
 
