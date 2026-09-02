@@ -682,9 +682,9 @@ function filterAndRender() {
 
   // 2. 並び替え (Sort)
   if (sOrder === 'nameAsc') {
-    filtered.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+    filtered.sort((a, b) => trItem(a).localeCompare(trItem(b), CURRENT_LANG === 'en' ? 'en' : 'ja'));
   } else if (sOrder === 'event') {
-    filtered.sort((a, b) => a.event.localeCompare(b.event, 'ja'));
+    filtered.sort((a, b) => trEvent(a.event).localeCompare(trEvent(b.event), CURRENT_LANG === 'en' ? 'en' : 'ja'));
   }
 
   // 3. 出力 (Render)
