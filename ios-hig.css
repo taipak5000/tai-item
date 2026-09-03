@@ -211,8 +211,18 @@ html:not([data-input-modality="mouse"]) *:focus-visible { outline: 2px solid var
      補間させる（他のドロワー等のCSSアニメーションと同じくコンポジタ駆動で軽い） */
   transition: background-color 0.32s var(--ios-ease);
 }
-.pf-modal-overlay.open, .modal-overlay.open { animation: none; }
+.pf-modal-overlay.open, .modal-overlay.open { animation: iosFade 0.32s var(--ios-ease); }
 .pf-modal-overlay.is-closing, .modal-overlay.is-closing { display: flex; pointer-events: none; }
+/* display:none → flex と同一タスク内で transform を書き換えても transition は発火しない
+   （更新前スタイルが存在しないため）。強制リフローでも描画更新を挟まない限り解決しない。
+   サイドバー(.sidebar.sidebar-open)と同じく animation に統一することで、display:none 直後
+   でも0%から確実に再生させる。ドラッグ/フリック中は.is-dragging/.js-animで打ち消す。
+   .open付きのdescendantセレクタは詳細度(0,3,0)がデスクトップ側の.pf-modal-card単体
+   (0,1,0)より高いため、850px以上でもiosSheetInを上書きしてしまわないようここで
+   モバイル幅に限定する（デスクトップの見た目には触れない） */
+@media (max-width: 849.98px) {
+  .pf-modal-overlay.open .pf-modal-card, .modal-overlay.open .modal-card { animation: sheetSlideUp 0.32s var(--ios-ease); }
+}
 .pf-modal-card, .modal-card {
   width: 100%; max-width: 100%; max-height: 88vh; max-height: 88dvh;
   border-radius: 20px 20px 0 0;
@@ -227,7 +237,7 @@ html:not([data-input-modality="mouse"]) *:focus-visible { outline: 2px solid var
   transition: transform 0.32s var(--ios-ease);
 }
 .pf-modal-card.is-dragging, .modal-card.is-dragging,
-.pf-modal-card.js-anim, .modal-card.js-anim { transition: none; }
+.pf-modal-card.js-anim, .modal-card.js-anim { transition: none; animation: none; }
 #randomModal .modal-card, #myCoordModal .modal-card { min-height: 70vh; }
 .pf-modal-card::before, .modal-card::before {
   content: ''; position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
@@ -250,6 +260,7 @@ html:not([data-input-modality="mouse"]) *:focus-visible { outline: 2px solid var
 }
 @keyframes iosSheetIn { from { opacity: 0; transform: scale(0.94) translateY(8px); filter: blur(6px); } to { opacity: 1; transform: none; filter: blur(0); } }
 @keyframes iosFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sheetSlideUp { from { transform: translate3d(0, 100%, 0); } to { transform: translate3d(0, 0, 0); } }
 
 /* ── 他のツール ドロワー（構造領域＝厚い素材。出入りは同じ経路で） ── */
 .pf-drawer { border-radius: 0 20px 20px 0; }
