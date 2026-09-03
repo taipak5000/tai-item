@@ -621,12 +621,6 @@ function pfInjectStyle() {
     .dash-shard-time { color: var(--blue); font-weight: 600; font-variant-numeric: tabular-nums; }
     .dash-shard-time.past { color: var(--text-2); font-weight: 400; text-decoration: line-through; }
     .dash-empty { font-size: 12.5px; color: var(--text-2); padding: 2px 2px 4px; }
-    /* 🕊️ 再訪精霊行→アイテムへ直接ジャンプ：該当カテゴリの一覧ページへのショートカットボタン */
-    .dash-shortcut { display: block; margin-top: 5px; }
-    .dash-shortcut-btn { display: inline-flex; margin: 3px 6px 0 0; padding: 3px 9px; background: var(--card);
-      border: 1px solid var(--sep); border-radius: 999px; font-size: 11.5px; font-weight: 700; color: var(--blue);
-      text-decoration: none; }
-    .dash-shortcut-btn:active { opacity: 0.7; }
 
     .srch-modal-card { max-width: 420px; }
     .srch-input { width: 100%; box-sizing: border-box; background: var(--bg); border: 1px solid var(--sep);
@@ -1415,24 +1409,6 @@ function pfDashRevisitStatuses(schedules) {
     .filter(x => x.status);
 }
 
-// 再訪精霊行からアイテムへ直接ジャンプ：ダッシュボードは精霊の固有名詞を伏せているが、
-// 各スケジュールのitems自体はカテゴリ・IDを把握済みのため、該当カテゴリの
-// 一覧ページへのショートカットボタンだけは出す（横断検索と同じSRCH_ITEM_CATSのfileを使う）。
-// 複数カテゴリにまたがる場合はカテゴリごとに1つずつ、重複は1つにまとめて表示する。
-function pfDashRevisitShortcutHtml(items) {
-  if (!items || !items.length) return '';
-  const cats = [];
-  items.forEach(it => {
-    const cat = SRCH_ITEM_CATS.find(c => c.key === it.catKey);
-    if (cat && !cats.some(c => c.key === cat.key)) cats.push(cat);
-  });
-  if (!cats.length) return '';
-  const links = cats.map(cat =>
-    `<a class="dash-shortcut-btn" href="${SITE_ROOT}/tai-item/${cat.file}">${escapeHtmlPf(trCat(cat.name))} →</a>`
-  ).join('');
-  return `<span class="dash-shortcut">${links}</span>`;
-}
-
 async function pfDashLoadData() {
   const res = await fetch(`${SITE_ROOT}/tai-item/index.html`);
   const html = await res.text();
@@ -1542,7 +1518,7 @@ function pfDashBuildHtml(data) {
     const revisitLabel = rv.active
       ? `${pfT('再訪精霊', 'Revisit Spirit')}${pfT('が来訪中', ' is here now')}`
       : `${pfT('再訪精霊', 'Revisit Spirit')}${pfT('の次回来訪まで', ' returns in')}`;
-    bucketRows[pfDashBucketFor(rv.target)].push(pfDashRow('🕊️', `${revisitLabel}<span class="dash-countdown">${pfDashCountdown(rv.target)}</span>${pfDashRevisitShortcutHtml(schedule.items)}`));
+    bucketRows[pfDashBucketFor(rv.target)].push(pfDashRow('🕊️', `${revisitLabel}<span class="dash-countdown">${pfDashCountdown(rv.target)}</span>`));
   });
   const edenTarget = pfDashNextEdenResetTarget();
   bucketRows[pfDashBucketFor(edenTarget)].push(pfDashRow('🌩️', `${pfT('原罪', 'Eye of Eden')}：${pfT('週間リセットまで', "Weekly reset in")}<span class="dash-countdown">${pfDashCountdown(edenTarget)}</span><span class="dash-note">${pfT('毎週日曜0時・太平洋時間', 'Every Sunday 00:00 Pacific Time')}</span>`));

@@ -186,7 +186,7 @@ html:not([data-input-modality="mouse"]) *:focus-visible { outline: 2px solid var
 /* ── 押した瞬間に反応する（pointer-down で 100ms の縮小、離すと緩やかに復帰） ── */
 .nav-action, .control-reset-btn, .action-btn, .save-small-btn, .pf-icon-btn, .pf-add-btn, .pf-close-btn,
 .pf-search-btn, .feature-btn, .cat-card, .view-toggle-btn, .share-btn, .gift-add-btn, .acquire-btn,
-.coord-share-style-btn, .candle-pack-btn, .dash-shortcut-btn, .pf-drawer-link, .fav-bg-file-btn,
+.coord-share-style-btn, .candle-pack-btn, .pf-drawer-link, .fav-bg-file-btn,
 .closet-stepper-btn, .modal-close, .item-wish-btn, .gs-advanced-toggle-btn, .title-badge, .site-dock button {
   transition: transform 0.18s var(--ios-ease), background 0.2s var(--ios-ease), opacity 0.2s var(--ios-ease),
               box-shadow 0.2s var(--ios-ease), color 0.2s var(--ios-ease), border-color 0.2s var(--ios-ease);
@@ -194,7 +194,7 @@ html:not([data-input-modality="mouse"]) *:focus-visible { outline: 2px solid var
 .nav-action:active, .control-reset-btn:active, .action-btn:active, .save-small-btn:active, .pf-icon-btn:active,
 .pf-add-btn:active, .pf-close-btn:active, .pf-search-btn:active, .feature-btn:active, .cat-card:active,
 .view-toggle-btn:active, .share-btn:active, .gift-add-btn:active, .acquire-btn:active, .coord-share-style-btn:active,
-.candle-pack-btn:active, .dash-shortcut-btn:active, .pf-drawer-link:active, .fav-bg-file-btn:active,
+.candle-pack-btn:active, .pf-drawer-link:active, .fav-bg-file-btn:active,
 .closet-stepper-btn:active, .modal-close:active, .item-wish-btn:active, .gs-advanced-toggle-btn:active {
   transform: scale(0.96); transition-duration: 100ms; transition-timing-function: ease-out;
 }
