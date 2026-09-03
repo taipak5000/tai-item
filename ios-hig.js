@@ -240,4 +240,21 @@
     if (MOBILE.addEventListener) MOBILE.addEventListener('change', onLayoutChange);
     else if (MOBILE.addListener) MOBILE.addListener(onLayoutChange);
   })();
+
+  /* ── 4. 入力方式トラッキング ── */
+  // ブラウザ標準の:focus-visibleヒューリスティックは、role="button"のアイテムタイルのように
+  // tabindexで後付けされた（ネイティブのbutton/linkと違いクリック自体に見た目のフィードバックが無い）
+  // 要素だと、マウスクリックでも「安全側に倒して」表示してしまう。矢印キー/Tabでの実際の
+  // キーボード操作時だけリングを見せたいので、直近の入力方式を<html>のdata属性に記録し、
+  // ios-hig.css側でマウス操作中だけ明示的にリングを抑制する（CSSだけでは判定できない）。
+  (function () {
+    var root = document.documentElement;
+    var NAV_KEYS = { Tab: 1, ArrowUp: 1, ArrowDown: 1, ArrowLeft: 1, ArrowRight: 1, Home: 1, End: 1, PageUp: 1, PageDown: 1 };
+    document.addEventListener('keydown', function (e) {
+      if (NAV_KEYS[e.key]) root.setAttribute('data-input-modality', 'keyboard');
+    }, true);
+    document.addEventListener('pointerdown', function () {
+      root.setAttribute('data-input-modality', 'mouse');
+    }, true);
+  })();
 })();

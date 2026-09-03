@@ -628,15 +628,6 @@ function pfInjectStyle() {
       text-decoration: none; }
     .dash-shortcut-btn:active { opacity: 0.7; }
 
-    /* 📈 達成率の推移（completionHistory_v1）：ミニスパークライン＋直近数件の一覧 */
-    .dash-trend-svg { width: 100%; height: 40px; display: block; margin-bottom: 8px; }
-    .dash-trend-line { fill: none; stroke: var(--blue); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-    .dash-trend-dot { fill: var(--orange); }
-    .dash-history-list { display: flex; flex-wrap: wrap; gap: 6px 14px; }
-    .dash-history-item { display: flex; flex-direction: column; align-items: center; gap: 2px;
-      font-size: 11px; color: var(--text-2); font-variant-numeric: tabular-nums; }
-    .dash-history-item b { font-size: 13px; font-weight: 700; color: var(--text); }
-
     .srch-modal-card { max-width: 420px; }
     .srch-input { width: 100%; box-sizing: border-box; background: var(--bg); border: 1px solid var(--sep);
       border-radius: var(--r-sm); padding: 10px 12px; font-size: 15px; font-family: inherit; color: var(--text); outline: none; }
@@ -734,10 +725,6 @@ function pfInjectStyle() {
        継承されてしまう（英語表示時にUNLOCKEDと大文字化される等）ため、明示的に打ち消す */
     .titles-count { font-size: 12px; font-weight: 700; color: var(--text-2);
       text-transform: none; letter-spacing: normal; margin-left: 8px; }
-
-    /* ⌨️ 左右矢印キーでのタイル間移動用フォーカスリング（music_sheet.html・12カテゴリページ
-       共通の#itemList内タイル）。各ページ固有のCSSに追加しなくて済むようここに1箇所だけ定義する */
-    #itemList [role="button"]:focus { outline: 2px solid var(--blue); outline-offset: 2px; }
   `;
   // 🍎 iOSデザイン層(ios-hig.css)より前に差し込み、同じ詳細度なら ios-hig.css が後勝ちで
   // 質感を上書きできるようにする（appendすると注入スタイルが最後になり上書きを打ち消してしまう）
@@ -1504,40 +1491,6 @@ function pfDashUpdateUrgentBadge() {
   });
 }
 
-// 📈 達成率の推移：completionHistory_v1（1日1件の絶対値スナップショット）から、
-// 簡易スパークライン（折れ線のみ、軸やグリッドは省略）と直近数件の日付・達成率の
-// 一覧を組み立てる。フルのチャートライブラリは使わず、SVGを直接生成するだけに留める。
-function pfHistorySparklineSvg(entries) {
-  if (entries.length < 2) return '';
-  const w = 280, h = 40, pad = 4;
-  const values = entries.map(e => e.pct);
-  const min = Math.min(...values), max = Math.max(...values);
-  const range = (max - min) || 1;
-  const stepX = (w - pad * 2) / (values.length - 1);
-  const pts = values.map((v, i) => [
-    pad + i * stepX,
-    h - pad - ((v - min) / range) * (h - pad * 2),
-  ]);
-  const linePath = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
-  const last = pts[pts.length - 1];
-  return `
-    <svg viewBox="0 0 ${w} ${h}" class="dash-trend-svg" preserveAspectRatio="none" role="img" aria-label="${pfT('達成率の推移グラフ', 'Completion rate trend graph')}">
-      <path d="${linePath}" class="dash-trend-line"></path>
-      <circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.5" class="dash-trend-dot"></circle>
-    </svg>`;
-}
-function pfHistorySectionHtml() {
-  const hist = loadCompletionHistory();
-  if (!hist.length) {
-    return `<div class="dash-empty">${pfT('まだ記録がありません（このサイトを開くたびに1日1件、自動で記録されます）', 'No history yet (a snapshot is recorded automatically once per day whenever you visit this site)')}</div>`;
-  }
-  const recent = hist.slice(-30); // スパークラインには直近30件（最大約1か月）だけ使う
-  const svg = pfHistorySparklineSvg(recent);
-  const listItems = hist.slice(-5).reverse()
-    .map(e => `<span class="dash-history-item">${e.date}<b>${e.pct}%</b></span>`).join('');
-  return `${svg}<div class="dash-history-list">${listItems}</div>`;
-}
-
 function pfDashBuildHtml(data) {
   const dailyRows = [];
   const shard = pfDashShardInfo();
@@ -1617,10 +1570,6 @@ function pfDashBuildHtml(data) {
   const monthHtml = monthParts.length ? monthParts.join('') : bucketEmptyMsg;
 
   return `
-    <div class="dash-section">
-      <p class="dash-section-label">📈 ${pfT('達成率の推移', 'Completion Trend')}</p>
-      ${pfHistorySectionHtml()}
-    </div>
     <div class="dash-section">
       <p class="dash-section-label">${pfT('デイリー', 'Daily')}</p>
       ${dailyHtml}

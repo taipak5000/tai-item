@@ -39,7 +39,11 @@ body {
   font-optical-sizing: auto;
 }
 button, a, label, [role="button"] { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-*:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+/* tabindexで後付けした要素(role="button"のアイテムタイル等)はマウスクリックでも
+   ブラウザが:focus-visibleを真と判定してしまうため、直近の入力方式(ios-hig.jsが
+   <html data-input-modality>へ記録)がマウスの間は明示的に抑える。キーボード操作
+   （Tab/矢印キー）の場合だけ本来どおりリングを表示する。 */
+html:not([data-input-modality="mouse"]) *:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 ::selection { background: rgba(0, 122, 255, 0.25); }
 
 /* ── ナビゲーションバー（すりガラス）＋ラージタイトル ── */
