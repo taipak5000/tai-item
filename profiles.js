@@ -2669,13 +2669,29 @@ function dmCancelImport() {
 }
 function dmConfirmImport() {
   if (!dmPendingImport) return;
+  let okCount = 0;
+  const failedKeys = [];
   Object.keys(dmPendingImport).forEach(key => {
-    localStorage.setItem(key, dmPendingImport[key]);
+    try {
+      localStorage.setItem(key, dmPendingImport[key]);
+      okCount++;
+    } catch (e) {
+      failedKeys.push(key);
+    }
   });
   dmPendingImport = null;
   document.getElementById('dmImportConfirmArea').innerHTML = '';
-  document.getElementById('dmStatus').textContent = pfT('インポートしました。ページを再読み込みします…', 'Imported. Reloading…');
-  setTimeout(() => location.reload(), 800);
+  if (failedKeys.length > 0) {
+    document.getElementById('dmStatus').textContent = pfT(
+      `${okCount + failedKeys.length}件中${failedKeys.length}件の復元に失敗しました（保存容量の上限などが原因の可能性があります）。残り${okCount}件は復元できました。${okCount > 0 ? 'ページを再読み込みします…' : ''}`,
+      `Failed to restore ${failedKeys.length} of ${okCount + failedKeys.length} keys (this may be due to reaching the browser's storage limit). The remaining ${okCount} were restored.${okCount > 0 ? ' Reloading…' : ''}`
+    );
+  } else {
+    document.getElementById('dmStatus').textContent = pfT('インポートしました。ページを再読み込みします…', 'Imported. Reloading…');
+  }
+  if (okCount > 0) {
+    setTimeout(() => location.reload(), 800);
+  }
 }
 
 let dmWipeConfirming = false;
