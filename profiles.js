@@ -1608,7 +1608,17 @@ async function pfDashOpen() {
   document.getElementById('dashModalOverlay').classList.add('open');
   pfSyncReminderUI(); // ブラウザ側の通知許可状態が変わっている可能性があるため開くたびに再同期
   const body = document.getElementById('dashBody');
-  if (pfDashCache) { body.innerHTML = pfDashBuildHtml(pfDashCache); pfDashStartTimer(); pfDashUpdateUrgentBadge(); return; }
+  if (pfDashCache) {
+    // 🍎 開き始める分にはbody.innerHTMLの再構築を待たせない（横断検索と同じ体感速度にする）。
+    // #dashBodyには前回開いた時の内容がまだ残っているため、シートの高さ計算はそれを
+    // 元に行われ、開き始めた直後の1フレームで最新の内容に差し替わる。
+    requestAnimationFrame(() => {
+      body.innerHTML = pfDashBuildHtml(pfDashCache);
+      pfDashStartTimer();
+      pfDashUpdateUrgentBadge();
+    });
+    return;
+  }
   body.innerHTML = `<div class="pf-hint">${pfT('読み込み中…', 'Loading…')}</div>`;
   try {
     if (!pfDashLoading) pfDashLoading = pfDashLoadData();
@@ -1897,9 +1907,14 @@ function pfOpenModal() {
   pfEditingId = null;
   pfDeletingId = null;
   pfExpandedTitleProfiles.clear();
-  pfRenderModal();
-  pfRenderCurrency();
+  // 🍎 横断検索(srchOpen)と同じく、シートを開き始めるのを先にする。
+  // 以前はプロフィール一覧の描画(称号の横断集計を含み重い)を待ってから
+  // 開いていたため、タップしてから動き出すまでに一拍の間があった。
   document.getElementById('pfModalOverlay').classList.add('open');
+  requestAnimationFrame(() => {
+    pfRenderModal();
+    pfRenderCurrency();
+  });
 }
 function pfCloseModal() {
   pfEditingId = null;
