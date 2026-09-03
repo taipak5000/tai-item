@@ -95,8 +95,20 @@
       s.overlay.style.setProperty('--sheet-progress', p.toFixed(3));
     }
     function stopAnim(s) { if (s.raf) { cancelAnimationFrame(s.raf); s.raf = null; } }
+    // 現在のtransform(translate3d)からY方向の実際の描画位置(px)を読み取る。CSSトランジション
+    // で開閉中のカードを途中で掴んだ場合、s.yは古い値のままなのでこれで実描画位置に同期する
+    function readCardY(card) {
+      var m = getComputedStyle(card).transform;
+      if (!m || m === 'none') return 0;
+      var parts = m.match(/matrix3d\(([^)]+)\)/);
+      if (parts) { var v = parts[1].split(',').map(Number); return v[13] || 0; }
+      var m2 = m.match(/matrix\(([^)]+)\)/);
+      if (m2) { var v2 = m2[1].split(',').map(Number); return v2[5] || 0; }
+      return 0;
+    }
     function animateTo(s, target, sp, velocity, onSettle) {
       stopAnim(s);
+      s.card.classList.add('js-anim'); // 物理演算で毎フレーム書き換える間はCSSトランジションを止める
       s.target = target; s.spring = sp; s.onSettle = onSettle || null;
       if (typeof velocity === 'number') s.v = velocity;
       s.last = performance.now();
@@ -112,6 +124,7 @@
         }
         if (Math.abs(s.y - s.target) < 0.5 && Math.abs(s.v) < 20) {
           s.y = s.target; s.v = 0; render(s); s.raf = null;
+          s.card.classList.remove('js-anim'); // 以後はCSSトランジションに委ねる
           if (s.onSettle) { var fn = s.onSettle; s.onSettle = null; fn(); }
           return;
         }
@@ -134,26 +147,45 @@
       overlay.classList.remove('open');
     }
     function finishHide(s) {
+      clearTimeout(s.hideTimer);
+      s.card.classList.remove('js-anim');
       s.overlay.classList.remove('is-closing');
       s.card.style.transform = '';
       s.overlay.style.removeProperty('--sheet-progress');
       s.y = 0; s.v = 0;
     }
+    // タップでの単純な開閉（ドラッグ/フリックによるものではない）はCSSトランジションに任せる：
+    // 他のドロワー等と同じくコンポジタ駆動になり、毎フレームJSがtransformとスクリムを書き換えていた
+    // 従来方式より軽く滑らかになる。ドラッグ中・フリック後の物理演算だけは従来どおりanimateTo()が
+    // 担当する（.js-anim/.is-draggingがCSSトランジションを打ち消すので競合しない）。
     function onVisibilityChange(overlay, visible) {
       if (!MOBILE.matches || REDUCE_MOTION.matches) return;
       var s = stateFor(overlay);
       if (!s.card) return;
+      if (s.dragging) return;
+      stopAnim(s);
+      s.card.classList.remove('js-anim');
+      clearTimeout(s.hideTimer);
       if (visible) {
+        var wasHidden = !s.card.style.transform && overlay.style.getPropertyValue('--sheet-progress') === '';
         overlay.classList.remove('is-closing');
-        measure(s);
-        if (!s.raf && !s.dragging) { s.y = s.height; s.v = 0; } // 閉じる途中の再表示なら現在位置から続ける
-        render(s);
-        animateTo(s, 0, SPRING_PRESENT, undefined, null);
+        if (wasHidden) {
+          measure(s);
+          s.card.style.transform = 'translate3d(0,' + s.height + 'px,0)';
+          overlay.style.setProperty('--sheet-progress', '0');
+          void s.card.offsetHeight; // 強制リフロー：この開始位置を確定させてからトランジションを発火させる
+        }
+        s.card.style.transform = 'translate3d(0,0,0)';
+        overlay.style.setProperty('--sheet-progress', '1');
+        s.y = 0; s.v = 0;
       } else {
         if (s.closedByGesture) { s.closedByGesture = false; finishHide(s); return; }
-        if (s.dragging) return;
+        measure(s);
         overlay.classList.add('is-closing');
-        animateTo(s, s.height, SPRING_PRESENT, undefined, function () { finishHide(s); });
+        s.card.style.transform = 'translate3d(0,' + s.height + 'px,0)';
+        overlay.style.setProperty('--sheet-progress', '0');
+        s.y = s.height; s.v = 0;
+        s.hideTimer = setTimeout(function () { finishHide(s); }, 340);
       }
     }
     new MutationObserver(function (records) {
@@ -179,6 +211,7 @@
       var s = stateFor(overlay);
       measure(s);
       stopAnim(s);                 // 動いている途中でも掴める（表示中の値から続行）
+      s.y = readCardY(s.card);     // CSSトランジション中の実描画位置にs.yを同期させる
       s.pointerId = e.pointerId;
       s.grabY = e.clientY - s.y;   // 掴んだ位置のオフセットを保持
       s.hist = [{ t: performance.now(), y: e.clientY }];

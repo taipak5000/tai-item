@@ -207,6 +207,9 @@ html:not([data-input-modality="mouse"]) *:focus-visible { outline: 2px solid var
 .pf-modal-overlay, .modal-overlay {
   background: rgba(0, 0, 0, calc(0.45 * var(--sheet-progress, 1)));
   align-items: flex-end; justify-content: center; padding: 0;
+  /* タップでの開閉はJSで毎フレーム書き換えず、この一回きりの値の変化をCSS側で
+     補間させる（他のドロワー等のCSSアニメーションと同じくコンポジタ駆動で軽い） */
+  transition: background-color 0.32s var(--ios-ease);
 }
 .pf-modal-overlay.open, .modal-overlay.open { animation: none; }
 .pf-modal-overlay.is-closing, .modal-overlay.is-closing { display: flex; pointer-events: none; }
@@ -218,7 +221,13 @@ html:not([data-input-modality="mouse"]) *:focus-visible { outline: 2px solid var
   position: relative; overscroll-behavior: contain;
   touch-action: pan-y; will-change: transform;
   animation: none;
+  /* タップでの単純な開閉はこのトランジションに任せる。ドラッグ中・フリック後の
+     物理アニメーション中(.is-dragging/.js-anim)だけJSの毎フレーム書き換えと
+     衝突しないよう打ち消す */
+  transition: transform 0.32s var(--ios-ease);
 }
+.pf-modal-card.is-dragging, .modal-card.is-dragging,
+.pf-modal-card.js-anim, .modal-card.js-anim { transition: none; }
 #randomModal .modal-card, #myCoordModal .modal-card { min-height: 70vh; }
 .pf-modal-card::before, .modal-card::before {
   content: ''; position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
