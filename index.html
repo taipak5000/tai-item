@@ -418,12 +418,6 @@
       line-height: 1.5;
       display: flex; gap: 5px; align-items: flex-start;
     }
-    .exclusive-divider {
-      font-size: 11px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.5px;
-      color: var(--orange-d); opacity: 0.7;
-      padding: 6px 4px 4px;
-    }
 
     .save-row {
       display: flex; gap: 8px; margin-top: 14px; align-items: center;
@@ -554,8 +548,6 @@
     .closet-cell-empty { color: rgba(0,0,0,0.3); font-size: 22px; font-weight: 300; }
     .closet-cell-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .closet-cell-item img { width: 78%; height: 78%; object-fit: contain; display: block; }
-
-    .closet-caption-hint { font-size: 11px; color: var(--text-3); margin: -8px 0 14px; line-height: 1.5; }
 
     /* エクスポート用カード（画面外で生成→html2canvasで書き出す） */
     .cls-export-card {
@@ -823,7 +815,6 @@
       display: flex; align-items: center; justify-content: center; overflow: hidden;
     }
     .grid-icon-cell img { width: 68%; height: 68%; object-fit: contain; }
-    .grid-icon-cell .cat-icon-fallback { font-size: 24px; }
     .grid-card-date {
       color: rgba(255,255,255,0.65); font-size: 10.5px; text-align: right; margin-top: 10px;
     }
@@ -1869,7 +1860,7 @@ const CURRENT_SEASON = {
 // 日時は日本時間（+09:00）で、ゲーム内デイリーリセット基準（例：8/14 16:00〜8/28 15:59）で指定してください。
 const EVENT_SCHEDULE = [
   { name: '光に染まるイベント', start: '2026-08-14T16:00:00+09:00', end: '2026-08-28T15:59:59+09:00' },
-  { name: '来訪する精霊団', start: '2026-08-28T16:00:00+09:00', end: '2026-09-11T15:59:59+09:00' },
+  { name: '来訪する精霊団', start: '2026-08-28T16:00:00+09:00', end: '2026-09-10T15:59:59+09:00' },
   { name: '夏のキャンプ', start: '2026-08-28T16:00:00+09:00', end: '2026-09-11T15:59:59+09:00' },
 ];
 // ▲▲▲ ダッシュボード用の日程付きイベント一覧（手動更新） ▲▲▲

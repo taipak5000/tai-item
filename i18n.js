@@ -55,6 +55,7 @@ const SEASON_NAME_EN = {
   '親愛なるファン・ゴッホへ': 'Dear Van Gogh',
   // 日々（曜日イベント）※すべて英語版Wikiで確認済み
   '来福の日々': 'Days of Fortune',
+  '癒しの日々': 'Days of Healing',
   '花笑む日々': 'Days of Bloom',
   '自然の日々': 'Days of Nature',
   '彩なす日々': 'Days of Color',
@@ -141,12 +142,6 @@ function trSource(source) {
 function trCat(jpName) {
   if (CURRENT_LANG !== 'en') return jpName;
   return CAT_NAME_EN[jpName] || jpName;
-}
-
-// アイテム名を現在の言語に変換する（英語名マップが無い/未収録なら日本語のまま返す）
-function trItemName(jpName, enMap, id) {
-  if (CURRENT_LANG !== 'en') return jpName;
-  return (enMap && enMap[id]) ? enMap[id] : jpName;
 }
 
 // item.nameEn（各カテゴリページのITEMS_DATAに直接持たせる英語名）を使う簡易版

@@ -339,9 +339,6 @@ function deleteProfile(id) {
 const SKY_THEME_KEY = 'sky_app_theme';
 const SKY_SHORTCUTS_KEY = 'sky_shortcuts_enabled';
 
-function isDarkModeOn() {
-  return document.documentElement.getAttribute('data-theme') === 'dark';
-}
 function applyThemeToDOM(isDark) {
   document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
 }
