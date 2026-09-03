@@ -21,7 +21,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Sky所持率管理">
-  <meta name="theme-color" content="#FF9500">
+  <meta name="theme-color" content="#F2F2F7">
   <title>楽譜コンプリート管理 - Sky所持率管理</title>
   <script src="i18n.js"></script>
   <script src="profiles.js"></script>
@@ -293,15 +293,18 @@
 
     .empty-message { grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-2); font-size: 14px; background: var(--card); border-radius: var(--r); }
   </style>
+  <link rel="stylesheet" href="ios-hig.css">
+  <script src="ios-hig.js" defer></script>
 </head>
 <body>
 
 <!-- ▸ Navigation bar -->
-<nav>
-  <a href="index.html" class="nav-back" data-i18n-en="◀ Main Menu">◀ 総合メニュー</a>
+<nav class="nav-bar">
+  <a href="index.html" class="nav-back" data-i18n-en="Main Menu">総合メニュー</a>
   <div class="nav-title" data-i18n-en="Music Sheet Completion">楽譜コンプリート管理</div>
   <button class="nav-action" onclick="toggleLang()" id="langToggleBtn" data-i18n-en="日本語">EN</button>
 </nav>
+<h1 class="large-title" aria-hidden="true"></h1>
 
 <div class="wrap">
 

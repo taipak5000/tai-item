@@ -21,7 +21,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Sky所持率管理">
-  <meta name="theme-color" content="#FF9500">
+  <meta name="theme-color" content="#F2F2F7">
   <title>アイテム別コスト - Sky所持率管理</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -369,14 +369,17 @@
     .gift-remove-btn { color: var(--red); font-size: 16px; padding: 4px; flex-shrink: 0; }
     .gift-empty { text-align: center; color: var(--text-2); font-size: 12.5px; padding: 14px 0; }
   </style>
+  <link rel="stylesheet" href="ios-hig.css">
+  <script src="ios-hig.js" defer></script>
 </head>
 <body>
 
-<nav>
-  <a href="index.html" class="nav-back" data-i18n-en="◀ Main Menu">◀ 総合メニュー</a>
+<nav class="nav-bar">
+  <a href="index.html" class="nav-back" data-i18n-en="Main Menu">総合メニュー</a>
   <div class="nav-title" data-i18n-en="💴 Item Costs">💴 アイテム別コスト</div>
   <button class="nav-action" onclick="toggleLang()" id="langToggleBtn" data-i18n-en="日本語">EN</button>
 </nav>
+<h1 class="large-title" aria-hidden="true"></h1>
 
 <div class="wrap">
 

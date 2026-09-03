@@ -1,0 +1,283 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   🍎 iOS Human Interface Guidelines デザイン層（アイテム所持管理 全15ページ共通）
+   各ページ固有の <style> と profiles.js が注入するスタイルより後ろに読み込まれ、
+   同じ詳細度なら後勝ちで「質感と操作感」だけを上書きする。レイアウト・機能の
+   ロジックには手を入れない。動きの考え方は Apple "Designing Fluid Interfaces" に準拠
+   （ジェスチャ駆動の動きは ios-hig.js のスプリングが担当し、CSSはそれ以外を扱う）。
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --ios-ease: cubic-bezier(0.25, 1, 0.5, 1);
+  --fill-secondary: rgba(120, 120, 128, 0.16);
+  --fill-tertiary: rgba(118, 118, 128, 0.12);
+  --separator: rgba(60, 60, 67, 0.29);
+  --group-secondary-bg: #f2f2f7;
+  --glass-bg: rgba(242, 242, 247, 0.72);
+  --glass-edge: rgba(255, 255, 255, 0.5);
+  --edge-shadow: rgba(0, 0, 0, 0.08);
+  --nav-h: 52px;
+  color-scheme: light;
+}
+[data-theme="dark"] {
+  --fill-secondary: rgba(120, 120, 128, 0.32);
+  --fill-tertiary: rgba(118, 118, 128, 0.24);
+  --separator: rgba(84, 84, 88, 0.65);
+  --group-secondary-bg: #2c2c2e;
+  --glass-bg: rgba(28, 28, 30, 0.68);
+  --glass-edge: rgba(255, 255, 255, 0.08);
+  --edge-shadow: rgba(0, 0, 0, 0.55);
+  color-scheme: dark;
+}
+
+/* ── 土台 ── */
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-optical-sizing: auto;
+}
+button, a, label, [role="button"] { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+*:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+::selection { background: rgba(0, 122, 255, 0.25); }
+
+/* ── ナビゲーションバー（すりガラス）＋ラージタイトル ── */
+.nav-bar {
+  position: sticky; top: 0; z-index: 20;
+  min-height: var(--nav-h);
+  padding: env(safe-area-inset-top) 16px 0;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  backdrop-filter: blur(25px) saturate(180%);
+  border-bottom: 0;
+}
+[data-theme="dark"] .nav-bar { background: var(--glass-bg); }
+.nav-bar > :last-child { margin-left: auto; }
+/* スクロールエッジ効果: 区切り線ではなく、コンテンツがバーの下へ潜り込む境目だけを短い
+   グラデーションで柔らかく分離する。--nav-progress(0→1)はスクロール量に連続的に追従する */
+.nav-bar::after {
+  content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 14px; pointer-events: none;
+  background: linear-gradient(to bottom, var(--edge-shadow), transparent);
+  opacity: var(--nav-progress, 0);
+}
+/* 小タイトル: すりガラス上のヴァイブランシー（やや重めのウェイト、控えめな字間） */
+.nav-bar .nav-title {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, calc(-50% + (1 - var(--nav-progress, 0)) * 6px));
+  font-size: 1.0625rem; font-weight: 600; letter-spacing: -0.01em; color: var(--text);
+  opacity: var(--nav-progress, 0);
+  pointer-events: none; white-space: nowrap; max-width: 56%; overflow: hidden; text-overflow: ellipsis;
+  margin: 0;
+}
+/* 戻るリンクの無いページ(総合メニュー等)では、小タイトルを左寄せの通常フローに置いて
+   右側の操作ボタンと重ねない */
+.nav-bar > .nav-title:first-child {
+  position: static; transform: translateY(calc((1 - var(--nav-progress, 0)) * 6px));
+  flex: 1 1 auto; min-width: 0; max-width: none; margin-right: auto;
+}
+.nav-bar .nav-back {
+  color: var(--blue); font-size: 1.0625rem; font-weight: 400; display: inline-flex; align-items: center; gap: 2px;
+  padding: 6px 0; margin-left: -2px;
+}
+@media (max-width: 480px) {
+  /* 狭い画面では「戻る」はシェブロンのみ、「更新」はアイコンのみにして小タイトルの幅を確保する
+     (文言は要素内に残るため読み上げには影響しない) */
+  .nav-bar .nav-back { width: 36px; overflow: hidden; white-space: nowrap; color: transparent; justify-content: flex-start; flex-shrink: 0; }
+  .nav-bar .nav-back::before { color: var(--blue); font-size: 1.9rem; line-height: 1; margin: 0; }
+  .nav-bar .nav-title { font-size: 1rem; max-width: calc(100% - 160px); }
+  .nav-bar .nav-action[onclick^="refreshData"] {
+    font-size: 0; width: 34px; height: 34px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .nav-bar .nav-action[onclick^="refreshData"]::before { content: '\21BB'; font-size: 18px; line-height: 1; }
+}
+.nav-bar .nav-back::before { content: '\2039'; font-size: 1.7em; line-height: 0; margin-right: 2px; margin-top: -0.06em; }
+.nav-bar .nav-action {
+  background: var(--fill-tertiary); border: none; color: var(--blue);
+  font-weight: 600; font-size: 0.9375rem; padding: 6px 12px; border-radius: 999px;
+}
+/* ラージタイトル: 大きい文字ほどトラッキングは負に、行送りは詰める。狭い画面では日本語が
+   不自然な位置で折り返さないよう可変サイズ。ios-hig.js が小タイトルの文言を写す */
+.large-title {
+  font-size: clamp(1.625rem, 7.6vw, 2.125rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1;
+  max-width: 720px; margin: 0.75rem auto 0; padding: 0 16px; color: var(--text);
+  opacity: calc(1 - var(--nav-progress, 0));
+  min-height: 1.1em;
+}
+@media (min-width: 850px) { .large-title { max-width: 960px; } }
+.large-title:empty { display: none; }
+.large-title + .pf-bar, .large-title + .wrap > .welcome-card, .large-title + .wrap > .cat-header-card { margin-top: 12px; }
+
+/* ── Inset Grouped List（角丸16px・影なし・二次背景のセル） ── */
+.welcome-card, .cat-card, .feature-btn, .control-panel, .cat-header-card, .item-card, .notice-card,
+.gift-card, .empty-message, .summary-card, .jump-select { box-shadow: none; }
+.item-tile-frame { box-shadow: none; }
+.item-card.is-owned { background: rgba(52, 199, 89, 0.06); }
+.sec-label, .list-header-row .sec-label { letter-spacing: 0.04em; }
+.badge, .item-badge, .tile-nr-badge, .pf-drawer-badge-test, .gift-item-picker-cat { letter-spacing: 0.02em; }
+.cat-pct, .bnum-val, .gauge-pct, .summary-item-value, .exp-hero-pct, .item-cost { letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.pf-bar { border: none; border-radius: 14px; padding: 12px 16px; font-size: 0.875rem; }
+.pf-search-btn {
+  background: var(--fill-secondary); border: none; border-radius: 50%; width: 34px; height: 34px; padding: 0;
+  font-size: 16px; display: inline-flex; align-items: center; justify-content: center; color: var(--text);
+}
+.pf-hint-banner { border-radius: 14px; }
+.dash-row, .srch-row, .coord-card, .gift-record, .wish-total-box, .pf-row-titles-list, .calendar-detail-panel {
+  background: var(--group-secondary-bg); border-radius: 12px;
+}
+.pf-row { padding: 12px 4px; border-bottom: 0.5px solid var(--separator); }
+.pf-row-name { font-size: 1rem; }
+
+/* ── 入力欄 ── */
+.select-box, .form-input, .cat-sel, .srch-input, .pf-input, .pf-row-input, .pf-currency-input,
+.gift-form select, .gift-form input, .gift-item-filter, .gift-record-edit-input, .candle-money-input,
+.customize-comment-input, .coord-share-id-row input, .wish-own-inputs input, .jump-select {
+  background: var(--fill-tertiary); border: 1px solid transparent; border-radius: 10px;
+  padding: 9px 12px; font-size: 0.9375rem; color: var(--text);
+  transition: box-shadow 0.2s var(--ios-ease), border-color 0.2s var(--ios-ease);
+}
+.select-box:focus, .form-input:focus, .cat-sel:focus, .srch-input:focus, .pf-input:focus, .pf-row-input:focus,
+.pf-currency-input:focus, .gift-form select:focus, .gift-form input:focus, .gift-item-filter:focus,
+.gift-record-edit-input:focus, .candle-money-input:focus, .customize-comment-input:focus,
+.coord-share-id-row input:focus, .wish-own-inputs input:focus, .jump-select:focus {
+  outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.25);
+}
+.item-card .select-box, .control-panel .select-box { background: var(--fill-tertiary); }
+.pf-currency-input, .candle-money-input, .wish-own-inputs input { font-variant-numeric: tabular-nums; }
+
+/* ── ボタン（塗り / ティント / グレー） ── */
+.action-btn { border-radius: 12px; font-weight: 600; }
+.action-btn.primary { background: var(--blue); }
+.action-btn.secondary { background: var(--fill-secondary); color: var(--text); }
+.action-btn.full { border-radius: 14px; padding: 14px; font-size: 1.0625rem; }
+.save-small-btn { border-radius: 10px; }
+.control-reset-btn { background: rgba(0, 122, 255, 0.12); color: var(--blue); border-radius: 10px; }
+[data-theme="dark"] .control-reset-btn { background: rgba(10, 132, 255, 0.22); }
+.pf-icon-btn { background: var(--fill-secondary); border: none; color: var(--text); border-radius: 10px; padding: 7px 12px; font-weight: 600; font-size: 0.8125rem; }
+.pf-icon-btn.active { background: var(--orange-bg); color: var(--orange-current, var(--orange-d)); }
+.pf-row-btn-ok { background: var(--blue); color: #fff; }
+.pf-row-btn-danger { background: #ff3b30; color: #fff; }
+.pf-add-btn { border-radius: 10px; font-weight: 600; padding: 9px 16px; }
+.pf-close-btn {
+  background: var(--fill-secondary); border: none; border-radius: 12px;
+  padding: 13px; font-size: 1rem; font-weight: 600; color: var(--blue); margin-top: 18px;
+}
+.acquire-btn, .coord-share-style-btn { border: 1px solid transparent; background: var(--fill-tertiary); border-radius: 10px; }
+.acquire-btn.active, .coord-share-style-btn.active { border-color: transparent; }
+.item-wish-btn { border: none; background: var(--fill-secondary); }
+.item-wish-btn.is-wish { background: var(--orange-bg); }
+.gift-add-btn, .share-btn { border-radius: 12px; }
+.candle-pack-btn { border-radius: 12px; }
+.modal-close {
+  width: 30px; height: 30px; border-radius: 50%; background: var(--fill-secondary); color: var(--text-2);
+  font-size: 15px; font-weight: 700; padding: 0; display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.modal-title { font-size: 1.0625rem; font-weight: 600; letter-spacing: -0.01em; }
+.pf-modal-card h3 { text-align: center; font-size: 1.0625rem; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 16px; }
+.settings-key { border: none; background: var(--fill-secondary); border-radius: 6px; }
+
+/* ── 押した瞬間に反応する（pointer-down で 100ms の縮小、離すと緩やかに復帰） ── */
+.nav-action, .control-reset-btn, .action-btn, .save-small-btn, .pf-icon-btn, .pf-add-btn, .pf-close-btn,
+.pf-search-btn, .feature-btn, .cat-card, .view-toggle-btn, .share-btn, .gift-add-btn, .acquire-btn,
+.coord-share-style-btn, .candle-pack-btn, .dash-shortcut-btn, .pf-drawer-link, .fav-bg-file-btn,
+.closet-stepper-btn, .modal-close, .item-wish-btn, .gs-advanced-toggle-btn, .title-badge, .site-dock button {
+  transition: transform 0.18s var(--ios-ease), background 0.2s var(--ios-ease), opacity 0.2s var(--ios-ease),
+              box-shadow 0.2s var(--ios-ease), color 0.2s var(--ios-ease), border-color 0.2s var(--ios-ease);
+}
+.nav-action:active, .control-reset-btn:active, .action-btn:active, .save-small-btn:active, .pf-icon-btn:active,
+.pf-add-btn:active, .pf-close-btn:active, .pf-search-btn:active, .feature-btn:active, .cat-card:active,
+.view-toggle-btn:active, .share-btn:active, .gift-add-btn:active, .acquire-btn:active, .coord-share-style-btn:active,
+.candle-pack-btn:active, .dash-shortcut-btn:active, .pf-drawer-link:active, .fav-bg-file-btn:active,
+.closet-stepper-btn:active, .modal-close:active, .item-wish-btn:active, .gs-advanced-toggle-btn:active {
+  transform: scale(0.96); transition-duration: 100ms; transition-timing-function: ease-out;
+}
+.feature-btn:active, .cat-card:active { transform: scale(0.965); box-shadow: none; }
+.action-btn.primary:active, .pf-add-btn:active, .share-btn:active, .gift-add-btn:active { opacity: 0.85; }
+
+/* ── モーダル → 流体ボトムシート ──
+   モバイル幅ではCSSアニメーションを使わず、ios-hig.js のスプリングが transform を駆動する
+   （指に1:1追従・速度の引き継ぎ・途中で掴んで反転可能）。スクリムの濃さ(--sheet-progress)も連動 */
+.pf-modal-overlay, .modal-overlay {
+  background: rgba(0, 0, 0, calc(0.45 * var(--sheet-progress, 1)));
+  align-items: flex-end; justify-content: center; padding: 0;
+}
+.pf-modal-overlay.open, .modal-overlay.open { animation: none; }
+.pf-modal-overlay.is-closing, .modal-overlay.is-closing { display: flex; pointer-events: none; }
+.pf-modal-card, .modal-card {
+  width: 100%; max-width: 100%; max-height: 88vh; max-height: 88dvh;
+  border-radius: 20px 20px 0 0;
+  padding: 30px 20px calc(24px + env(safe-area-inset-bottom));
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.25), inset 0 1px 0 var(--glass-edge);
+  position: relative; overscroll-behavior: contain;
+  touch-action: pan-y; will-change: transform;
+  animation: none;
+}
+#randomModal .modal-card, #myCoordModal .modal-card { min-height: 70vh; }
+.pf-modal-card::before, .modal-card::before {
+  content: ''; position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+  width: 36px; height: 5px; border-radius: 3px; background: rgba(60, 60, 67, 0.3);
+}
+[data-theme="dark"] .pf-modal-card::before, [data-theme="dark"] .modal-card::before { background: rgba(235, 235, 245, 0.3); }
+.pf-modal-card.is-dragging, .modal-card.is-dragging { cursor: grabbing; user-select: none; }
+@media (min-width: 850px) {
+  .pf-modal-overlay, .modal-overlay { align-items: center; padding: 24px; background: rgba(0, 0, 0, 0.45); }
+  .pf-modal-overlay.open, .modal-overlay.open { animation: iosFade 0.25s var(--ios-ease); }
+  .pf-modal-card, .modal-card {
+    max-width: 560px; border-radius: 18px; padding: 24px 22px; max-height: 84vh;
+    touch-action: auto; will-change: auto;
+    /* 素材が「現れる」: 透明度だけでなく、ぼかしとスケールを同時に解いて実体化させる */
+    animation: iosSheetIn 0.3s var(--ios-ease);
+  }
+  .pf-modal-card { max-width: 440px; }
+  .srch-modal-card { max-width: 480px; }
+  .pf-modal-card::before, .modal-card::before { display: none; }
+}
+@keyframes iosSheetIn { from { opacity: 0; transform: scale(0.94) translateY(8px); filter: blur(6px); } to { opacity: 1; transform: none; filter: blur(0); } }
+@keyframes iosFade { from { opacity: 0; } to { opacity: 1; } }
+
+/* ── 他のツール ドロワー（構造領域＝厚い素材。出入りは同じ経路で） ── */
+.pf-drawer { border-radius: 0 20px 20px 0; }
+.pf-drawer.open { animation: iosSlideIn 0.32s var(--ios-ease); }
+.pf-drawer-overlay.open { animation: iosFade 0.25s var(--ios-ease); }
+.pf-drawer-link { border-radius: 10px; font-size: 0.9375rem; padding: 11px 12px; }
+@keyframes iosSlideIn { from { transform: translateX(-100%); } to { transform: none; } }
+
+/* ── タブバー（サイトドック）のすりガラス。上端の細い光沢線＝光が当たるマテリアルの縁 ── */
+.site-dock {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  backdrop-filter: blur(25px) saturate(180%);
+  border-top: 0.5px solid var(--separator);
+  box-shadow: inset 0 1px 0 var(--glass-edge);
+  padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+}
+.site-dock button { border-radius: 12px; gap: 3px; }
+.site-dock button:active { background: none; transform: scale(0.92); opacity: 0.7; transition-duration: 100ms; transition-timing-function: ease-out; }
+.site-dock .site-dock-icon { font-size: 22px; }
+.site-dock .site-dock-label { font-size: 10px; font-weight: 600; letter-spacing: 0.02em; }
+
+/* ── トースト（すりガラスのカプセル） ── */
+.toast, .pf-toast {
+  background: rgba(28, 28, 30, 0.82);
+  -webkit-backdrop-filter: blur(20px) saturate(180%); backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* ── アクセシビリティ: 動き・透明・コントラストの各設定に応じて穏やかな代替表現にする ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  .pf-modal-overlay.open, .modal-overlay.open { animation: iosFade 200ms ease !important; animation-duration: 200ms !important; }
+  .pf-modal-card, .modal-card { animation: none !important; transform: none !important; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .nav-bar, .site-dock, .toast, .pf-toast { background: var(--card); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .toast, .pf-toast { color: var(--text); }
+}
+@media (prefers-contrast: more) {
+  .nav-bar, .site-dock { background: var(--card); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .nav-bar { border-bottom: 1px solid var(--separator); }
+  .cat-card, .feature-btn, .control-panel, .item-card, .welcome-card, .pf-modal-card, .modal-card { border: 1px solid var(--separator); }
+}

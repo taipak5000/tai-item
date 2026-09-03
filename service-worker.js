@@ -13,15 +13,17 @@
        更新を配布したい時はCACHE_VERSIONの数字を上げるだけでよく、
        activate時に旧バージョンのキャッシュを丸ごと破棄する
    ================================================================ */
-const CACHE_VERSION = 'sky-item-v1';
+const CACHE_VERSION = 'sky-item-v2'; // v2: iOSデザイン層(ios-hig.css/js)導入に伴い旧キャッシュを破棄
 
-// 起動時に必ず入れておく最小限のアプリシェル（全ページ共通で必要な3点）。
+// 起動時に必ず入れておく最小限のアプリシェル（全ページ共通で必要なもの）。
 // 各ページ自身のHTML・カテゴリ固有のデータファイル等は、実際に開かれた時に
 // fetchハンドラ側で自然にキャッシュされるため、ここに全ページを列挙はしない。
 const APP_SHELL = [
   './index.html',
   './i18n.js',
   './profiles.js',
+  './ios-hig.css',
+  './ios-hig.js',
 ];
 
 self.addEventListener('install', event => {

@@ -21,7 +21,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Sky所持率管理">
-  <meta name="theme-color" content="#FF9500">
+  <meta name="theme-color" content="#F2F2F7">
   <title>アイテム所持率管理</title>
   <script src="i18n.js"></script>
   <script src="profiles.js"></script>
@@ -975,17 +975,20 @@
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
   </style>
+  <link rel="stylesheet" href="ios-hig.css">
+  <script src="ios-hig.js" defer></script>
 </head>
 <body>
 
 <!-- ▸ Navigation bar -->
-<nav>
+<nav class="nav-bar">
   <div class="nav-title" data-i18n-en="🗂️ Item Collection Tracker">🗂️ アイテム所持率管理</div>
   <div style="display:flex; gap:10px; align-items:center;">
     <button class="nav-action" onclick="toggleLang()" id="langToggleBtn" data-i18n-en="日本語">EN</button>
     <button class="nav-action" data-i18n-en="Refresh" onclick="refreshData()">更新</button>
   </div>
 </nav>
+<h1 class="large-title" aria-hidden="true"></h1>
 
 <div class="wrap">
 

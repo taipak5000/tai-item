@@ -739,7 +739,11 @@ function pfInjectStyle() {
        共通の#itemList内タイル）。各ページ固有のCSSに追加しなくて済むようここに1箇所だけ定義する */
     #itemList [role="button"]:focus { outline: 2px solid var(--blue); outline-offset: 2px; }
   `;
-  document.head.appendChild(style);
+  // 🍎 iOSデザイン層(ios-hig.css)より前に差し込み、同じ詳細度なら ios-hig.css が後勝ちで
+  // 質感を上書きできるようにする（appendすると注入スタイルが最後になり上書きを打ち消してしまう）
+  const iosLayer = document.querySelector('link[href$="ios-hig.css"]');
+  if (iosLayer) document.head.insertBefore(style, iosLayer);
+  else document.head.appendChild(style);
 }
 
 function pfT(ja, en) {
@@ -2290,7 +2294,8 @@ function pfInit() {
   const bar = document.createElement('div');
   bar.className = 'pf-bar';
   bar.id = 'pfBar';
-  nav.insertAdjacentElement('afterend', bar);
+  // 🍎 ラージタイトル(.large-title、nav直下)がある場合はその後ろに置き、見出し→バーの順にする
+  (document.querySelector('.large-title') || nav).insertAdjacentElement('afterend', bar);
   pfRenderBar();
   pfRenderFirstVisitHint(bar);
 
