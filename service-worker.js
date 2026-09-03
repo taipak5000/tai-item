@@ -2,18 +2,24 @@
    Sky所持率管理 - Service Worker（PWAオフライン対応）
    全ページ共通で profiles.js から登録される（各HTMLで個別登録する必要はない）。
 
-   方針：シンプルな cache-first-then-network。
+   方針：stale-while-revalidate（キャッシュがあれば即返しつつ、裏側で
+   最新を取得してキャッシュを更新する）。
      - 同一オリジンのGETリクエストだけを対象にする
        （他ツール/外部画像・フォント等はそのままネットワークへ素通しする）
-     - キャッシュにあればそれを即返す。無ければネットワークから取得し、
-       成功したレスポンスだけをキャッシュへ足していく
-       （アプリシェル3点だけでなく、実際に開いた各カテゴリページや
-       cost-data.js等も、訪れるたびに自然とキャッシュへ積み上がっていく）
-     - 個別ファイルの差分更新・検証は行わない（過剰実装を避ける）。
-       更新を配布したい時はCACHE_VERSIONの数字を上げるだけでよく、
-       activate時に旧バージョンのキャッシュを丸ごと破棄する
+     - キャッシュがあれば表示速度優先でそれを即返す。同時に裏側でネットワークから
+       最新版を取得し、成功していればキャッシュを更新する（表示自体は待たせない）。
+       キャッシュが無い初回だけネットワークの完了を待つ。
+     - 🩹 以前はcache-first-then-network（キャッシュがあれば以後ずっとそれを
+       使い続ける）だった。この方式だと、新アイテム追加のような各カテゴリ
+       ページ自体の中身の更新は、CACHE_VERSIONを上げて明示的に破棄しない限り
+       ユーザーの端末で永遠に古いまま固まってしまう（実際に「新アイテムが
+       表示されない」という不具合として発生し、原因はこのSWの仕組みだった）。
+       stale-while-revalidateなら、1回サイトを開くたびに裏側で自動的に
+       最新化されるため、CACHE_VERSIONを毎回上げ忘れても実害が出にくい。
+     - CACHE_VERSIONは引き続き、既存キャッシュを丸ごと破棄して即座に
+       クリーンな状態へ揃えたい時（配布物の構成を大きく変えた時等）に使う。
    ================================================================ */
-const CACHE_VERSION = 'sky-item-v2'; // v2: iOSデザイン層(ios-hig.css/js)導入に伴い旧キャッシュを破棄
+const CACHE_VERSION = 'sky-item-v3'; // v3: 各ページがcache-firstで固定化される不具合を修正（stale-while-revalidate化）
 
 // 起動時に必ず入れておく最小限のアプリシェル（全ページ共通で必要なもの）。
 // 各ページ自身のHTML・カテゴリ固有のデータファイル等は、実際に開かれた時に
@@ -50,14 +56,11 @@ self.addEventListener('activate', event => {
 // index.html自身は「アプリシェル（オフライン起動用）」であると同時に、
 // pfDashLoadData()がダッシュボードの季節・イベント情報を取るために
 // `${SITE_ROOT}/tai-item/index.html` を自分自身へfetchし直す先でもある
-// （検索機能の他ツール横断fetchも同様の仕組み）。cache-firstのままだと
-// この自己fetchがプリキャッシュ済みの古いindex.htmlを永遠に返し続けてしまい、
-// 実際のデプロイを更新してもダッシュボードの季節・イベント表示がCACHE_VERSIONを
-// 上げるまで固まったままになる。index.htmlだけはnetwork-first
-// （オンライン時は常に最新を取得し、キャッシュはオフライン時のフォールバック
-// としてのみ使う）にして、他の同一オリジンファイル（i18n.js・profiles.js・
-// 各カテゴリページ・cost-data.js等、更新頻度が低くオフライン優先で構わないもの）
-// は引き続きcache-firstのままにする。
+// （検索機能の他ツール横断fetchも同様の仕組み）。この自己fetchが古い
+// index.htmlを返すと季節・イベント表示がその場で古いまま固まって見えるため、
+// index.htmlだけは他より一段階厳しく、オンライン時は常にネットワークの
+// 完了を待って最新を取得するnetwork-first-then-cacheにする（キャッシュは
+// オフライン時のフォールバックとしてのみ使う）。
 function isIndexHtmlRequest(url) {
   return url.pathname.endsWith('/index.html') || url.pathname.endsWith('/');
 }
@@ -70,7 +73,6 @@ self.addEventListener('fetch', event => {
   if (url.origin !== self.location.origin) return; // 同一オリジンのみ対象（他ツール・外部画像等はそのまま）
 
   if (isIndexHtmlRequest(url)) {
-    // network-first-then-cache：オンラインなら常に最新のindex.htmlを取得する
     event.respondWith(
       fetch(req).then(res => {
         if (res && res.ok) {
@@ -83,10 +85,14 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // 他の同一オリジンファイル（i18n.js・profiles.js・各カテゴリページ・
+  // cost-data.js等）はstale-while-revalidate：表示速度優先でキャッシュを
+  // 即返しつつ、裏側でネットワークから最新を取得してキャッシュを更新する
+  // （表示自体はネットワークの完了を待たない）。キャッシュが無い初回だけ
+  // ネットワークの完了を待って返す。
   event.respondWith(
     caches.match(req).then(cached => {
-      if (cached) return cached; // キャッシュ優先（cache-first）
-      return fetch(req).then(res => {
+      const revalidate = fetch(req).then(res => {
         // 200系のレスポンスだけをキャッシュへ足す（エラーページ等を誤ってキャッシュしない）
         if (res && res.ok) {
           const copy = res.clone();
@@ -94,6 +100,12 @@ self.addEventListener('fetch', event => {
         }
         return res;
       }).catch(() => cached); // オフラインでキャッシュも無ければ、そのまま失敗させる
+
+      if (cached) {
+        event.waitUntil(revalidate); // 裏側の更新はレスポンスを待たせず継続させる
+        return cached;
+      }
+      return revalidate;
     })
   );
 });
