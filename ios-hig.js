@@ -61,7 +61,6 @@
 
   /* ── 3. 流体ボトムシート ── */
   (function () {
-    var MOBILE = window.matchMedia('(max-width: 849px)');
     var REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)');
     var OVERLAY_SEL = '.pf-modal-overlay, .modal-overlay';
     var CARD_SEL = '.pf-modal-card, .modal-card';
@@ -159,7 +158,7 @@
     // 従来方式より軽く滑らかになる。ドラッグ中・フリック後の物理演算だけは従来どおりanimateTo()が
     // 担当する（.js-anim/.is-draggingがCSSトランジションを打ち消すので競合しない）。
     function onVisibilityChange(overlay, visible) {
-      if (!MOBILE.matches || REDUCE_MOTION.matches) return;
+      if (REDUCE_MOTION.matches) return;
       var s = stateFor(overlay);
       if (!s.card) return;
       if (s.dragging) return;
@@ -202,7 +201,7 @@
       return !!(el && el.closest && el.closest('input, select, textarea, button, a, label, [contenteditable], [role="button"], .crop-viewport, input[type="range"]'));
     }
     document.addEventListener('pointerdown', function (e) {
-      if (!MOBILE.matches || REDUCE_MOTION.matches) return;
+      if (REDUCE_MOTION.matches) return;
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       var card = e.target && e.target.closest ? e.target.closest(CARD_SEL) : null;
       if (!card) return;
@@ -260,18 +259,6 @@
     }
     document.addEventListener('pointerup', release);
     document.addEventListener('pointercancel', release);
-
-    // 画面幅がデスクトップ側に変わったら、JSで与えたtransform等を片付けてCSS側に引き渡す
-    function onLayoutChange(e) {
-      if (e.matches) return;
-      active = null;
-      Object.keys(sheets).forEach(function (key) {
-        var s = sheets[key];
-        stopAnim(s); s.dragging = false; if (s.card) { s.card.classList.remove('is-dragging'); } finishHide(s);
-      });
-    }
-    if (MOBILE.addEventListener) MOBILE.addEventListener('change', onLayoutChange);
-    else if (MOBILE.addListener) MOBILE.addListener(onLayoutChange);
   })();
 
   /* ── 4. 入力方式トラッキング ── */
