@@ -98,7 +98,11 @@
     }
     .nav-title {
       font-size: 17px; font-weight: 600; letter-spacing: -0.3px;
+      display: flex; align-items: center; gap: 6px;
     }
+    /* ── アイコンチップ（絵文字の代替）のCSSは profiles.js の pfInjectIconSprite()
+       が全ページ共通で<head>に注入する（.icon-chip / .inline-icon 等）。
+       このファイル固有のCSSはここには置かない。 */
     .nav-action {
       color: var(--blue); font-size: 15px; padding: 4px 0;
     }
@@ -498,7 +502,8 @@
     .coord-pick-item img { width: 100%; height: 100%; object-fit: contain; padding: 12%; box-sizing: border-box; display: block; }
     .coord-pick-item.selected { border-color: var(--blue); }
     .coord-pick-item.selected::after {
-      content: '✓'; position: absolute; bottom: 1px; right: 1px;
+      content: ''; position: absolute; bottom: 1px; right: 1px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4.5 12.5l5 5L20 6.5' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:center; background-size:60%;
       width: 16px; height: 16px; border-radius: 50%; background: var(--blue); color: #fff;
       font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center;
       box-shadow: 0 0 0 2px var(--card);
@@ -534,8 +539,8 @@
     }
     .closet-bg-swatch.selected { border-color: var(--blue); }
     .closet-bg-swatch.selected::after {
-      content: '✓'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-      color: #fff; font-size: 16px; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+      content: ''; position: absolute; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4.5 12.5l5 5L20 6.5' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:center; background-size:44%; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
     }
 
     .closet-board { display: grid; gap: 6px; padding: 14px; border-radius: var(--r); margin: 4px 0 14px; }
@@ -854,9 +859,8 @@
     }
     .theme-swatch.selected { border-color: var(--text); }
     .theme-swatch.selected::after {
-      content: '✓'; position: absolute; inset: 0; display: flex;
-      align-items: center; justify-content: center; color: #fff;
-      font-size: 15px; font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+      content: ''; position: absolute; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4.5 12.5l5 5L20 6.5' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:center; background-size:44%; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.35));
     }
     .customize-cat-grid {
       display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;
@@ -973,7 +977,7 @@
 
 <!-- ▸ Navigation bar -->
 <nav class="nav-bar">
-  <div class="nav-title" data-i18n-en="🗂️ Item Collection Tracker">🗂️ アイテム所持率管理</div>
+  <div class="nav-title"><span class="icon-chip" style="width:28px; height:28px;"><svg width="22" height="22"><use href="#i-folder"/></svg></span><span data-i18n-en="Item Collection Tracker">アイテム所持率管理</span></div>
   <div style="display:flex; gap:10px; align-items:center;">
     <button class="nav-action" onclick="toggleLang()" id="langToggleBtn" data-i18n-en="日本語">EN</button>
     <button class="nav-action" data-i18n-en="Refresh" onclick="refreshData()">更新</button>
@@ -988,7 +992,7 @@
   <div class="welcome-card">
     <div class="welcome-title" onclick="toggleWelcomeCard()">
       <span class="welcome-title-label" data-i18n-en="For First-Time Visitors">はじめての方へ</span>
-      <span class="welcome-toggle-icon" id="welcomeToggleIcon">▶</span>
+      <span class="welcome-toggle-icon" id="welcomeToggleIcon"><svg class="inline-icon" width="14" height="14" style="stroke:currentColor; transition:transform .2s ease;"><use href="#i-chevron-right"/></svg></span>
     </div>
     <div class="welcome-text" id="welcomeText" style="display:none;" data-i18n-en-html="This tool lets you track your Sky dress-up item collection by category.<br>Use the Random Coord feature to discover new combinations, save favorites with My Coord, and share your completion rate as an image on X.<br>Start by registering items in a category you're interested in!<br>Clicking an item's name searches for &quot;item name + Sky&quot; automatically, so give it a try!<br>Please report any bugs or issues to @Skyzztai!">
       このツールでは、Skyのドレスアップアイテムの所持状況をカテゴリ別にチェックできます。<br>ランダムコーデ機能で新しい組み合わせを発見したり、マイコーデでお気に入りを保存したりできるほか、達成率を画像にしてXでシェアすることも可能です。<br>まずは気になるカテゴリからアイテムを登録してみてください！<br>アイテムの名前をクリックすると、「アイテム名+Sky」で自動で検索できますので活用してみてください！<br>不具合やミスは@Skyzztaiまでお知らせください！
@@ -1039,14 +1043,14 @@
   <div class="cat-grid" id="catGrid"><!-- JS --></div>
 
   <div class="hint">
-    <span>💡</span>
+    <span class="icon-chip" style="width:18px; height:18px;"><svg width="14" height="14"><use href="#i-lightbulb"/></svg></span>
     <span data-i18n-en="Register items on each category page and your completion rate will automatically appear here">各カテゴリページでアイテムを登録すると、ここに所持率が自動で反映されます</span>
   </div>
 
   <!-- ▸ アイテム検索（季節・イベント横断） -->
   <p class="sec-label" data-i18n-en="Item Search">アイテム検索</p>
   <button class="feature-btn" onclick="openItemSearch()">
-    <span class="feature-icon">🔍</span>
+    <span class="feature-icon icon-chip" style="width:32px; height:32px;"><svg width="25" height="25"><use href="#i-search"/></svg></span>
     <span class="feature-label" data-i18n-en="Search Items by Season / Event">季節・イベントでアイテムを検索</span>
     <span class="feature-desc" data-i18n-en="Search items across all categories by season, days, category, favorites, and ownership status">全カテゴリのアイテムを季節・日々・カテゴリ・お気に入り・所持状況で横断検索できます</span>
   </button>
@@ -1054,7 +1058,7 @@
   <!-- ▸ 楽譜コンプリート管理 -->
   <p class="sec-label" data-i18n-en="Music Sheet Completion">楽譜コンプリート管理</p>
   <a href="music_sheet.html" class="feature-btn">
-    <span class="feature-icon">🎼</span>
+    <span class="feature-icon icon-chip" style="width:32px; height:32px;"><svg width="25" height="25"><use href="#i-sheet-music"/></svg></span>
     <span class="feature-label" data-i18n-en="Music Sheet Completion Tracker">楽譜コンプリート率</span>
     <span class="feature-desc" data-i18n-en="Track which of the 55 in-game Music Sheets you've collected, by acquisition method and candle cost">ゲーム内に存在する全55種の楽譜の入手状況とコンプリート率を管理できます</span>
   </a>
@@ -1062,17 +1066,17 @@
   <!-- ▸ コスト管理 -->
   <p class="sec-label" data-i18n-en="Cost Management">コスト管理</p>
   <a href="item_cost.html" class="feature-btn">
-    <span class="feature-icon">💴</span>
+    <span class="feature-icon icon-chip" style="width:32px; height:32px;"><svg width="25" height="25"><use href="#i-coin"/></svg></span>
     <span class="feature-label" data-i18n-en="Item Cost Breakdown">アイテム別コスト</span>
     <span class="feature-desc" data-i18n-en="Check the actual acquisition cost of owned items (Candles, Wax, Hearts, real currency)">所持アイテムの実際の入手コスト（キャンドル・星のキャンドル・ハート・実額）を確認できます</span>
   </a>
   <button class="feature-btn" onclick="openWishList()">
-    <span class="feature-icon">🛒</span>
+    <span class="feature-icon icon-chip" style="width:32px; height:32px;"><svg width="25" height="25"><use href="#i-cart"/></svg></span>
     <span class="feature-label" data-i18n-en="Wishlist &amp; Unlock Calculator">ウィッシュリスト・必要コスト計算</span>
-    <span class="feature-desc" data-i18n-en="Pick items you want (🛒 in Item Search) and see the total Candles/Hearts/price you still need">欲しいアイテムを🛒登録すると、必要なキャンドル・ハート・課金額の合計と不足数を自動計算します</span>
+    <span class="feature-desc" data-i18n-en="Pick items you want in Item Search and see the total Candles/Hearts/price you still need">欲しいアイテムを登録すると、必要なキャンドル・ハート・課金額の合計と不足数を自動計算します</span>
   </button>
   <button class="feature-btn" onclick="openAcquireLog()">
-    <span class="feature-icon">📅</span>
+    <span class="feature-icon icon-chip" style="width:32px; height:32px;"><svg width="25" height="25"><use href="#i-calendar"/></svg></span>
     <span class="feature-label" data-i18n-en="Acquisition Log">アイテム獲得ログ</span>
     <span class="feature-desc" data-i18n-en="See a timeline of when you checked off each item as owned">所持チェックを入れた日時の一覧を確認できます</span>
   </button>
@@ -1080,12 +1084,12 @@
   <!-- ▸ 達成率シェア -->
   <p class="sec-label" data-i18n-en="Share Your Completion Rate">達成率をシェア</p>
   <button class="feature-btn twitter" onclick="shareOverallOnTwitter()">
-    <span class="feature-icon">📤</span>
+    <span class="feature-icon icon-chip" style="width:32px; height:32px;"><svg width="25" height="25"><use href="#i-upload"/></svg></span>
     <span class="feature-label" data-i18n-en="Share Image on X">Xで画像を共有</span>
     <span class="feature-desc" data-i18n-en="Turn your completion rate into an image and post it on X (the image is also ready to save)">達成率を画像にしてXへ投稿できます（画像の保存も同時にできます）</span>
   </button>
   <button class="feature-btn" style="margin-top:8px;" onclick="openCustomizeModal()">
-    <span class="feature-icon">🎨</span>
+    <span class="feature-icon icon-chip" style="width:32px; height:32px;"><svg width="25" height="25"><use href="#i-palette"/></svg></span>
     <span class="feature-label" data-i18n-en="Customize & Share">カスタマイズして共有</span>
     <span class="feature-desc" data-i18n-en="Choose which categories, background theme, and comment to use before saving/sharing">表示するカテゴリ・背景テーマ・コメントを自分好みに設定してから保存/共有できます</span>
   </button>
@@ -1093,26 +1097,26 @@
   <!-- ▸ お気に入りシェア -->
   <p class="sec-label" data-i18n-en="Share Your Favorites">お気に入りをシェア</p>
   <button class="feature-btn" onclick="openFavShare()">
-    <span class="feature-icon">⭐</span>
+    <span class="feature-icon icon-chip" style="width:32px; height:32px;"><svg width="25" height="25"><use href="#i-star"/></svg></span>
     <span class="feature-label" data-i18n-en="Share Favorite Items">お気に入りアイテムを共有</span>
-    <span class="feature-desc" data-i18n-en="Save and share your ★ favorited items as an image with a comment">★お気に入り登録したアイテムをコメント付きの画像で保存・共有できます</span>
+    <span class="feature-desc" data-i18n-en="Save and share your favorited items as an image with a comment">お気に入り登録したアイテムをコメント付きの画像で保存・共有できます</span>
   </button>
 
   <!-- ▸ コーデ機能 -->
   <p class="sec-label" data-i18n-en="Coord Features">コーデ機能</p>
   <div class="feature-row">
     <button class="feature-btn" onclick="openRandomCoord()">
-      <span class="feature-icon">🎲</span>
+      <span class="feature-icon icon-chip" style="width:32px; height:32px;"><svg width="25" height="25"><use href="#i-dice"/></svg></span>
       <span class="feature-label" data-i18n-en="Random Coord">ランダムコーデ</span>
       <span class="feature-desc" data-i18n-en="Suggests a random coord from your owned items">所持アイテムからランダムにコーデを提案</span>
     </button>
     <button class="feature-btn" onclick="openMyCoord()">
-      <span class="feature-icon">👗</span>
+      <span class="feature-icon icon-chip" style="width:32px; height:32px;"><svg width="25" height="25"><use href="#i-hanger"/></svg></span>
       <span class="feature-label" data-i18n-en="My Coord">マイコーデ</span>
       <span class="feature-desc" data-i18n-en="Save and manage your favorite coord sets">お気に入りのコーデセットを保存・管理</span>
     </button>
     <button class="feature-btn" onclick="openCloset()">
-      <span class="feature-icon">🖼️</span>
+      <span class="feature-icon icon-chip" style="width:32px; height:32px;"><svg width="25" height="25"><use href="#i-image"/></svg></span>
       <span class="feature-label" data-i18n-en="Closet Collage">クローゼットコラージュ</span>
       <span class="feature-desc" data-i18n-en="Arrange owned items and your own photos on a grid to create a cute shareable collage">所持アイテムや自分の写真をマス目に並べて、かわいいコラージュ画像を作成・共有できます</span>
     </button>
@@ -1125,7 +1129,7 @@
   <div class="modal-card">
     <div class="modal-header">
       <span class="modal-title" data-i18n-en="Random Coord">ランダムコーデ</span>
-      <button class="modal-close" onclick="closeModal('randomModal')">✕</button>
+      <button class="modal-close" onclick="closeModal('randomModal')"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-close"/></svg></span></button>
     </div>
 
     <div id="randomResult"><!-- JS --></div>
@@ -1174,18 +1178,18 @@
     <div id="myCoordListView">
       <div class="modal-header">
         <span class="modal-title" data-i18n-en="My Coord">マイコーデ</span>
-        <button class="modal-close" onclick="closeModal('myCoordModal')">✕</button>
+        <button class="modal-close" onclick="closeModal('myCoordModal')"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-close"/></svg></span></button>
       </div>
       <div id="myCoordList"><!-- JS --></div>
-      <button class="action-btn primary full" style="margin-top:12px;" onclick="showCreateForm()" data-i18n-en="+ Create New Coord">＋ 新しいコーデを作成</button>
+      <button class="action-btn primary full" style="margin-top:12px;" onclick="showCreateForm()"><svg class="inline-icon" width="14" height="14" style="vertical-align:-2px;"><use href="#i-plus"/></svg> <span data-i18n-en="Create New Coord">新しいコーデを作成</span></button>
     </div>
 
     <!-- 新規作成フォーム -->
     <div id="myCoordCreateView" style="display:none;">
       <div class="modal-header">
-        <button class="modal-back" onclick="showCoordList()" data-i18n-en="◀ Back">◀ 戻る</button>
+        <button class="modal-back" onclick="showCoordList()"><svg class="inline-icon" width="14" height="14" style="transform:rotate(180deg); vertical-align:-2px;"><use href="#i-chevron-right"/></svg> <span data-i18n-en="Back">戻る</span></button>
         <span class="modal-title" style="font-size:15px;" data-i18n-en="Create New Coord">新規コーデ作成</span>
-        <button class="modal-close" onclick="closeModal('myCoordModal')">✕</button>
+        <button class="modal-close" onclick="closeModal('myCoordModal')"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-close"/></svg></span></button>
       </div>
 
       <div class="form-field">
@@ -1210,18 +1214,18 @@
     <div id="closetListView">
       <div class="modal-header">
         <span class="modal-title" data-i18n-en="Closet Collage">クローゼットコラージュ</span>
-        <button class="modal-close" onclick="closeModal('closetModal')">✕</button>
+        <button class="modal-close" onclick="closeModal('closetModal')"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-close"/></svg></span></button>
       </div>
       <div id="closetList"><!-- JS --></div>
-      <button class="action-btn primary full" style="margin-top:12px;" onclick="newClosetCollage()" data-i18n-en="+ Create New Collage">＋ 新しいコラージュを作成</button>
+      <button class="action-btn primary full" style="margin-top:12px;" onclick="newClosetCollage()"><svg class="inline-icon" width="14" height="14" style="vertical-align:-2px;"><use href="#i-plus"/></svg> <span data-i18n-en="Create New Collage">新しいコラージュを作成</span></button>
     </div>
 
     <!-- 編集画面 -->
     <div id="closetEditView" style="display:none;">
       <div class="modal-header">
-        <button class="modal-back" onclick="showClosetListView()" data-i18n-en="◀ Back">◀ 戻る</button>
+        <button class="modal-back" onclick="showClosetListView()"><svg class="inline-icon" width="14" height="14" style="transform:rotate(180deg); vertical-align:-2px;"><use href="#i-chevron-right"/></svg> <span data-i18n-en="Back">戻る</span></button>
         <span class="modal-title" style="font-size:15px;" data-i18n-en="Edit Collage">コラージュを編集</span>
-        <button class="modal-close" onclick="closeModal('closetModal')">✕</button>
+        <button class="modal-close" onclick="closeModal('closetModal')"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-close"/></svg></span></button>
       </div>
 
       <div class="form-field">
@@ -1232,15 +1236,15 @@
       <div class="closet-size-row">
         <div class="closet-stepper">
           <span class="closet-stepper-label" data-i18n-en="Rows">縦</span>
-          <button type="button" class="closet-stepper-btn" onclick="adjustClosetGrid('rows', -1)">−</button>
+          <button type="button" class="closet-stepper-btn"><svg class="inline-icon" width="13" height="13"><use href="#i-minus"/></svg></button>{/* onclick unchanged: onclick="adjustClosetGrid('rows', -1)" */}
           <span class="closet-stepper-val" id="closetRowsVal">3</span>
-          <button type="button" class="closet-stepper-btn" onclick="adjustClosetGrid('rows', 1)">＋</button>
+          <button type="button" class="closet-stepper-btn" onclick="adjustClosetGrid('rows', 1)"><svg class="inline-icon" width="13" height="13"><use href="#i-plus"/></svg></button>
         </div>
         <div class="closet-stepper">
           <span class="closet-stepper-label" data-i18n-en="Cols">横</span>
-          <button type="button" class="closet-stepper-btn" onclick="adjustClosetGrid('cols', -1)">−</button>
+          <button type="button" class="closet-stepper-btn" onclick="adjustClosetGrid('cols', -1)"><svg class="inline-icon" width="13" height="13"><use href="#i-minus"/></svg></button>
           <span class="closet-stepper-val" id="closetColsVal">3</span>
-          <button type="button" class="closet-stepper-btn" onclick="adjustClosetGrid('cols', 1)">＋</button>
+          <button type="button" class="closet-stepper-btn" onclick="adjustClosetGrid('cols', 1)"><svg class="inline-icon" width="13" height="13"><use href="#i-plus"/></svg></button>
         </div>
       </div>
 
@@ -1266,7 +1270,7 @@
   <div class="modal-card">
     <div class="modal-header">
       <span class="modal-title" data-i18n-en="Choose Cell Content">マスの内容を選ぶ</span>
-      <button class="modal-close" onclick="closeModal('closetCellModal')">✕</button>
+      <button class="modal-close" onclick="closeModal('closetCellModal')"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-close"/></svg></span></button>
     </div>
 
     <div class="action-row">
@@ -1288,7 +1292,7 @@
   <div class="modal-card">
     <div class="modal-header">
       <span class="modal-title" data-i18n-en="Shared Coord">共有されたコーデ</span>
-      <button class="modal-close" onclick="closeSharedCoordModal()">✕</button>
+      <button class="modal-close" onclick="closeSharedCoordModal()"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-close"/></svg></span></button>
     </div>
     <div id="sharedCoordBody"><!-- JS --></div>
     <div class="action-row" style="margin-top:12px;">
@@ -1302,12 +1306,12 @@
   <div class="modal-card">
     <div class="modal-header">
       <span class="modal-title" data-i18n-en="Item Search">アイテム検索</span>
-      <button class="modal-close" onclick="closeModal('itemSearchModal')">✕</button>
+      <button class="modal-close" onclick="closeModal('itemSearchModal')"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-close"/></svg></span></button>
     </div>
 
     <div class="gs-control-panel">
       <div class="gs-control-row">
-        <input type="text" class="form-input" id="gsName" data-i18n-en-placeholder="🔍 Search by item name, season, or day..." placeholder="🔍 アイテム名・季節/日々で検索..." oninput="renderGlobalSearch()">
+        <input type="text" class="form-input" id="gsName" data-i18n-en-placeholder="Search by item name, season, or day..." placeholder="アイテム名・季節/日々で検索..." oninput="renderGlobalSearch()">
       </div>
       <div class="gs-control-row">
         <label class="gs-current-toggle">
@@ -1351,7 +1355,7 @@
       <div class="gs-control-row">
         <button type="button" class="gs-advanced-toggle-btn" id="gsAdvancedToggleBtn" onclick="toggleAdvancedSearchFilters()">
           <span data-i18n-en="More Filters &amp; Sort">詳細な絞り込み・並び替え</span>
-          <span class="gs-advanced-icon" id="gsAdvancedIcon">▾</span>
+          <span class="gs-advanced-icon" id="gsAdvancedIcon"><svg width="12" height="12" style="stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; transform:rotate(90deg); transition:transform .15s ease; display:inline-block;"><use href="#i-chevron-right"/></svg></span>
         </button>
       </div>
       <div class="gs-control-row" id="gsAdvancedRow" style="display:none;">
@@ -1388,12 +1392,12 @@
     </div>
 
     <div class="hint" style="margin-top:10px;">
-      <span>💡</span>
-      <span data-i18n-en="Tap to toggle ownership status, and use ★ to add favorites (also reflected on each category page)">タップで所持状態を切り替え、★でお気に入り登録ができます（各カテゴリページにも反映されます）</span>
+      <span class="icon-chip" style="width:18px; height:18px;"><svg width="14" height="14"><use href="#i-lightbulb"/></svg></span>
+      <span data-i18n-en="Tap to toggle ownership status, and use the favorite button to add favorites (also reflected on each category page)">タップで所持状態を切り替え、お気に入りボタンでお気に入り登録ができます（各カテゴリページにも反映されます）</span>
     </div>
 
     <button class="feature-btn" id="gsMarkAllOwnedBtn" style="display:none; margin-top:10px;" onclick="markFilteredItemsOwned()">
-      <span class="feature-icon">🎯</span>
+      <span class="feature-icon icon-chip" style="width:32px; height:32px;"><svg width="25" height="25"><use href="#i-check"/></svg></span>
       <span class="feature-label" id="gsMarkAllOwnedLabel" data-i18n-en="Mark all filtered items as owned">絞り込み結果をすべて所持済みにする</span>
       <span class="feature-desc" data-i18n-en="Marks every not-yet-owned item currently shown below as owned">下に表示中の未所持アイテムをすべて所持済みにします</span>
     </button>
@@ -1411,12 +1415,12 @@
   <div class="modal-card">
     <div class="modal-header">
       <span class="modal-title" data-i18n-en="Wishlist &amp; Cost Calculator">ウィッシュリスト・必要コスト計算</span>
-      <button class="modal-close" onclick="closeModal('wishModal')">✕</button>
+      <button class="modal-close" onclick="closeModal('wishModal')"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-close"/></svg></span></button>
     </div>
 
     <div class="hint" style="margin-top:0;">
-      <span>💡</span>
-      <span data-i18n-en="Add items with the 🛒 button in Item Search. Items you mark as owned are automatically excluded from the totals.">「アイテム検索」の🛒ボタンで追加できます。入手済みにしたアイテムは自動で合計から外れます</span>
+      <span class="icon-chip" style="width:18px; height:18px;"><svg width="14" height="14"><use href="#i-lightbulb"/></svg></span>
+      <span data-i18n-en="Add items with the wishlist button in Item Search. Items you mark as owned are automatically excluded from the totals.">「アイテム検索」のウィッシュリスト追加ボタンで追加できます。入手済みにしたアイテムは自動で合計から外れます</span>
     </div>
 
     <div id="wishListBody"><!-- JS --></div>
@@ -1428,11 +1432,11 @@
   <div class="modal-card">
     <div class="modal-header">
       <span class="modal-title" data-i18n-en="Acquisition Log">アイテム獲得ログ</span>
-      <button class="modal-close" onclick="closeModal('acquireLogModal')">✕</button>
+      <button class="modal-close" onclick="closeModal('acquireLogModal')"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-close"/></svg></span></button>
     </div>
 
     <div class="hint" style="margin-top:0;">
-      <span>💡</span>
+      <span class="icon-chip" style="width:18px; height:18px;"><svg width="14" height="14"><use href="#i-lightbulb"/></svg></span>
       <span data-i18n-en="Records the date/time you checked off each item as owned. Unchecking an item removes its record.">所持チェックを入れた日時を自動で記録します。チェックを外すと記録も消えます</span>
     </div>
 
@@ -1445,11 +1449,11 @@
   <div class="modal-card">
     <div class="modal-header">
       <span class="modal-title" id="previewModalTitle" data-i18n-en="Save Image">画像を保存</span>
-      <button class="modal-close" onclick="closeModal('imagePreviewModal')">✕</button>
+      <button class="modal-close" onclick="closeModal('imagePreviewModal')"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-close"/></svg></span></button>
     </div>
 
     <div class="hint" style="margin-top:0;">
-      <span>👆</span>
+      <span class="icon-chip" style="width:18px; height:18px;"><svg width="15" height="15"><use href="#i-tap"/></svg></span>
       <span id="previewHintText" data-i18n-en="Long-press the image (right-click on PC) and choose &quot;Save Image&quot;">画像を長押し（PCの場合は右クリック）して「画像を保存」を選んでください</span>
     </div>
 
@@ -1469,7 +1473,7 @@
   <div class="modal-card">
     <div class="modal-header">
       <span class="modal-title" data-i18n-en="Customize Image">画像をカスタマイズ</span>
-      <button class="modal-close" onclick="closeModal('customizeModal')">✕</button>
+      <button class="modal-close" onclick="closeModal('customizeModal')"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-close"/></svg></span></button>
     </div>
 
     <div class="customize-section-label" data-i18n-en="Background Theme">背景テーマ</div>
@@ -1492,11 +1496,11 @@
   <div class="modal-card">
     <div class="modal-header">
       <span class="modal-title" data-i18n-en="Share Favorites">お気に入りを共有</span>
-      <button class="modal-close" onclick="closeModal('favShareModal')">✕</button>
+      <button class="modal-close" onclick="closeModal('favShareModal')"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-close"/></svg></span></button>
     </div>
 
     <div class="hint" style="margin-top:0;">
-      <span>💡</span>
+      <span class="icon-chip" style="width:18px; height:18px;"><svg width="14" height="14"><use href="#i-lightbulb"/></svg></span>
       <span id="favShareCountText" data-i18n-en="Loading…">読み込み中…</span>
     </div>
 
@@ -1550,7 +1554,7 @@
   <div class="modal-card">
     <div class="modal-header">
       <span class="modal-title" data-i18n-en="Attach a Photo">写真を添付</span>
-      <button class="modal-close" onclick="closeModal('coordPhotoModal')">✕</button>
+      <button class="modal-close" onclick="closeModal('coordPhotoModal')"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-close"/></svg></span></button>
     </div>
 
     <div class="hint" style="margin-top:0;" data-i18n-en="Attach a photo (e.g. yourself wearing the outfit) to embed in the image generated for this coord.">このコーデの画像を生成するときに埋め込む写真（実際に着ている写真など）を選べます。</div>
@@ -1586,7 +1590,7 @@
   <div class="modal-card">
     <div class="modal-header">
       <span class="modal-title" data-i18n-en="Adjust Photo Position">写真の位置を調整</span>
-      <button class="modal-close" onclick="cancelPhotoCrop()">✕</button>
+      <button class="modal-close" onclick="cancelPhotoCrop()"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-close"/></svg></span></button>
     </div>
 
     <div class="hint" style="margin-top:0;" data-i18n-en="Drag to reposition, and use the slider to zoom in/out. Nothing outside the frame will be included.">ドラッグして位置を調整し、スライダーで拡大・縮小できます。枠の外側は画像に含まれません。</div>
@@ -1598,7 +1602,7 @@
     </div>
 
     <div class="crop-zoom-row">
-      <span>🔍</span>
+      <span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-search"/></svg></span>
       <input type="range" id="cropZoomSlider" min="100" max="300" value="100" oninput="onCropZoomChange(this.value)">
     </div>
 
@@ -1612,18 +1616,18 @@
 <script>
 /* ── Category list ──────────────────────── */
 const CATS = [
-  { key:'outfit',          name:'アウトフィット',         file:'outfit.html',          icon:'🧥', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/a/aa/Icon_pants_default.png/revision/latest/scale-to-width-down/51' },
-  { key:'shoes',           name:'シューズ',               file:'shoes.html',           icon:'👟', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/c/cc/Peeking-Postman-Shoes-icon.png/revision/latest/scale-to-width-down/51' },
-  { key:'mask',            name:'マスク',                 file:'mask.html',            icon:'🎭', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/c/cf/Icon_mask_default.png/revision/latest/scale-to-width-down/51' },
-  { key:'face_accessory',  name:'フェイスアクセサリー',   file:'face_accessory.html',  icon:'💎', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/b/bc/RejectingVoyager-3.png/revision/latest/scale-to-width-down/51' },
-  { key:'necklace',        name:'ネックレス',             file:'necklace.html',        icon:'📿', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/7/73/1_Gratitude.png/revision/latest/scale-to-width-down/51' },
-  { key:'hairstyle',       name:'ヘアスタイル',           file:'hairstyle.html',       icon:'💇', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/4/47/Icon_hair_default.png/revision/latest/scale-to-width-down/51' },
-  { key:'hair_accessory',  name:'ヘアアクセサリー',       file:'hair_accessory.html',  icon:'👒', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/6/6d/Mimi-4117_07_chill_sunbather_hat.png/revision/latest/scale-to-width-down/51' },
-  { key:'head_accessory',  name:'ヘッドアクセサリー',     file:'head_accessory.html',  icon:'🎧', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/1/12/Mimi-4117_04_hairtousle_teen_hat.png/revision/latest/scale-to-width-down/51' },
-  { key:'cape',            name:'ケープ',                 file:'cape.html',            icon:'🪽‪', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/9/9f/Cape-category-Ray.png/revision/latest/scale-to-width-down/51' },
-  { key:'portable_item',   name:'持ち運べるアイテム',     file:'portable_item.html',   icon:'🎹', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/c/c0/LaughingLightCatcher-2.png/revision/latest/scale-to-width-down/51' },
-  { key:'large_placeable', name:'大きい設置アイテム',     file:'large_placeable.html', icon:'🏛️', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/0/03/Sunlight-Manta-Float-icon.png/revision/latest/scale-to-width-down/51' },
-  { key:'small_placeable', name:'小さい設置アイテム',     file:'small_placeable.html', icon:'🏮', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/6/6c/Icon_prop_vault_lantern.png/revision/latest/scale-to-width-down/51' },
+  { key:'outfit',          name:'アウトフィット',         file:'outfit.html',          icon:'<svg class="inline-icon" width="20" height="20"><use href="#i-hanger"/></svg>', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/a/aa/Icon_pants_default.png/revision/latest/scale-to-width-down/51' },
+  { key:'shoes',           name:'シューズ',               file:'shoes.html',           icon:'<svg class="inline-icon" width="20" height="20"><use href="#i-shoe"/></svg>', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/c/cc/Peeking-Postman-Shoes-icon.png/revision/latest/scale-to-width-down/51' },
+  { key:'mask',            name:'マスク',                 file:'mask.html',            icon:'<svg class="inline-icon" width="20" height="20"><use href="#i-masks"/></svg>', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/c/cf/Icon_mask_default.png/revision/latest/scale-to-width-down/51' },
+  { key:'face_accessory',  name:'フェイスアクセサリー',   file:'face_accessory.html',  icon:'<svg class="inline-icon" width="20" height="20"><use href="#i-gem"/></svg>', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/b/bc/RejectingVoyager-3.png/revision/latest/scale-to-width-down/51' },
+  { key:'necklace',        name:'ネックレス',             file:'necklace.html',        icon:'<svg class="inline-icon" width="20" height="20"><use href="#i-necklace"/></svg>', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/7/73/1_Gratitude.png/revision/latest/scale-to-width-down/51' },
+  { key:'hairstyle',       name:'ヘアスタイル',           file:'hairstyle.html',       icon:'<svg class="inline-icon" width="20" height="20"><use href="#i-scissors"/></svg>', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/4/47/Icon_hair_default.png/revision/latest/scale-to-width-down/51' },
+  { key:'hair_accessory',  name:'ヘアアクセサリー',       file:'hair_accessory.html',  icon:'<svg class="inline-icon" width="20" height="20"><use href="#i-hat"/></svg>', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/6/6d/Mimi-4117_07_chill_sunbather_hat.png/revision/latest/scale-to-width-down/51' },
+  { key:'head_accessory',  name:'ヘッドアクセサリー',     file:'head_accessory.html',  icon:'<svg class="inline-icon" width="20" height="20"><use href="#i-headphones"/></svg>', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/1/12/Mimi-4117_04_hairtousle_teen_hat.png/revision/latest/scale-to-width-down/51' },
+  { key:'cape',            name:'ケープ',                 file:'cape.html',            icon:'<svg class="inline-icon" width="20" height="20"><use href="#i-wing"/></svg>', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/9/9f/Cape-category-Ray.png/revision/latest/scale-to-width-down/51' },
+  { key:'portable_item',   name:'持ち運べるアイテム',     file:'portable_item.html',   icon:'<svg class="inline-icon" width="20" height="20"><use href="#i-music-note"/></svg>', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/c/c0/LaughingLightCatcher-2.png/revision/latest/scale-to-width-down/51' },
+  { key:'large_placeable', name:'大きい設置アイテム',     file:'large_placeable.html', icon:'<svg class="inline-icon" width="20" height="20"><use href="#i-building"/></svg>', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/0/03/Sunlight-Manta-Float-icon.png/revision/latest/scale-to-width-down/51' },
+  { key:'small_placeable', name:'小さい設置アイテム',     file:'small_placeable.html', icon:'<svg class="inline-icon" width="20" height="20"><use href="#i-candle"/></svg>', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/6/6c/Icon_prop_vault_lantern.png/revision/latest/scale-to-width-down/51' },
 ];
 
 // 絵文字アイコン or 画像アイコンを出し分けるヘルパー
@@ -1704,7 +1708,7 @@ function cardHTML(cat, data, fallbackTotal) {
       </div>
       <div class="cat-bottom">
         <span class="cat-count">${cTxt}</span>
-        <span class="cat-chevron">›</span>
+        <span class="cat-chevron"><svg width="14" height="14" style="stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; vertical-align:-2px;"><use href="#i-chevron-right"/></svg></span>
       </div>
     </a>`;
 }
@@ -2285,9 +2289,9 @@ function renderGlobalSearch() {
                onclick="event.stopPropagation()">${escapeHtml(trItem(item))}</a>
           </div>
         </div>
-        <button class="gs-wish-btn ${isWish ? 'is-wish' : ''}" onclick="toggleWishFromSearch('${cat.key}','${item.id}', this)" aria-label="${CURRENT_LANG === 'en' ? 'Wishlist' : 'ウィッシュリスト'}" title="${CURRENT_LANG === 'en' ? 'Add to wishlist' : 'ウィッシュリストに追加'}">🛒</button>
-        <button class="gs-fav-btn ${isFav ? 'is-fav' : ''}" onclick="toggleFavFromSearch('${cat.key}','${item.id}', this)" aria-label="${CURRENT_LANG === 'en' ? 'Favorite' : 'お気に入り'}">${isFav ? '★' : '☆'}</button>
-        <div class="gs-owned-dot ${isOwned ? 'owned' : ''}" onclick="toggleOwnedFromSearch('${cat.key}','${item.id}')" role="button" aria-label="${CURRENT_LANG === 'en' ? 'Toggle ownership status' : '所持状態を切り替える'}">${isOwned ? '✓' : ''}</div>
+        <button class="gs-wish-btn ${isWish ? 'is-wish' : ''}" onclick="toggleWishFromSearch('${cat.key}','${item.id}', this)" aria-label="${CURRENT_LANG === 'en' ? 'Wishlist' : 'ウィッシュリスト'}" title="${CURRENT_LANG === 'en' ? 'Add to wishlist' : 'ウィッシュリストに追加'}"><span class="icon-chip" style="width:22px; height:22px;"><svg width="18" height="18"><use href="#i-cart"/></svg></span></button>
+        <button class="gs-fav-btn ${isFav ? 'is-fav' : ''}" onclick="toggleFavFromSearch('${cat.key}','${item.id}', this)" aria-label="${CURRENT_LANG === 'en' ? 'Favorite' : 'お気に入り'}"><svg width="18" height="18" style="stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round;"><use href="#i-star"/></svg></button>
+        <div class="gs-owned-dot ${isOwned ? 'owned' : ''}" onclick="toggleOwnedFromSearch('${cat.key}','${item.id}')" role="button" aria-label="${CURRENT_LANG === 'en' ? 'Toggle ownership status' : '所持状態を切り替える'}">${isOwned ? '<svg width="14" height="14" style="stroke:#fff; fill:none; stroke-width:2.8; stroke-linecap:round; stroke-linejoin:round;"><use href="#i-check"/></svg>' : ''}</div>
       </div>`;
   }).join('');
 }
@@ -2370,7 +2374,7 @@ function toggleOwnedFromSearch(catKey, itemId) {
     const dot = row?.querySelector('.gs-owned-dot');
     if (dot) {
       dot.classList.toggle('owned', nowOwned);
-      dot.textContent = nowOwned ? '✓' : '';
+      dot.innerHTML = nowOwned ? '<svg width="14" height="14" style="stroke:#fff; fill:none; stroke-width:2.8; stroke-linecap:round; stroke-linejoin:round;"><use href="#i-check"/></svg>' : '';
     }
     // 所持済みになった場合、自動でウィッシュリストから外れるためボタンの見た目も同期する
     if (nowOwned) {
@@ -2420,7 +2424,7 @@ function toggleFavFromSearch(catKey, itemId, btnEl) {
     renderGlobalSearch();
   } else if (btnEl) {
     btnEl.classList.toggle('is-fav', nowFav);
-    btnEl.textContent = nowFav ? '★' : '☆';
+    btnEl.innerHTML = '<svg width="18" height="18" style="stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round;"><use href="#i-star"/></svg>';
   }
 }
 
@@ -2438,7 +2442,7 @@ function toggleFavFromSearch(catKey, itemId, btnEl) {
 // 合流させられる。楽譜自体のマスターデータ（価格・季節等）はmusic_sheet.htmlのMUSIC_SHEETSに
 // 一本化されているため、二重管理を避けて必要な時にそのページ自身を取得する
 // （item_cost.htmlの同名関数・ITEM_IMG_CAT_FILES系の画像取得と同じ考え方）。
-const MUSIC_SHEET_CAT = { key: 'music_sheet', name: '楽譜', icon: '🎼' };
+const MUSIC_SHEET_CAT = { key: 'music_sheet', name: '楽譜', icon: '<svg class="inline-icon" width="20" height="20"><use href="#i-sheet-music"/></svg>' };
 let musicSheetsCache = null;
 let musicSheetsLoadingPromise = null;
 function loadMusicSheetsOnce() {
@@ -2520,11 +2524,11 @@ async function openWishList() {
 function wishCostHtml(cost) {
   if (!cost) return `<span class="wish-cost unknown">${CURRENT_LANG === 'en' ? 'No data' : 'データなし'}</span>`;
   switch (cost.type) {
-    case 'candle': return `<span class="wish-cost">🕯️ ${cost.value}</span>`;
-    case 'starCandle': return `<span class="wish-cost">⭐ ${cost.value}</span>`;
-    case 'heart':  return `<span class="wish-cost">💗 ${cost.value}</span>`;
-    case 'money':  return `<span class="wish-cost money">💴 ¥${Number(cost.value).toLocaleString()}</span>`;
-    case 'ticket': return `<span class="wish-cost unknown">🎫 ${CURRENT_LANG === 'en' ? 'Ticket' : 'チケット'}</span>`;
+    case 'candle': return `<span class="wish-cost"><svg class="inline-icon" width="17" height="17"><use href="#i-candle"/></svg> ${cost.value}</span>`;
+    case 'starCandle': return `<span class="wish-cost"><svg class="inline-icon" width="17" height="17"><use href="#i-star"/></svg> ${cost.value}</span>`;
+    case 'heart':  return `<span class="wish-cost"><svg class="inline-icon" width="17" height="17"><use href="#i-heart"/></svg> ${cost.value}</span>`;
+    case 'money':  return `<span class="wish-cost money"><svg class="inline-icon" width="17" height="17"><use href="#i-coin"/></svg> ${Number(cost.value).toLocaleString()}</span>`;
+    case 'ticket': return `<span class="wish-cost unknown"><svg class="inline-icon" width="17" height="17"><use href="#i-ticket"/></svg> ${CURRENT_LANG === 'en' ? 'Ticket' : 'チケット'}</span>`;
     case 'na':     return `<span class="wish-cost unknown">${CURRENT_LANG === 'en' ? 'Pass/UG item' : 'パス・究極系'}</span>`;
     default:       return `<span class="wish-cost unknown">${CURRENT_LANG === 'en' ? 'Unknown' : '価格不明'}</span>`;
   }
@@ -2564,8 +2568,8 @@ function renderWishList() {
 
   if (rows.length === 0) {
     body.innerHTML = CURRENT_LANG === 'en'
-      ? `<div class="empty-msg">Your wishlist is empty.<br>Add items with the 🛒 button in Item Search.</div>`
-      : `<div class="empty-msg">ウィッシュリストは空です。<br>「アイテム検索」の🛒ボタンで追加できます。</div>`;
+      ? `<div class="empty-msg">Your wishlist is empty.<br>Add items with the <svg class="inline-icon" width="16" height="16"><use href="#i-cart"/></svg> button in Item Search.</div>`
+      : `<div class="empty-msg">ウィッシュリストは空です。<br>「アイテム検索」の<svg class="inline-icon" width="16" height="16"><use href="#i-cart"/></svg>ボタンで追加できます。</div>`;
     return;
   }
 
@@ -2590,11 +2594,11 @@ function renderWishList() {
     <div class="wish-row ${r.owned ? 'owned-item' : ''}">
       <div class="wish-icon">${itemIconHtml(r.cat, r.item)}</div>
       <div class="wish-info">
-        <div class="wish-name">${escapeHtml(trItem(r.item))}${r.owned ? (CURRENT_LANG === 'en' ? ' ✓Owned' : ' ✓入手済み') : ''}</div>
+        <div class="wish-name">${escapeHtml(trItem(r.item))}${r.owned ? (CURRENT_LANG === 'en' ? ' <svg class="inline-icon ok" width="15" height="15"><use href="#i-check"/></svg>Owned' : ' <svg class="inline-icon ok" width="15" height="15"><use href="#i-check"/></svg>入手済み') : ''}</div>
         <div class="wish-meta">${escapeHtml(trCat(r.cat.name))} ・ ${escapeHtml(trEvent(r.item.event))}</div>
       </div>
       ${wishCostHtml(r.cost)}
-      <button class="wish-remove" onclick="removeWishItem('${r.cat.key}','${r.item.id}')" aria-label="${CURRENT_LANG === 'en' ? 'Remove' : '削除'}">✕</button>
+      <button class="wish-remove" onclick="removeWishItem('${r.cat.key}','${r.item.id}')" aria-label="${CURRENT_LANG === 'en' ? 'Remove' : '削除'}"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-close"/></svg></span></button>
     </div>`).join('');
 
   const en = CURRENT_LANG === 'en';
@@ -2602,30 +2606,30 @@ function renderWishList() {
     <div style="margin-top:10px;">${listHtml}</div>
 
     <div class="wish-own-inputs">
-      <label>🕯️ ${en ? 'Owned Candles' : '所持キャンドル'}
+      <label><svg class="inline-icon" width="18" height="18"><use href="#i-candle"/></svg> ${en ? 'Owned Candles' : '所持キャンドル'}
         <input type="number" id="wishOwnCandle" min="0" value="${own.candle}" onchange="saveWishOwnCurrency()">
       </label>
-      <label>⭐ ${en ? 'Owned Star Candles' : '所持星のキャンドル'}
+      <label><svg class="inline-icon" width="18" height="18"><use href="#i-star"/></svg> ${en ? 'Owned Star Candles' : '所持星のキャンドル'}
         <input type="number" id="wishOwnStarCandle" min="0" value="${own.starCandle}" onchange="saveWishOwnCurrency()">
       </label>
-      <label>💗 ${en ? 'Owned Hearts' : '所持ハート'}
+      <label><svg class="inline-icon" width="18" height="18"><use href="#i-heart"/></svg> ${en ? 'Owned Hearts' : '所持ハート'}
         <input type="number" id="wishOwnHeart" min="0" value="${own.heart}" onchange="saveWishOwnCurrency()">
       </label>
     </div>
 
     <div class="wish-total-box">
-      <div class="wish-total-row"><span>🕯️ ${en ? 'Candles needed' : '必要キャンドル合計'}</span><b>${sumCandle}</b></div>
+      <div class="wish-total-row"><span><svg class="inline-icon" width="18" height="18"><use href="#i-candle"/></svg> ${en ? 'Candles needed' : '必要キャンドル合計'}</span><b>${sumCandle}</b></div>
       <div class="wish-total-row"><span>　→ ${en ? 'Still short' : 'あと'}</span>
-        <b class="${lackCandle > 0 ? 'lack' : 'enough'}">${lackCandle > 0 ? lackCandle + (en ? '' : ' 本') : (en ? 'Enough! ✓' : '足りています ✓')}</b></div>
-      <div class="wish-total-row"><span>⭐ ${en ? 'Star Candles needed' : '必要星のキャンドル合計'}</span><b>${sumStarCandle}</b></div>
+        <b class="${lackCandle > 0 ? 'lack' : 'enough'}">${lackCandle > 0 ? lackCandle + (en ? '' : ' 本') : (en ? 'Enough! ' : '足りています ') + '<svg class="inline-icon ok" width="16" height="16"><use href="#i-check"/></svg>'}</b></div>
+      <div class="wish-total-row"><span><svg class="inline-icon" width="18" height="18"><use href="#i-star"/></svg> ${en ? 'Star Candles needed' : '必要星のキャンドル合計'}</span><b>${sumStarCandle}</b></div>
       <div class="wish-total-row"><span>　→ ${en ? 'Still short' : 'あと'}</span>
-        <b class="${lackStarCandle > 0 ? 'lack' : 'enough'}">${lackStarCandle > 0 ? lackStarCandle + (en ? '' : ' 本') : (en ? 'Enough! ✓' : '足りています ✓')}</b></div>
-      <div class="wish-total-row"><span>💗 ${en ? 'Hearts needed' : '必要ハート合計'}</span><b>${sumHeart}</b></div>
+        <b class="${lackStarCandle > 0 ? 'lack' : 'enough'}">${lackStarCandle > 0 ? lackStarCandle + (en ? '' : ' 本') : (en ? 'Enough! ' : '足りています ') + '<svg class="inline-icon ok" width="16" height="16"><use href="#i-check"/></svg>'}</b></div>
+      <div class="wish-total-row"><span><svg class="inline-icon" width="18" height="18"><use href="#i-heart"/></svg> ${en ? 'Hearts needed' : '必要ハート合計'}</span><b>${sumHeart}</b></div>
       <div class="wish-total-row"><span>　→ ${en ? 'Still short' : 'あと'}</span>
-        <b class="${lackHeart > 0 ? 'lack' : 'enough'}">${lackHeart > 0 ? lackHeart + (en ? '' : ' 個') : (en ? 'Enough! ✓' : '足りています ✓')}</b></div>
-      ${sumMoney > 0 ? `<div class="wish-total-row"><span>💴 ${en ? 'Real money total' : '課金合計'}</span><b>¥${sumMoney.toLocaleString()}</b></div>` : ''}
-      ${unknownCount > 0 ? `<div class="wish-total-row"><span>❔ ${en ? 'No price data' : '価格不明・対象外'}</span><b>${unknownCount}${en ? '' : ' 件'}</b></div>` : ''}
-      ${ownedCount > 0 ? `<div class="wish-total-row" style="color:var(--text-2);"><span>✓ ${en ? 'Already owned (excluded)' : '入手済み（合計から除外）'}</span><b>${ownedCount}${en ? '' : ' 件'}</b></div>` : ''}
+        <b class="${lackHeart > 0 ? 'lack' : 'enough'}">${lackHeart > 0 ? lackHeart + (en ? '' : ' 個') : (en ? 'Enough! ' : '足りています ') + '<svg class="inline-icon ok" width="16" height="16"><use href="#i-check"/></svg>'}</b></div>
+      ${sumMoney > 0 ? `<div class="wish-total-row"><span><svg class="inline-icon" width="18" height="18"><use href="#i-coin"/></svg> ${en ? 'Real money total' : '課金合計'}</span><b>¥${sumMoney.toLocaleString()}</b></div>` : ''}
+      ${unknownCount > 0 ? `<div class="wish-total-row"><span><svg class="inline-icon" width="18" height="18"><use href="#i-question"/></svg> ${en ? 'No price data' : '価格不明・対象外'}</span><b>${unknownCount}${en ? '' : ' 件'}</b></div>` : ''}
+      ${ownedCount > 0 ? `<div class="wish-total-row" style="color:var(--text-2);"><span><svg class="inline-icon ok" width="18" height="18"><use href="#i-check"/></svg> ${en ? 'Already owned (excluded)' : '入手済み（合計から除外）'}</span><b>${ownedCount}${en ? '' : ' 件'}</b></div>` : ''}
     </div>`;
 }
 
@@ -2701,7 +2705,7 @@ function renderAcquireLog() {
         <div class="wish-name">${escapeHtml(trItem(e.item))}</div>
         <div class="wish-meta">${escapeHtml(trCat(e.cat.name))} ・ ${fmtDate(e.at)}</div>
       </div>
-      <button class="wish-remove" onclick="removeAcquireLogEntry('${e.itemId}')" aria-label="${en ? 'Delete record' : '記録を削除'}">✕</button>
+      <button class="wish-remove" onclick="removeAcquireLogEntry('${e.itemId}')" aria-label="${en ? 'Delete record' : '記録を削除'}"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-close"/></svg></span></button>
     </div>`).join('');
 
   // 📊 今月/今年の振り返り集計（画像シェアボタン用のプレビュー表示）
@@ -2718,9 +2722,9 @@ function renderAcquireLog() {
   body.innerHTML = `
     <div style="margin-top:10px;">${listHtml}</div>
     <div class="wish-total-box">
-      <div class="wish-total-row"><span>📦 ${en ? 'Total recorded' : '記録件数'}</span><b>${entries.length}${en ? '' : ' 件'}</b></div>
-      <div class="wish-total-row"><span>📅 ${en ? 'Acquired this month' : '今月の入手数'}</span><b>${monthCount}${en ? '' : ' 件'}</b></div>
-      <div class="wish-total-row"><span>🗓️ ${en ? 'Acquired this year' : '今年の入手数'}</span><b>${yearCount}${en ? '' : ' 件'}</b></div>
+      <div class="wish-total-row"><span><svg class="inline-icon" width="18" height="18"><use href="#i-folder"/></svg> ${en ? 'Total recorded' : '記録件数'}</span><b>${entries.length}${en ? '' : ' 件'}</b></div>
+      <div class="wish-total-row"><span><svg class="inline-icon" width="18" height="18"><use href="#i-calendar"/></svg> ${en ? 'Acquired this month' : '今月の入手数'}</span><b>${monthCount}${en ? '' : ' 件'}</b></div>
+      <div class="wish-total-row"><span><svg class="inline-icon" width="18" height="18"><use href="#i-calendar"/></svg> ${en ? 'Acquired this year' : '今年の入手数'}</span><b>${yearCount}${en ? '' : ' 件'}</b></div>
     </div>
     <div class="action-row" style="margin-top:12px;">
       <button class="action-btn twitter full" onclick="shareRecapOnTwitter('month')">${en ? 'Share This Month’s Recap' : '今月の振り返りを画像でシェア'}</button>
@@ -2774,7 +2778,7 @@ function buildRecapExportCardEl(scope) {
   const card = document.createElement('div');
   card.className = 'export-card';
   card.innerHTML = `
-    <div class="exp-brand">${en ? '🗂️ Item Collection Tracker' : '🗂️ アイテム所持率管理'}</div>
+    <div class="exp-brand"><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px;margin-right:3px"><path d="M4 6.5A1.5 1.5 0 0 1 5.5 5h4l1.6 2H18.5A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5Z"/></svg>${en ? 'Item Collection Tracker' : 'アイテム所持率管理'}</div>
     <div class="exp-hero">
       <div class="exp-hero-pct">${count}</div>
       <div class="exp-hero-label">${labelTxt}</div>
@@ -2888,7 +2892,7 @@ function toggleFavorite(catKey, itemId) {
   const btn = document.querySelector(`.rand-fav-btn[data-cat="${catKey}"][data-id="${id}"]`);
   if (btn) {
     btn.classList.toggle('fav-on', nowFav);
-    btn.textContent = nowFav ? '★' : '☆';
+    btn.innerHTML = '<svg width="20" height="20" style="stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round;"><use href="#i-star"/></svg>';
   }
 }
 
@@ -3022,7 +3026,7 @@ function renderCurrentRandom() {
       ? `<button class="rand-fav-btn ${favOn ? 'fav-on' : ''}"
            data-cat="${cat.key}" data-id="${String(picked.id).replace(/"/g, '&quot;')}"
            onclick="handleFavClick(this)" title="${CURRENT_LANG === 'en' ? 'Add to favorites' : 'お気に入り登録'}">
-           ${favOn ? '★' : '☆'}
+           <svg width="20" height="20" style="stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round;"><use href="#i-star"/></svg>
          </button>`
       : '';
 
@@ -3129,10 +3133,10 @@ function renderMyCoordList() {
           <div class="coord-title">${escapeHtml(set.name)}</div>
           <div class="coord-actions">
             ${set.photoDataUrl ? `<img class="coord-photo-thumb" src="${set.photoDataUrl}" alt="" onclick="openCoordPhotoModal(${set.id})" title="${CURRENT_LANG === 'en' ? 'Change Photo' : '写真を変更'}">` : ''}
-            <button class="coord-icon-btn" onclick="openCoordPhotoModal(${set.id})" title="${CURRENT_LANG === 'en' ? 'Attach a Photo' : '写真を添付'}">📷</button>
-            <button class="coord-icon-btn" onclick="shareMyCoordOnTwitter(${set.id})" title="${CURRENT_LANG === 'en' ? 'Share Image on X' : 'Xで画像を共有'}">📤</button>
-            <button class="coord-icon-btn" onclick="shareMyCoordLink(${set.id})" title="${CURRENT_LANG === 'en' ? 'Share as Link' : 'リンクで共有'}">🔗</button>
-            <button class="coord-icon-btn coord-del" onclick="deleteCoord(${set.id})" title="${CURRENT_LANG === 'en' ? 'Delete' : '削除'}">🗑</button>
+            <button class="coord-icon-btn" onclick="openCoordPhotoModal(${set.id})" title="${CURRENT_LANG === 'en' ? 'Attach a Photo' : '写真を添付'}"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-image"/></svg></span></button>
+            <button class="coord-icon-btn" onclick="shareMyCoordOnTwitter(${set.id})" title="${CURRENT_LANG === 'en' ? 'Share Image on X' : 'Xで画像を共有'}"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-upload"/></svg></span></button>
+            <button class="coord-icon-btn" onclick="shareMyCoordLink(${set.id})" title="${CURRENT_LANG === 'en' ? 'Share as Link' : 'リンクで共有'}"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-link"/></svg></span></button>
+            <button class="coord-icon-btn coord-del" onclick="deleteCoord(${set.id})" title="${CURRENT_LANG === 'en' ? 'Delete' : '削除'}"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-trash"/></svg></span></button>
           </div>
         </div>
         <div class="coord-rows">${rows}</div>
@@ -3350,7 +3354,7 @@ function buildCreateForm() {
 
     // 排他グループの先頭にヒントを挿入
     const prefix = cat.key === EXCLUSIVE_KEYS[0]
-      ? `<div class="exclusive-hint">${CURRENT_LANG === 'en' ? '⚠️ Only one of the following 3 categories can be selected' : '⚠️ 以下3カテゴリはどれか1つのみ選択できます'}</div>`
+      ? `<div class="exclusive-hint"><svg class="inline-icon warn" width="18" height="18"><use href="#i-warning"/></svg> ${CURRENT_LANG === 'en' ? 'Only one of the following 3 categories can be selected' : '以下3カテゴリはどれか1つのみ選択できます'}</div>`
       : '';
 
     if (owned.length === 0) {
@@ -3363,7 +3367,7 @@ function buildCreateForm() {
     const selectedId = coordFormSelection[cat.key];
     const noneBtn = `<div class="coord-pick-item coord-pick-none ${!selectedId ? 'selected' : ''}"
         onclick="selectCoordItem('${cat.key}', null)"
-        title="${CURRENT_LANG === 'en' ? 'None' : '選択しない'}">✕</div>`;
+        title="${CURRENT_LANG === 'en' ? 'None' : '選択しない'}"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-close"/></svg></span></div>`;
     const itemBtns = owned.map(i => `<div class="coord-pick-item ${selectedId === i.id ? 'selected' : ''}"
         onclick="selectCoordItem('${cat.key}', '${i.id}')"
         title="${escapeHtml(trItem(i))}">${itemIconHtml(cat, i)}</div>`).join('');
@@ -3422,14 +3426,14 @@ function saveCreatedCoord() {
 const CLOSET_MIN_GRID = 2;
 const CLOSET_MAX_GRID = 5;
 const CLOSET_BG_PRESETS = [
-  { key: 'sakura', label: '🌸', css: 'linear-gradient(160deg, #FFE4EC 0%, #FFC1D9 50%, #FFE9C7 100%)', accent: '🌸', dark: false },
-  { key: 'sky',    label: '☁️', css: 'linear-gradient(160deg, #CDEBFF 0%, #A6D8FF 55%, #E8F6FF 100%)', accent: '☁️', dark: false },
-  { key: 'night',  label: '🌙', css: 'linear-gradient(160deg, #241B4E 0%, #3F2E7A 55%, #6A4FB0 100%)', accent: '⭐', dark: true  },
-  { key: 'peach',  label: '🍑', css: 'linear-gradient(160deg, #FFE0D6 0%, #FFC9B3 55%, #FFD9A0 100%)', accent: '🍑', dark: false },
-  { key: 'forest', label: '🌿', css: 'linear-gradient(160deg, #DCF2E3 0%, #B7E4C7 55%, #EFF7D8 100%)', accent: '🍃', dark: false },
-  { key: 'gold',   label: '✨', css: 'linear-gradient(160deg, #FFF6DA 0%, #FFE18C 55%, #FFCB6B 100%)', accent: '✨', dark: false },
-  { key: 'white',  label: '🤍', css: '#FAFAFC',                                                        accent: '',   dark: false },
-  { key: 'black',  label: '🖤', css: 'linear-gradient(160deg, #2E2E33 0%, #17171A 100%)',              accent: '',   dark: true  },
+  { key: 'sakura', label: 'Sakura', css: 'linear-gradient(160deg, #FFE4EC 0%, #FFC1D9 50%, #FFE9C7 100%)', accent: '<svg width="90" height="90" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="12" cy="12" r="2"/><path d="M12 4a3 3 0 0 1 3 3 3 3 0 0 1-3 3 3 3 0 0 1-3-3 3 3 0 0 1 3-3ZM12 20a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3ZM4 12a3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3 3 3 0 0 1-3-3ZM20 12a3 3 0 0 1-3 3 3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3Z"/></svg>', dark: false },
+  { key: 'sky',    label: 'Sky', css: 'linear-gradient(160deg, #CDEBFF 0%, #A6D8FF 55%, #E8F6FF 100%)', accent: '<svg width="90" height="90" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><path d="M7 18a4 4 0 0 1-.5-7.97A5 5 0 0 1 16.2 8.1 4.5 4.5 0 0 1 17.5 18Z"/></svg>', dark: false },
+  { key: 'night',  label: 'Night', css: 'linear-gradient(160deg, #241B4E 0%, #3F2E7A 55%, #6A4FB0 100%)', accent: '<svg width="90" height="90" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><path d="M12 3.5l2.5 5.6 6.1.6-4.6 4.1 1.3 6-5.3-3.2-5.3 3.2 1.3-6-4.6-4.1 6.1-.6Z"/></svg>', dark: true  },
+  { key: 'peach',  label: 'Peach', css: 'linear-gradient(160deg, #FFE0D6 0%, #FFC9B3 55%, #FFD9A0 100%)', accent: '<svg width="90" height="90" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><path d="M12 6c-3 0-5.5 2.5-5.5 6s2 7 5.5 7 5.5-3.5 5.5-7S15 6 12 6Z"/></svg>', dark: false },
+  { key: 'forest', label: 'Forest', css: 'linear-gradient(160deg, #DCF2E3 0%, #B7E4C7 55%, #EFF7D8 100%)', accent: '<svg width="90" height="90" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><path d="M12 3c-5 2-8 6-8 11a8 8 0 0 0 8 7c5-2 8-6 8-11a8 8 0 0 0-8-7Z"/></svg>', dark: false },
+  { key: 'gold',   label: 'Gold', css: 'linear-gradient(160deg, #FFF6DA 0%, #FFE18C 55%, #FFCB6B 100%)', accent: '<svg width="90" height="90" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><path d="M12 3l1.5 6L20 12l-6.5 1.5L12 21l-1.5-6L4 12l6.5-1.5Z"/></svg>', dark: false },
+  { key: 'white',  label: 'White', css: '#FAFAFC',                                                        accent: '',   dark: false },
+  { key: 'black',  label: 'Black', css: 'linear-gradient(160deg, #2E2E33 0%, #17171A 100%)',              accent: '',   dark: true  },
 ];
 function closetBgPreset(key) {
   return CLOSET_BG_PRESETS.find(p => p.key === key) || CLOSET_BG_PRESETS[0];
@@ -3485,9 +3489,9 @@ function renderClosetList() {
         <div class="coord-header">
           <div class="coord-title">${escapeHtml(set.name)}</div>
           <div class="coord-actions">
-            <button class="coord-icon-btn" onclick="editClosetCollage(${set.id})" title="${CURRENT_LANG === 'en' ? 'Edit' : '編集'}">✏️</button>
-            <button class="coord-icon-btn" onclick="shareClosetOnTwitter(${set.id})" title="${CURRENT_LANG === 'en' ? 'Share Image on X' : 'Xで画像を共有'}">📤</button>
-            <button class="coord-icon-btn coord-del" onclick="deleteClosetCollage(${set.id})" title="${CURRENT_LANG === 'en' ? 'Delete' : '削除'}">🗑</button>
+            <button class="coord-icon-btn" onclick="editClosetCollage(${set.id})" title="${CURRENT_LANG === 'en' ? 'Edit' : '編集'}"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-edit"/></svg></span></button>
+            <button class="coord-icon-btn" onclick="shareClosetOnTwitter(${set.id})" title="${CURRENT_LANG === 'en' ? 'Share Image on X' : 'Xで画像を共有'}"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-upload"/></svg></span></button>
+            <button class="coord-icon-btn coord-del" onclick="deleteClosetCollage(${set.id})" title="${CURRENT_LANG === 'en' ? 'Delete' : '削除'}"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-trash"/></svg></span></button>
           </div>
         </div>
         <div class="closet-mini-board" style="grid-template-columns:repeat(${set.cols}, 1fr); background:${preset.css};">${cellsHtml}</div>
@@ -3577,11 +3581,11 @@ function renderClosetBoard() {
 }
 
 function closetCellEditHtml(cell, i) {
-  if (!cell) return `<div class="closet-cell closet-cell-empty" onclick="openClosetCellPicker(${i})">＋</div>`;
+  if (!cell) return `<div class="closet-cell closet-cell-empty" onclick="openClosetCellPicker(${i})"><svg class="inline-icon" width="20" height="20"><use href="#i-plus"/></svg></div>`;
   if (cell.type === 'photo') return `<div class="closet-cell closet-cell-photo" onclick="openClosetCellPicker(${i})"><img src="${cell.dataUrl}" alt=""></div>`;
   const cat = CATS.find(c => c.key === cell.catKey);
   const item = cat && allItemsCache ? allItemsCache.find(it => it.catKey === cell.catKey && it.id === cell.itemId) : null;
-  return `<div class="closet-cell closet-cell-item" onclick="openClosetCellPicker(${i})">${item && cat ? itemIconHtml(cat, item) : (cat ? catIconHtml(cat) : '？')}</div>`;
+  return `<div class="closet-cell closet-cell-item" onclick="openClosetCellPicker(${i})">${item && cat ? itemIconHtml(cat, item) : (cat ? catIconHtml(cat) : '<svg class=\"inline-icon\" width=\"18\" height=\"18\"><use href=\"#i-question\"/></svg>')}</div>`;
 }
 
 function openClosetCellPicker(index) {
@@ -3673,7 +3677,7 @@ function buildClosetExportCardEl(set) {
   card.style.background = preset.css;
   card.innerHTML = `
     ${preset.accent ? `<div class="cls-exp-accent cls-exp-accent-tl">${preset.accent}</div><div class="cls-exp-accent cls-exp-accent-br">${preset.accent}</div>` : ''}
-    <div class="cls-exp-brand">${CURRENT_LANG === 'en' ? '🗂️ Item Collection Tracker' : '🗂️ アイテム所持率管理'}</div>
+    <div class="cls-exp-brand"><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px;margin-right:3px"><path d="M4 6.5A1.5 1.5 0 0 1 5.5 5h4l1.6 2H18.5A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5Z"/></svg>${CURRENT_LANG === 'en' ? 'Item Collection Tracker' : 'アイテム所持率管理'}</div>
     <div class="cls-exp-title">${escapeHtml(set.name)}</div>
     <div class="cls-exp-board" style="grid-template-columns:repeat(${set.cols}, 1fr);">${cellsHtml}</div>
     ${set.caption ? `<div class="cls-exp-caption">${escapeHtml(set.caption)}</div>` : ''}
@@ -3756,7 +3760,7 @@ function buildExportCardEl(title, items, photoDataUrl) {
   const card = document.createElement('div');
   card.className = 'export-card';
   card.innerHTML = `
-    <div class="exp-brand">${CURRENT_LANG === 'en' ? '🗂️ Item Collection Tracker' : '🗂️ アイテム所持率管理'}</div>
+    <div class="exp-brand"><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px;margin-right:3px"><path d="M4 6.5A1.5 1.5 0 0 1 5.5 5h4l1.6 2H18.5A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5Z"/></svg>${CURRENT_LANG === 'en' ? 'Item Collection Tracker' : 'アイテム所持率管理'}</div>
     <div class="exp-title">${escapeHtml(title)}</div>
     ${photoDataUrl ? `
     <div class="exp-photo-wrap">
@@ -3766,8 +3770,8 @@ function buildExportCardEl(title, items, photoDataUrl) {
         <img class="exp-photo" src="${photoDataUrl}" alt="">
         <div class="exp-photo-caption">${escapeHtml(title)}</div>
       </div>
-      <div class="exp-photo-sticker exp-photo-sticker-1">✨</div>
-      <div class="exp-photo-sticker exp-photo-sticker-2">🎀</div>
+      <div class="exp-photo-sticker exp-photo-sticker-1"><svg width="22" height="22" viewBox="0 0 24 24" style="stroke:#007AFF;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><path d="M12 3l1.5 6L20 12l-6.5 1.5L12 21l-1.5-6L4 12l6.5-1.5Z"/></svg></div>
+      <div class="exp-photo-sticker exp-photo-sticker-2"><svg width="22" height="22" viewBox="0 0 24 24" style="stroke:#007AFF;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><g transform="translate(12 12) scale(1.25) translate(-12 -13.5)"><path d="M12 12L5 6.5v3.5c0 1.2 1 2.2 2.2 2.2H12ZM12 12l7-5.5v3.5c0 1.2-1 2.2-2.2 2.2H12Z"/><circle cx="12" cy="12" r="1.6"/><path d="M12 13.6v6.9M9.3 20.5h5.4"/></g></svg></div>
     </div>` : ''}
     <div class="exp-body">${rows}</div>
   `;
@@ -3792,12 +3796,12 @@ function buildIconGridExportCardEl(items, photoDataUrl, playerName) {
   const card = document.createElement('div');
   card.className = 'grid-card';
   card.innerHTML = `
-    <div class="grid-card-brand">${CURRENT_LANG === 'en' ? '🗂️ Item Collection Tracker' : '🗂️ アイテム所持率管理'}</div>
+    <div class="grid-card-brand"><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px;margin-right:3px"><path d="M4 6.5A1.5 1.5 0 0 1 5.5 5h4l1.6 2H18.5A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5Z"/></svg>${CURRENT_LANG === 'en' ? 'Item Collection Tracker' : 'アイテム所持率管理'}</div>
     <div class="grid-card-body">
       <div class="grid-photo-cell">
         ${photoDataUrl
           ? `<img src="${photoDataUrl}" alt="">`
-          : `<span class="grid-photo-placeholder">📷</span>`}
+          : `<span class="grid-photo-placeholder"><svg width="28" height="28" viewBox="0 0 24 24" style="stroke:rgba(255,255,255,0.35);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><g transform="translate(12 12) scale(1.167) translate(-12 -12)"><path d="M4.5 4.5h15v15h-15Z"/><path d="M4.5 15.5l4.2-4.5a1 1 0 0 1 1.5 0l2.3 2.5 2.5-3a1 1 0 0 1 1.5 0l3 4.5"/><path d="M9 9.5a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4Z"/></g></svg></span>`}
         ${playerName ? `<div class="grid-photo-id">${escapeHtml(playerName)}</div>` : ''}
       </div>
       ${cells}
@@ -3900,8 +3904,8 @@ function openImagePreview(dataUrl, filename, shareText) {
   if (shareText) {
     title.textContent = CURRENT_LANG === 'en' ? 'Save Image & Post to X' : '画像を保存してXへ投稿';
     hint.textContent = CURRENT_LANG === 'en'
-      ? '① Save the image with "Download" below → ② Tap "Open X Post Screen" and attach the saved image to your post'
-      : '① 下の「ダウンロード」で画像を保存 → ② 「Xの投稿画面を開く」を押して、保存した画像を添付して投稿してください';
+      ? '1. Save the image with "Download" below → 2. Tap "Open X Post Screen" and attach the saved image to your post'
+      : '1. 下の「ダウンロード」で画像を保存 → 2. 「Xの投稿画面を開く」を押して、保存した画像を添付して投稿してください';
     document.getElementById('previewTwitterLink').href =
       'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText);
     twRow.style.display = '';
@@ -4083,7 +4087,7 @@ function openCoordLinkPreview(url) {
       <div class="modal-card">
         <div class="modal-header">
           <span class="modal-title">${CURRENT_LANG === 'en' ? 'Share Link' : '共有リンク'}</span>
-          <button class="modal-close" onclick="document.getElementById('coordLinkPreviewOverlay').classList.remove('open')">✕</button>
+          <button class="modal-close" onclick="document.getElementById('coordLinkPreviewOverlay').classList.remove('open')"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-close"/></svg></span></button>
         </div>
         <textarea class="form-input" id="coordLinkPreviewText" readonly
           style="width:100%; min-height:80px; font-size:11px; font-family:monospace; box-sizing:border-box;"
@@ -4152,7 +4156,7 @@ function renderSharedCoordModal() {
     return `
       <div class="coord-item-row">
         <span class="coord-cat">${itemIconHtml(cat, item)} ${trCat(cat.name)}</span>
-        <span class="coord-iname">${escapeHtml(trItem(item))} ${owned ? '✅' : ''}</span>
+        <span class="coord-iname">${escapeHtml(trItem(item))} ${owned ? '<svg class="inline-icon ok" width="16" height="16"><use href="#i-check"/></svg>' : ''}</span>
       </div>`;
   }).join('');
   document.getElementById('sharedCoordBody').innerHTML = `
@@ -4160,7 +4164,7 @@ function renderSharedCoordModal() {
       <div class="coord-header"><div class="coord-title">${escapeHtml(sharedCoordCache.name)}</div></div>
       <div class="coord-rows">${rows || `<div class="empty-msg">${CURRENT_LANG === 'en' ? 'No items could be loaded.' : 'アイテムを読み込めませんでした。'}</div>`}</div>
     </div>
-    <div class="hint" style="margin-top:8px;">✅ ${CURRENT_LANG === 'en' ? '= you already own this' : '＝ 所持済み'}</div>
+    <div class="hint" style="margin-top:8px;"><svg class="inline-icon ok" width="16" height="16"><use href="#i-check"/></svg> ${CURRENT_LANG === 'en' ? '= you already own this' : '＝ 所持済み'}</div>
   `;
 }
 
@@ -4221,7 +4225,7 @@ function toggleWelcomeCard() {
   const icon = document.getElementById('welcomeToggleIcon');
   const expanded = body.style.display !== 'none';
   body.style.display = expanded ? 'none' : 'block';
-  icon.textContent = expanded ? '▶' : '▼';
+  icon.classList.toggle('expanded', !expanded);
 }
 
 function openCustomizeModal() {
@@ -4292,7 +4296,7 @@ function buildOverallExportCardEl(opts = {}) {
   card.className = 'export-card';
   card.style.background = SHARE_THEMES[theme].grad;
   card.innerHTML = `
-    <div class="exp-brand">${CURRENT_LANG === 'en' ? '🗂️ Item Collection Tracker' : '🗂️ アイテム所持率管理'}</div>
+    <div class="exp-brand"><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px;margin-right:3px"><path d="M4 6.5A1.5 1.5 0 0 1 5.5 5h4l1.6 2H18.5A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5Z"/></svg>${CURRENT_LANG === 'en' ? 'Item Collection Tracker' : 'アイテム所持率管理'}</div>
     <div class="exp-hero">
       <div class="exp-hero-pct">${pctTxt}</div>
       <div class="exp-hero-label">${CURRENT_LANG === 'en' ? 'Collection Completion Rate' : 'コレクション達成率'}</div>
@@ -4370,7 +4374,7 @@ async function openFavShare() {
     renderFavItemSelectList();
     document.getElementById('favShareCountText').textContent = favShareItems.length > 0
       ? (CURRENT_LANG === 'en' ? `You currently have ${favShareItems.length} favorite item(s)` : `現在 ${favShareItems.length}件のお気に入りアイテムがあります`)
-      : (CURRENT_LANG === 'en' ? "You haven't favorited any items yet (use the ★ button in the search screen to add some)" : 'お気に入り登録したアイテムがまだありません（検索画面の★ボタンで登録できます）');
+      : (CURRENT_LANG === 'en' ? "You haven't favorited any items yet (use the favorite button in the search screen to add some)" : 'お気に入り登録したアイテムがまだありません（検索画面のお気に入りボタンで登録できます）');
   } catch (e) {
     console.error(e);
     document.getElementById('favShareCountText').textContent = CURRENT_LANG === 'en'
@@ -4523,7 +4527,7 @@ function buildFavExportCardEl(items, comment, style, theme, bgImageDataUrl) {
     card.style.background = SHARE_THEMES[theme] ? SHARE_THEMES[theme].grad : SHARE_THEMES.orange.grad;
   }
   card.innerHTML = `
-    <div class="exp-brand">${CURRENT_LANG === 'en' ? '🗂️ Item Collection Tracker' : '🗂️ アイテム所持率管理'}</div>
+    <div class="exp-brand"><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px;margin-right:3px"><path d="M4 6.5A1.5 1.5 0 0 1 5.5 5h4l1.6 2H18.5A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5Z"/></svg>${CURRENT_LANG === 'en' ? 'Item Collection Tracker' : 'アイテム所持率管理'}</div>
     <div class="exp-title">${CURRENT_LANG === 'en' ? 'Favorite Items' : 'お気に入りアイテム'}</div>
     ${comment ? `<div class="exp-comment">${escapeHtml(comment)}</div>` : ''}
     ${bodyHtml}

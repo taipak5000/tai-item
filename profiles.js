@@ -386,11 +386,11 @@ function pfSyncSettingsUI() {
   if (btn) {
     const mode = getSkyThemeMode();
     const info = {
-      light: { icon: '☀️', label: pfT('ライト', 'Light'), next: pfT('ダーク', 'Dark') },
-      dark: { icon: '🌙', label: pfT('ダーク', 'Dark'), next: pfT('システム', 'System') },
-      system: { icon: '🖥️', label: pfT('システム', 'System'), next: pfT('ライト', 'Light') },
+      light: { icon: 'i-sun', label: pfT('ライト', 'Light'), next: pfT('ダーク', 'Dark') },
+      dark: { icon: 'i-moon', label: pfT('ダーク', 'Dark'), next: pfT('システム', 'System') },
+      system: { icon: 'i-monitor', label: pfT('システム', 'System'), next: pfT('ライト', 'Light') },
     }[mode];
-    btn.textContent = `${info.icon} ${info.label}`;
+    btn.innerHTML = `<svg class="inline-icon" width="15" height="15"><use href="#${info.icon}"/></svg> ${info.label}`;
     btn.setAttribute('aria-label', pfT(
       `テーマ: ${info.label}（タップで${info.next}に切替）`,
       `Theme: ${info.label} (tap to switch to ${info.next})`
@@ -734,10 +734,10 @@ function pfRenderBar() {
   const displayName = pfDisplayName(profile);
   if (bar) {
     bar.innerHTML = `
-      <span class="pf-bar-text" onclick="pfOpenModal()">🗂️ <b>${escapeHtmlPf(displayName)}</b> ${pfT('に切替中（タップで切替）', 'active (tap to switch)')}</span>
-      <button type="button" class="pf-search-btn" onclick="pfDashOpen()" title="${pfT('今日・今週・今月ダッシュボード', 'Today / this week / this month')}">🗓️<span class="pf-dash-urgent-dot" aria-hidden="true" title="${pfT('季節・イベントの終了が近づいています', 'A season or event is ending soon')}"></span></button>
-      <button type="button" class="pf-search-btn" onclick="srchOpen()" title="${pfT('横断検索（アイテム・エモート・精霊・季節）', 'Cross-site search')}">🔍</button>
-      <button type="button" class="pf-search-btn" onclick="settingsOpen()" title="${pfT('⚙️ 表示設定', '⚙️ Display Settings')}">⚙️</button>`;
+      <span class="pf-bar-text" onclick="pfOpenModal()"><svg class="inline-icon" width="18" height="18"><use href="#i-folder"/></svg> <b>${escapeHtmlPf(displayName)}</b> ${pfT('に切替中（タップで切替）', 'active (tap to switch)')}</span>
+      <button type="button" class="pf-search-btn" onclick="pfDashOpen()" title="${pfT('今日・今週・今月ダッシュボード', 'Today / this week / this month')}"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-calendar"/></svg></span><span class="pf-dash-urgent-dot" aria-hidden="true" title="${pfT('季節・イベントの終了が近づいています', 'A season or event is ending soon')}"></span></button>
+      <button type="button" class="pf-search-btn" onclick="srchOpen()" title="${pfT('横断検索（アイテム・エモート・精霊・季節）', 'Cross-site search')}"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-search"/></svg></span></button>
+      <button type="button" class="pf-search-btn" onclick="settingsOpen()" title="${pfT('表示設定', 'Display Settings')}"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-settings"/></svg></span></button>`;
   }
   // 🧭 画面下部ドックの「プロフィール」ボタンにも、現在アクティブなプロフィール名を表示する
   // （上部pf-barを将来的に非表示にしても、今どのプロフィールを使っているかドック側だけで
@@ -780,11 +780,11 @@ function pfRenderFirstVisitHint(afterEl) {
   hint.className = 'pf-hint-banner';
   hint.id = 'firstVisitHintBanner';
   hint.innerHTML = `
-    <span class="pf-hint-banner-text">💡 ${pfT(
-      '共有リンクから来た方へ：🗂️ プロフィール切替で複数の保存枠を使い分けたり、🔄 データ引継ぎでクラウド不要のまま別端末にデータを移せます。',
-      'New here from a shared link? 🗂️ Switch between multiple save-slot profiles, and use 🔄 Data Transfer to move your data to another device — no cloud account needed.'
+    <span class="pf-hint-banner-text"><svg class="inline-icon" width="18" height="18"><use href="#i-lightbulb"/></svg> ${pfT(
+      '共有リンクから来た方へ：プロフィール切替で複数の保存枠を使い分けたり、データ引継ぎでクラウド不要のまま別端末にデータを移せます。',
+      'New here from a shared link? Switch between multiple save-slot profiles, and use Data Transfer to move your data to another device — no cloud account needed.'
     )}</span>
-    <button type="button" class="pf-hint-banner-close" onclick="pfDismissFirstVisitHint()" aria-label="${pfT('閉じる', 'Dismiss')}">×</button>`;
+    <button type="button" class="pf-hint-banner-close" onclick="pfDismissFirstVisitHint()" aria-label="${pfT('閉じる', 'Dismiss')}"><span class="icon-chip" style="width:22px; height:22px;"><svg width="18" height="18"><use href="#i-close"/></svg></span></button>`;
   afterEl.insertAdjacentElement('afterend', hint);
 }
 
@@ -804,20 +804,20 @@ const TITLE_CAT_KEYS = [
 ];
 
 const TITLES = [
-  { id: 'rate25',     icon: '🕯️', name: '灯火の旅人',           nameEn: 'Traveler of the Flame',       descJa: '全アイテムの所持率が25%に到達',   descEn: 'Reached 25% overall ownership',   condition: hwm => hwm.overallPct >= 25 },
-  { id: 'rate50',     icon: '🌙', name: '星屑の収集家',         nameEn: 'Stardust Collector',           descJa: '全アイテムの所持率が50%に到達',   descEn: 'Reached 50% overall ownership',   condition: hwm => hwm.overallPct >= 50 },
-  { id: 'rate75',     icon: '✨', name: '煌めきの探究者',       nameEn: 'Seeker of Radiance',           descJa: '全アイテムの所持率が75%に到達',   descEn: 'Reached 75% overall ownership',   condition: hwm => hwm.overallPct >= 75 },
-  { id: 'rate100',    icon: '👑', name: '光の守護者',           nameEn: 'Guardian of the Light',        descJa: '登録した全アイテムを100%所持',    descEn: 'Reached 100% overall ownership',  condition: hwm => hwm.overallPct >= 100 },
-  { id: 'catmaster1', icon: '🏅', name: 'コレクションの第一歩', nameEn: 'First Steps of a Collection',  descJa: 'いずれか1カテゴリを100%達成',     descEn: 'Completed at least 1 category',   condition: hwm => hwm.masteredCount >= 1 },
-  { id: 'catmaster6', icon: '🏆', name: '熟練コレクター',       nameEn: 'Master Collector',             descJa: '6カテゴリ以上を100%達成',         descEn: 'Completed 6 or more categories',  condition: hwm => hwm.masteredCount >= 6 },
+  { id: 'rate25',     icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-candle"/></svg>', name: '灯火の旅人',           nameEn: 'Traveler of the Flame',       descJa: '全アイテムの所持率が25%に到達',   descEn: 'Reached 25% overall ownership',   condition: hwm => hwm.overallPct >= 25 },
+  { id: 'rate50',     icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-moon"/></svg>', name: '星屑の収集家',         nameEn: 'Stardust Collector',           descJa: '全アイテムの所持率が50%に到達',   descEn: 'Reached 50% overall ownership',   condition: hwm => hwm.overallPct >= 50 },
+  { id: 'rate75',     icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-sparkle"/></svg>', name: '煌めきの探究者',       nameEn: 'Seeker of Radiance',           descJa: '全アイテムの所持率が75%に到達',   descEn: 'Reached 75% overall ownership',   condition: hwm => hwm.overallPct >= 75 },
+  { id: 'rate100',    icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-crown"/></svg>', name: '光の守護者',           nameEn: 'Guardian of the Light',        descJa: '登録した全アイテムを100%所持',    descEn: 'Reached 100% overall ownership',  condition: hwm => hwm.overallPct >= 100 },
+  { id: 'catmaster1', icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-medal"/></svg>', name: 'コレクションの第一歩', nameEn: 'First Steps of a Collection',  descJa: 'いずれか1カテゴリを100%達成',     descEn: 'Completed at least 1 category',   condition: hwm => hwm.masteredCount >= 1 },
+  { id: 'catmaster6', icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-trophy"/></svg>', name: '熟練コレクター',       nameEn: 'Master Collector',             descJa: '6カテゴリ以上を100%達成',         descEn: 'Completed 6 or more categories',  condition: hwm => hwm.masteredCount >= 6 },
   // 💴 ここから：item_cost.html（アイテム別コスト）が計算する「実額」合計のハイウォーターマーク基準。
   // アイテムの所持解除・ギフト扱いへの変更・表示設定の切替などで実額合計は下がり得るため、
   // 生の値ではなくhwm.moneySpentMaxを見る（golden rule: 一度解禁した称号は下方修正しない）
-  { id: 'spend1k',  icon: '💴', name: '灯火の支援者',     nameEn: 'Supporter of the Flame',   descJa: '実額の合計が¥1,000に到達',   descEn: 'Real-money total reached ¥1,000',  condition: hwm => hwm.moneySpentMax >= 1000 },
-  { id: 'spend5k',  icon: '🎁', name: '季節の後援者',     nameEn: "Patron of the Season",     descJa: '実額の合計が¥5,000に到達',   descEn: 'Real-money total reached ¥5,000',  condition: hwm => hwm.moneySpentMax >= 5000 },
-  { id: 'spend15k', icon: '💎', name: '彩りの後援者',     nameEn: 'Patron of Colors',         descJa: '実額の合計が¥15,000に到達',  descEn: 'Real-money total reached ¥15,000', condition: hwm => hwm.moneySpentMax >= 15000 },
-  { id: 'spend30k', icon: '🌌', name: '星空の大後援者',   nameEn: 'Grand Patron of the Stars', descJa: '実額の合計が¥30,000に到達',  descEn: 'Real-money total reached ¥30,000', condition: hwm => hwm.moneySpentMax >= 30000 },
-  { id: 'spend50k', icon: '🌟', name: '光の大後援者',     nameEn: 'Grand Patron of Light',    descJa: '実額の合計が¥50,000に到達',  descEn: 'Real-money total reached ¥50,000', condition: hwm => hwm.moneySpentMax >= 50000 },
+  { id: 'spend1k',  icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-coin"/></svg>', name: '灯火の支援者',     nameEn: 'Supporter of the Flame',   descJa: '実額の合計が¥1,000に到達',   descEn: 'Real-money total reached ¥1,000',  condition: hwm => hwm.moneySpentMax >= 1000 },
+  { id: 'spend5k',  icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-gift"/></svg>', name: '季節の後援者',     nameEn: "Patron of the Season",     descJa: '実額の合計が¥5,000に到達',   descEn: 'Real-money total reached ¥5,000',  condition: hwm => hwm.moneySpentMax >= 5000 },
+  { id: 'spend15k', icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-gem"/></svg>', name: '彩りの後援者',     nameEn: 'Patron of Colors',         descJa: '実額の合計が¥15,000に到達',  descEn: 'Real-money total reached ¥15,000', condition: hwm => hwm.moneySpentMax >= 15000 },
+  { id: 'spend30k', icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-sparkle"/></svg>', name: '星空の大後援者',   nameEn: 'Grand Patron of the Stars', descJa: '実額の合計が¥30,000に到達',  descEn: 'Real-money total reached ¥30,000', condition: hwm => hwm.moneySpentMax >= 30000 },
+  { id: 'spend50k', icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-star"/></svg>', name: '光の大後援者',     nameEn: 'Grand Patron of Light',    descJa: '実額の合計が¥50,000に到達',  descEn: 'Real-money total reached ¥50,000', condition: hwm => hwm.moneySpentMax >= 50000 },
 ];
 
 const TITLES_KEY = 'itemTitles_v1'; // { earned:{<id>:ISO日時}, hwm:{ perCat:{<catKey>:{pctMax}}, overallPct, masteredCount, moneySpentMax } }（nsKeyでプロフィールごとに分離）
@@ -875,11 +875,11 @@ const CROSS_TOOL_TITLE_CATALOG = {
     source: 'エモート所持率管理', sourceEn: 'Emote Ownership Tracker',
     extract: d => Object.keys(d || {}),
     titles: {
-      apprentice:    { icon: '🔰', name: '一芸見習い',       nameEn: 'Emote Apprentice',        descJa: '所持レベル数が全体の10%に到達',       descEn: 'Owned levels reached 10% of the total' },
-      performer:     { icon: '🎭', name: '芸達者',           nameEn: 'Skilled Performer',        descJa: '所持レベル数が全体の50%に到達',       descEn: 'Owned levels reached 50% of the total' },
-      grandmaster:   { icon: '👑', name: 'エモート完全制覇', nameEn: 'Emote Grandmaster',        descJa: '全エモートの全レベルを所持',           descEn: 'Owns every level of every emote' },
-      completionist: { icon: '🗺️', name: '全種踏破',         nameEn: 'Full Collection',          descJa: '全エモートを最低1レベルずつ所持',       descEn: 'Owns at least one level of every emote' },
-      guideFan:      { icon: '🧭', name: '案内人めぐり',     nameEn: 'Guide’s Companion',        descJa: '「案内人」エモートを全種最低1レベルずつ所持', descEn: 'Owns at least one level of every Guide emote' },
+      apprentice:    { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-star"/></svg>', name: '一芸見習い',       nameEn: 'Emote Apprentice',        descJa: '所持レベル数が全体の10%に到達',       descEn: 'Owned levels reached 10% of the total' },
+      performer:     { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-masks"/></svg>', name: '芸達者',           nameEn: 'Skilled Performer',        descJa: '所持レベル数が全体の50%に到達',       descEn: 'Owned levels reached 50% of the total' },
+      grandmaster:   { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-crown"/></svg>', name: 'エモート完全制覇', nameEn: 'Emote Grandmaster',        descJa: '全エモートの全レベルを所持',           descEn: 'Owns every level of every emote' },
+      completionist: { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-map"/></svg>', name: '全種踏破',         nameEn: 'Full Collection',          descJa: '全エモートを最低1レベルずつ所持',       descEn: 'Owns at least one level of every emote' },
+      guideFan:      { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-compass"/></svg>', name: '案内人めぐり',     nameEn: 'Guide’s Companion',        descJa: '「案内人」エモートを全種最低1レベルずつ所持', descEn: 'Owns at least one level of every Guide emote' },
     }
   },
   wings: {
@@ -887,11 +887,11 @@ const CROSS_TOOL_TITLE_CATALOG = {
     source: '羽トラッカー', sourceEn: 'Wings Tracker',
     extract: d => Object.keys(d || {}),
     titles: {
-      cape_lv5:  { icon: '🪶', name: '羽ばたきの証',       nameEn: 'Budding Wings',                descJa: 'ケープレベル5に到達（光の翼20枚）',          descEn: 'Reached Cape Level 5 (20 Wings of Light)' },
-      cape_lv10: { icon: '🧥', name: '旅するケープ使い',   nameEn: 'Traveling Cloak-Bearer',       descJa: 'ケープレベル10に到達（光の翼120枚）',        descEn: 'Reached Cape Level 10 (120 Wings of Light)' },
-      cape_lv13: { icon: '👑', name: '光の翼、極めし者',   nameEn: 'Master of the Winged Light',   descJa: 'ケープレベル最大の13に到達（光の翼250枚）',   descEn: 'Reached the max Cape Level 13 (250 Wings of Light)' },
-      lc_half:   { icon: '🔦', name: '光を辿る探検家',     nameEn: 'Light-Tracing Explorer',       descJa: '光の子を62体（半数）発見',                   descEn: 'Found 62 Children of Light (half)' },
-      lc_all:    { icon: '🌟', name: '光の子コンプリート', nameEn: 'Children of Light Completionist', descJa: '光の子124体すべてを発見',                descEn: 'Found all 124 Children of Light' },
+      cape_lv5:  { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-wing"/></svg>', name: '羽ばたきの証',       nameEn: 'Budding Wings',                descJa: 'ケープレベル5に到達（光の翼20枚）',          descEn: 'Reached Cape Level 5 (20 Wings of Light)' },
+      cape_lv10: { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-hanger"/></svg>', name: '旅するケープ使い',   nameEn: 'Traveling Cloak-Bearer',       descJa: 'ケープレベル10に到達（光の翼120枚）',        descEn: 'Reached Cape Level 10 (120 Wings of Light)' },
+      cape_lv13: { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-crown"/></svg>', name: '光の翼、極めし者',   nameEn: 'Master of the Winged Light',   descJa: 'ケープレベル最大の13に到達（光の翼250枚）',   descEn: 'Reached the max Cape Level 13 (250 Wings of Light)' },
+      lc_half:   { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-flashlight"/></svg>', name: '光を辿る探検家',     nameEn: 'Light-Tracing Explorer',       descJa: '光の子を62体（半数）発見',                   descEn: 'Found 62 Children of Light (half)' },
+      lc_all:    { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-star"/></svg>', name: '光の子コンプリート', nameEn: 'Children of Light Completionist', descJa: '光の子124体すべてを発見',                descEn: 'Found all 124 Children of Light' },
     }
   },
   spirit: {
@@ -899,11 +899,11 @@ const CROSS_TOOL_TITLE_CATALOG = {
     source: '姉妹サイト', sourceEn: 'Sibling Site',
     extract: d => Object.keys(d || {}),
     titles: {
-      pct1:   { icon: '🌱', name: '芽吹きの精霊使い',     nameEn: 'Budding Spirit Keeper',         descJa: '精霊ツリーのノードを1%以上解放した',   descEn: 'Unlocked 1%+ of all spirit tree nodes' },
-      pct10:  { icon: '🕯️', name: '灯火の道しるべ',       nameEn: 'Candlelit Trailblazer',         descJa: '精霊ツリーのノードを10%以上解放した',  descEn: 'Unlocked 10%+ of all spirit tree nodes' },
-      pct25:  { icon: '🌿', name: '深緑の探求者',         nameEn: 'Verdant Explorer',              descJa: '精霊ツリーのノードを25%以上解放した',  descEn: 'Unlocked 25%+ of all spirit tree nodes' },
-      pct50:  { icon: '🌳', name: '満開の森の守り人',     nameEn: 'Guardian of the Blooming Grove', descJa: '精霊ツリーのノードを50%以上解放した', descEn: 'Unlocked 50%+ of all spirit tree nodes' },
-      pct100: { icon: '👑', name: '精霊の森の賢者',       nameEn: 'Sage of the Spirit Forest',     descJa: '精霊ツリーの全ノードをコンプリートした', descEn: 'Unlocked 100% of all spirit tree nodes' },
+      pct1:   { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-leaf"/></svg>', name: '芽吹きの精霊使い',     nameEn: 'Budding Spirit Keeper',         descJa: '精霊ツリーのノードを1%以上解放した',   descEn: 'Unlocked 1%+ of all spirit tree nodes' },
+      pct10:  { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-candle"/></svg>', name: '灯火の道しるべ',       nameEn: 'Candlelit Trailblazer',         descJa: '精霊ツリーのノードを10%以上解放した',  descEn: 'Unlocked 10%+ of all spirit tree nodes' },
+      pct25:  { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-leaf"/></svg>', name: '深緑の探求者',         nameEn: 'Verdant Explorer',              descJa: '精霊ツリーのノードを25%以上解放した',  descEn: 'Unlocked 25%+ of all spirit tree nodes' },
+      pct50:  { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-tree"/></svg>', name: '満開の森の守り人',     nameEn: 'Guardian of the Blooming Grove', descJa: '精霊ツリーのノードを50%以上解放した', descEn: 'Unlocked 50%+ of all spirit tree nodes' },
+      pct100: { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-crown"/></svg>', name: '精霊の森の賢者',       nameEn: 'Sage of the Spirit Forest',     descJa: '精霊ツリーの全ノードをコンプリートした', descEn: 'Unlocked 100% of all spirit tree nodes' },
     }
   },
   score: {
@@ -911,12 +911,12 @@ const CROSS_TOOL_TITLE_CATALOG = {
     source: '姉妹サイト', sourceEn: 'Sibling Site',
     extract: d => ((d && d.earned) || []).map(e => e.id),
     titles: {
-      firstSong:  { icon: '🎼', name: 'はじめの一歩',     nameEn: 'First Step',            descJa: 'はじめての1曲をライブラリに加えた',     descEn: 'Added your first song to the library' },
-      apprentice: { icon: '🎶', name: '作曲家見習い',     nameEn: 'Apprentice Composer',   descJa: '曲を5曲、ライブラリに加えた',           descEn: 'Added 5 songs to the library' },
-      craftsman:  { icon: '🎹', name: '楽譜職人',         nameEn: 'Sheet Music Craftsman', descJa: '曲を20曲、ライブラリに加えた',          descEn: 'Added 20 songs to the library' },
-      legend:     { icon: '🏅', name: '伝説の作曲家',     nameEn: 'Legendary Composer',    descJa: '曲を50曲、ライブラリに加えた',          descEn: 'Added 50 songs to the library' },
-      passionate: { icon: '🔥', name: '情熱の演奏者',     nameEn: 'Passionate Performer',  descJa: '1曲に100音を超える演奏を詰め込んだ',    descEn: 'Packed over 100 notes into a single song' },
-      virtuoso:   { icon: '⚡', name: '超絶技巧',         nameEn: 'Virtuoso',              descJa: '1曲に300音を超える演奏を詰め込んだ',    descEn: 'Packed over 300 notes into a single song' },
+      firstSong:  { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-sheet-music"/></svg>', name: 'はじめの一歩',     nameEn: 'First Step',            descJa: 'はじめての1曲をライブラリに加えた',     descEn: 'Added your first song to the library' },
+      apprentice: { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-music-note"/></svg>', name: '作曲家見習い',     nameEn: 'Apprentice Composer',   descJa: '曲を5曲、ライブラリに加えた',           descEn: 'Added 5 songs to the library' },
+      craftsman:  { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-music-note"/></svg>', name: '楽譜職人',         nameEn: 'Sheet Music Craftsman', descJa: '曲を20曲、ライブラリに加えた',          descEn: 'Added 20 songs to the library' },
+      legend:     { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-medal"/></svg>', name: '伝説の作曲家',     nameEn: 'Legendary Composer',    descJa: '曲を50曲、ライブラリに加えた',          descEn: 'Added 50 songs to the library' },
+      passionate: { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-flame"/></svg>', name: '情熱の演奏者',     nameEn: 'Passionate Performer',  descJa: '1曲に100音を超える演奏を詰め込んだ',    descEn: 'Packed over 100 notes into a single song' },
+      virtuoso:   { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-bolt"/></svg>', name: '超絶技巧',         nameEn: 'Virtuoso',              descJa: '1曲に300音を超える演奏を詰め込んだ',    descEn: 'Packed over 300 notes into a single song' },
     }
   },
   share: {
@@ -924,11 +924,11 @@ const CROSS_TOOL_TITLE_CATALOG = {
     source: '創作物管理ツール', sourceEn: 'Creations Manager',
     extract: d => ((d && d.earned) || []).map(e => e.id),
     titles: {
-      first:      { icon: '🌱', name: 'はじめての一歩',   nameEn: 'First Steps',          descJa: '創作物をはじめて追加した',       descEn: 'Added your first creation' },
-      apprentice: { icon: '🔨', name: '見習い設置職人',   nameEn: 'Apprentice Placer',    descJa: '累計5個の創作物を追加した',      descEn: '5 creations added (lifetime)' },
-      skilled:    { icon: '🏗️', name: '熟練の設置職人',   nameEn: 'Skilled Placer',       descJa: '累計15個の創作物を追加した',     descEn: '15 creations added (lifetime)' },
-      master:     { icon: '🏛️', name: '創作の匠',         nameEn: 'Master Craftsperson',  descJa: '累計30個の創作物を追加した',     descEn: '30 creations added (lifetime)' },
-      legend:     { icon: '👑', name: '伝説の創作者',     nameEn: 'Legendary Creator',    descJa: '累計50個の創作物を追加した',     descEn: '50 creations added (lifetime)' },
+      first:      { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-leaf"/></svg>', name: 'はじめての一歩',   nameEn: 'First Steps',          descJa: '創作物をはじめて追加した',       descEn: 'Added your first creation' },
+      apprentice: { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-hammer"/></svg>', name: '見習い設置職人',   nameEn: 'Apprentice Placer',    descJa: '累計5個の創作物を追加した',      descEn: '5 creations added (lifetime)' },
+      skilled:    { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-hammer"/></svg>', name: '熟練の設置職人',   nameEn: 'Skilled Placer',       descJa: '累計15個の創作物を追加した',     descEn: '15 creations added (lifetime)' },
+      master:     { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-building"/></svg>', name: '創作の匠',         nameEn: 'Master Craftsperson',  descJa: '累計30個の創作物を追加した',     descEn: '30 creations added (lifetime)' },
+      legend:     { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-crown"/></svg>', name: '伝説の創作者',     nameEn: 'Legendary Creator',    descJa: '累計50個の創作物を追加した',     descEn: '50 creations added (lifetime)' },
     }
   },
   nomacan: {
@@ -936,12 +936,12 @@ const CROSS_TOOL_TITLE_CATALOG = {
     source: 'ノマキャン計算機', sourceEn: 'Nomacan Calculator',
     extract: d => Object.keys((d && d.earned) || {}),
     titles: {
-      streak3:  { icon: '🔥', name: '灯し始め',       nameEn: 'Spark of a Streak',  descJa: '3日連続で記録',       descEn: 'Recorded 3 days in a row' },
-      streak7:  { icon: '🕯️', name: '一週間の灯火',   nameEn: "A Week's Flame",     descJa: '7日連続で記録',       descEn: 'Recorded 7 days in a row' },
-      streak30: { icon: '🌟', name: '絶やさぬ灯',     nameEn: 'Unwavering Flame',   descJa: '30日連続で記録',      descEn: 'Recorded 30 days in a row' },
-      hold100:  { icon: '🕯️', name: '灯の蓄え',       nameEn: 'Candle Stockpile',   descJa: '所持本数が100本に到達', descEn: 'Reached 100 candles held' },
-      hold300:  { icon: '🏮', name: '光の貯蔵庫',     nameEn: 'Vault of Light',     descJa: '所持本数が300本に到達', descEn: 'Reached 300 candles held' },
-      hold600:  { icon: '👑', name: '灯火の富豪',     nameEn: 'Candle Baron',       descJa: '所持本数が600本に到達', descEn: 'Reached 600 candles held' },
+      streak3:  { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-flame"/></svg>', name: '灯し始め',       nameEn: 'Spark of a Streak',  descJa: '3日連続で記録',       descEn: 'Recorded 3 days in a row' },
+      streak7:  { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-candle"/></svg>', name: '一週間の灯火',   nameEn: "A Week's Flame",     descJa: '7日連続で記録',       descEn: 'Recorded 7 days in a row' },
+      streak30: { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-star"/></svg>', name: '絶やさぬ灯',     nameEn: 'Unwavering Flame',   descJa: '30日連続で記録',      descEn: 'Recorded 30 days in a row' },
+      hold100:  { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-candle"/></svg>', name: '灯の蓄え',       nameEn: 'Candle Stockpile',   descJa: '所持本数が100本に到達', descEn: 'Reached 100 candles held' },
+      hold300:  { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-candle"/></svg>', name: '光の貯蔵庫',     nameEn: 'Vault of Light',     descJa: '所持本数が300本に到達', descEn: 'Reached 300 candles held' },
+      hold600:  { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-crown"/></svg>', name: '灯火の富豪',     nameEn: 'Candle Baron',       descJa: '所持本数が600本に到達', descEn: 'Reached 600 candles held' },
     }
   },
   starcandle: {
@@ -949,12 +949,12 @@ const CROSS_TOOL_TITLE_CATALOG = {
     source: '星のキャンドル計算機', sourceEn: 'Star Candle Calculator',
     extract: d => Object.keys(d || {}),
     titles: {
-      streak_3:   { icon: '🕯️', name: '灯を絶やさぬ者',       nameEn: 'Flame Unwavering',             descJa: '赤闇を3日連続で取りこぼさず回収',  descEn: 'Collected shard rewards 3 days in a row without missing one' },
-      streak_7:   { icon: '🔥', name: '一週間の灯火番',       nameEn: 'Weeklong Flamekeeper',         descJa: '赤闇を7日連続で取りこぼさず回収',  descEn: 'Collected shard rewards 7 days in a row without missing one' },
-      streak_20:  { icon: '🌌', name: '常夜の灯守',           nameEn: 'Everlasting Flamekeeper',      descJa: '赤闇を20日連続で取りこぼさず回収', descEn: 'Collected shard rewards 20 days in a row without missing one' },
-      candle_30:  { icon: '⭐', name: '星屑の蒐集者',         nameEn: 'Stardust Collector',           descJa: '所持本数が最高30本に到達',        descEn: 'Held 30 candles at once for the first time' },
-      candle_100: { icon: '🌟', name: '百連の灯',             nameEn: 'Hundredfold Flame',            descJa: '所持本数が最高100本に到達',       descEn: 'Held 100 candles at once for the first time' },
-      candle_300: { icon: '👑', name: '星々の帳を統べる者',   nameEn: 'Sovereign of the Starry Veil', descJa: '所持本数が最高300本に到達',       descEn: 'Held 300 candles at once for the first time' },
+      streak_3:   { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-candle"/></svg>', name: '灯を絶やさぬ者',       nameEn: 'Flame Unwavering',             descJa: '赤闇を3日連続で取りこぼさず回収',  descEn: 'Collected shard rewards 3 days in a row without missing one' },
+      streak_7:   { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-flame"/></svg>', name: '一週間の灯火番',       nameEn: 'Weeklong Flamekeeper',         descJa: '赤闇を7日連続で取りこぼさず回収',  descEn: 'Collected shard rewards 7 days in a row without missing one' },
+      streak_20:  { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-sparkle"/></svg>', name: '常夜の灯守',           nameEn: 'Everlasting Flamekeeper',      descJa: '赤闇を20日連続で取りこぼさず回収', descEn: 'Collected shard rewards 20 days in a row without missing one' },
+      candle_30:  { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-star"/></svg>', name: '星屑の蒐集者',         nameEn: 'Stardust Collector',           descJa: '所持本数が最高30本に到達',        descEn: 'Held 30 candles at once for the first time' },
+      candle_100: { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-star"/></svg>', name: '百連の灯',             nameEn: 'Hundredfold Flame',            descJa: '所持本数が最高100本に到達',       descEn: 'Held 100 candles at once for the first time' },
+      candle_300: { icon: '<svg class="inline-icon" width="16" height="16"><use href="#i-crown"/></svg>', name: '星々の帳を統べる者',   nameEn: 'Sovereign of the Starry Veil', descJa: '所持本数が最高300本に到達',       descEn: 'Held 300 candles at once for the first time' },
     }
   },
 };
@@ -1163,7 +1163,7 @@ function renderTitlesPanel() {
     if (!store.earned[t.id]) {
       return `
         <div class="title-badge locked" title="${escapeHtmlPf(pfT('称号は条件を満たすと明らかになります', 'Unlocks when you meet its condition'))}">
-          <span class="title-badge-icon">🔒</span>
+          <span class="title-badge-icon"><svg class="inline-icon" width="14" height="14"><use href="#i-lock"/></svg></span>
           <span class="title-badge-name">？？？</span>
         </div>`;
     }
@@ -1183,8 +1183,8 @@ function refreshTitlesUI() {
   const newlyEarned = checkAndUnlockTitles();
   if (newlyEarned.length && typeof showToast === 'function') {
     const msg = newlyEarned.length === 1
-      ? pfT(`🏆 称号解禁「${newlyEarned[0].name}」`, `🏆 Title unlocked: ${newlyEarned[0].nameEn}`)
-      : pfT(`🏆 称号を${newlyEarned.length}個解禁！`, `🏆 ${newlyEarned.length} titles unlocked!`);
+      ? pfT(`称号解禁「${newlyEarned[0].name}」`, `Title unlocked: ${newlyEarned[0].nameEn}`)
+      : pfT(`称号を${newlyEarned.length}個解禁！`, `${newlyEarned.length} titles unlocked!`);
     showToast(msg);
   }
   renderTitlesPanel();
@@ -1468,7 +1468,9 @@ function pfDashBuildHtml(data) {
   const dailyRows = [];
   const shard = pfDashShardInfo();
   if (shard.hasShard) {
-    const icon = shard.isRed ? '🔴' : '⚫';
+    const icon = shard.isRed
+      ? '<span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#e5484d;"></span>'
+      : '<span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#8e8e93;"></span>';
     const colorLabel = shard.isRed ? pfT('赤闇', 'Red Shard') : pfT('黒闇', 'Black Shard');
     const realmLabel = pfT(SHARD_REALM_JA[shard.realm], SHARD_REALM_EN[shard.realm]);
     const locationLabel = pfT(shard.location.ja, shard.location.en);
@@ -1483,17 +1485,17 @@ function pfDashBuildHtml(data) {
   } else {
     const nextShard = pfDashNextShardTime();
     const nextHtml = nextShard ? `<span class="dash-countdown">${pfT('次まで', 'Next in')} ${pfDashCountdown(nextShard)}</span>` : '';
-    dailyRows.push(pfDashRow('🌑', `${pfT('本日は闇の破片の出現はありません', 'No shard eruptions today')}${nextHtml}`));
+    dailyRows.push(pfDashRow('<svg class="inline-icon" width="16" height="16"><use href="#i-moon"/></svg>', `${pfT('本日は闇の破片の出現はありません', 'No shard eruptions today')}${nextHtml}`));
   }
   const candleRealm = pfDashGrandCandleRealm();
   const candleRealmLabel = pfT(SHARD_REALM_JA[candleRealm], SHARD_REALM_EN[candleRealm]);
-  dailyRows.push(pfDashRow('🕯️', `${pfT('大キャンドル', 'Grand Candle')}：<b>${candleRealmLabel}</b><span class="dash-countdown">${pfT('次の変更まで', 'Changes in')} ${pfDashCountdown(pfDashNextPacificMidnight())}</span>`));
+  dailyRows.push(pfDashRow('<svg class="inline-icon" width="16" height="16"><use href="#i-candle"/></svg>', `${pfT('大キャンドル', 'Grand Candle')}：<b>${candleRealmLabel}</b><span class="dash-countdown">${pfT('次の変更まで', 'Changes in')} ${pfDashCountdown(pfDashNextPacificMidnight())}</span>`));
   const questCandleRealm = pfDashGrandCandleRealm(-1);
   const questCandleRealmLabel = pfT(SHARD_REALM_JA[questCandleRealm], SHARD_REALM_EN[questCandleRealm]);
-  dailyRows.push(pfDashRow('📜', `${pfT('クエスト・シーズンキャンドル', 'Quest & Season Candle')}：<b>${questCandleRealmLabel}</b><span class="dash-countdown">${pfT('次の変更まで', 'Changes in')} ${pfDashCountdown(pfDashNextPacificMidnight())}</span>`));
-  dailyRows.push(pfDashRow('🌋', `${pfT('ウニ焼き', 'Geyser')}<span class="dash-countdown">${pfT('次回まで', 'Next in')} ${pfDashCountdown(pfDashNextEvenHourEvent(5))}</span>`));
-  dailyRows.push(pfDashRow('🍞', `${pfT('パン焼き', 'Bread Baking')}<span class="dash-countdown">${pfT('次回まで', 'Next in')} ${pfDashCountdown(pfDashNextEvenHourEvent(35))}</span>`));
-  dailyRows.push(pfDashRow('🐢', `${pfT('亀闇', 'Turtle Darkness')}<span class="dash-countdown">${pfT('次回まで', 'Next in')} ${pfDashCountdown(pfDashNextEvenHourEvent(50))}</span>`));
+  dailyRows.push(pfDashRow('<svg class="inline-icon" width="16" height="16"><use href="#i-scroll"/></svg>', `${pfT('クエスト・シーズンキャンドル', 'Quest & Season Candle')}：<b>${questCandleRealmLabel}</b><span class="dash-countdown">${pfT('次の変更まで', 'Changes in')} ${pfDashCountdown(pfDashNextPacificMidnight())}</span>`));
+  dailyRows.push(pfDashRow('<svg class="inline-icon" width="16" height="16"><use href="#i-geyser"/></svg>', `${pfT('ウニ焼き', 'Geyser')}<span class="dash-countdown">${pfT('次回まで', 'Next in')} ${pfDashCountdown(pfDashNextEvenHourEvent(5))}</span>`));
+  dailyRows.push(pfDashRow('<svg class="inline-icon" width="16" height="16"><use href="#i-bread"/></svg>', `${pfT('パン焼き', 'Bread Baking')}<span class="dash-countdown">${pfT('次回まで', 'Next in')} ${pfDashCountdown(pfDashNextEvenHourEvent(35))}</span>`));
+  dailyRows.push(pfDashRow('<svg class="inline-icon" width="16" height="16"><use href="#i-turtle"/></svg>', `${pfT('亀闇', 'Turtle Darkness')}<span class="dash-countdown">${pfT('次回まで', 'Next in')} ${pfDashCountdown(pfDashNextEvenHourEvent(50))}</span>`));
   const dailyHtml = dailyRows.join('');
 
   // 種類（イベント/再訪/週間リセット/アップデート/シーズン終了）ではなく、各項目の実際の
@@ -1502,11 +1504,11 @@ function pfDashBuildHtml(data) {
   const bucketRows = { today: [], week: [], month: [] };
   let seasonErrored = false;
   if (data.season && data.season.name && data.season.endDate && new Date() < new Date(data.season.endDate)) {
-    bucketRows.today.push(pfDashRow('🌟', `<b>${escapeHtmlPf(trEvent(data.season.name))}</b> ${pfT('が開催中', 'is currently active')}`));
+    bucketRows.today.push(pfDashRow(seasonPendantIconHtml(data.season.name, 16, 'i-star'), `<b>${escapeHtmlPf(trEvent(data.season.name))}</b> ${pfT('が開催中', 'is currently active')}`));
   }
   pfDashActiveScheduledEvents(data.eventSchedule).forEach(ev => {
     const endDate = new Date(ev.end);
-    bucketRows[pfDashBucketFor(endDate)].push(pfDashRow('🌟', `<b>${escapeHtmlPf(trEvent(ev.name))}</b> ${pfT('が開催中', 'is currently active')}<span class="dash-countdown">${pfT('終了まで', 'Ends in')} ${pfDashCountdown(endDate)}</span>`));
+    bucketRows[pfDashBucketFor(endDate)].push(pfDashRow(seasonPendantIconHtml(ev.name, 16, 'i-star'), `<b>${escapeHtmlPf(trEvent(ev.name))}</b> ${pfT('が開催中', 'is currently active')}<span class="dash-countdown">${pfT('終了まで', 'Ends in')} ${pfDashCountdown(endDate)}</span>`));
   });
   // 複数の来訪(周期的な単独の旅の精霊・期間限定の来訪団など)が同時に進行することがあるため、
   // それぞれ独立した行として表示する（1件にまとめると、片方の来訪が隠れてしまうため）
@@ -1515,19 +1517,19 @@ function pfDashBuildHtml(data) {
     const revisitLabel = rv.active
       ? `${pfT('再訪精霊', 'Revisit Spirit')}${pfT('が来訪中', ' is here now')}`
       : `${pfT('再訪精霊', 'Revisit Spirit')}${pfT('の次回来訪まで', ' returns in')}`;
-    bucketRows[pfDashBucketFor(rv.target)].push(pfDashRow('🕊️', `${revisitLabel}<span class="dash-countdown">${pfDashCountdown(rv.target)}</span>`));
+    bucketRows[pfDashBucketFor(rv.target)].push(pfDashRow('<svg class="inline-icon" width="16" height="16"><use href="#i-wing"/></svg>', `${revisitLabel}<span class="dash-countdown">${pfDashCountdown(rv.target)}</span>`));
   });
   const edenTarget = pfDashNextEdenResetTarget();
-  bucketRows[pfDashBucketFor(edenTarget)].push(pfDashRow('🌩️', `${pfT('原罪', 'Eye of Eden')}：${pfT('週間リセットまで', "Weekly reset in")}<span class="dash-countdown">${pfDashCountdown(edenTarget)}</span><span class="dash-note">${pfT('毎週日曜0時・太平洋時間', 'Every Sunday 00:00 Pacific Time')}</span>`));
+  bucketRows[pfDashBucketFor(edenTarget)].push(pfDashRow('<svg class="inline-icon" width="16" height="16"><use href="#i-bolt"/></svg>', `${pfT('原罪', 'Eye of Eden')}：${pfT('週間リセットまで', "Weekly reset in")}<span class="dash-countdown">${pfDashCountdown(edenTarget)}</span><span class="dash-note">${pfT('毎週日曜0時・太平洋時間', 'Every Sunday 00:00 Pacific Time')}</span>`));
   if (data.nextUpdate && data.nextUpdate.date) {
     const updateTarget = new Date(data.nextUpdate.date);
     if (new Date() < updateTarget) {
-      bucketRows[pfDashBucketFor(updateTarget)].push(pfDashRow('🔧', `${pfT('次回アップデート予定', 'Next Update')}<span class="dash-countdown">${pfDashCountdown(updateTarget)}</span>`));
+      bucketRows[pfDashBucketFor(updateTarget)].push(pfDashRow('<svg class="inline-icon" width="16" height="16"><use href="#i-hammer"/></svg>', `${pfT('次回アップデート予定', 'Next Update')}<span class="dash-countdown">${pfDashCountdown(updateTarget)}</span>`));
     }
   }
   if (data.season && data.season.endDate) {
     const end = new Date(data.season.endDate);
-    bucketRows[pfDashBucketFor(end)].push(pfDashRow('🎨', `${pfT('「', '"')}<b>${escapeHtmlPf(trEvent(data.season.name))}</b>${pfT('」', '"')}${pfT('終了まで', ' ends in')}<span class="dash-countdown">${pfDashCountdown(end)}</span>`));
+    bucketRows[pfDashBucketFor(end)].push(pfDashRow(seasonPendantIconHtml(data.season.name, 16, 'i-palette'), `${pfT('「', '"')}<b>${escapeHtmlPf(trEvent(data.season.name))}</b>${pfT('」', '"')}${pfT('終了まで', ' ends in')}<span class="dash-countdown">${pfDashCountdown(end)}</span>`));
   } else {
     seasonErrored = true;
   }
@@ -1688,7 +1690,7 @@ async function pfReminderCheckNow() {
     if (notified.has(key)) return;
     pfReminderMarkNotified(key);
     try {
-      new Notification(pfT('⏰ まもなく終了', '⏰ Ending soon'), {
+      new Notification(pfT('まもなく終了', 'Ending soon'), {
         body: pfT(`${t.label} — 残り ${pfDashCountdown(t.target)}`, `${t.label} — ${pfDashCountdown(t.target)} left`),
         tag: key,
       });
@@ -1784,12 +1786,13 @@ function pfToggleProfileTitles(id) {
    シーズンハート・イベント通貨はどのサイトにも記録先が無いため、
    新規キー（skyCurrencyExtra_v1）で管理する。
    ================================================================ */
+const PF_CURRENCY_ICON = (name) => `<svg class="inline-icon" width="14" height="14"><use href="#${name}"/></svg>`;
 const PF_CURRENCY_FIELDS = [
-  { key: 'candle',         icon: '🕯️' },
-  { key: 'heart',          icon: '💗' },
-  { key: 'ascendedCandle', icon: '🕯️✨' },
-  { key: 'seasonCandle',   icon: '🕯️🍂' },
-  { key: 'giftPass',       icon: '🎟️' },
+  { key: 'candle',         icon: PF_CURRENCY_ICON('i-candle') },
+  { key: 'heart',          icon: PF_CURRENCY_ICON('i-heart') },
+  { key: 'ascendedCandle', icon: PF_CURRENCY_ICON('i-star') },
+  { key: 'seasonCandle',   icon: PF_CURRENCY_ICON('i-candle') },
+  { key: 'giftPass',       icon: PF_CURRENCY_ICON('i-ticket') },
 ];
 function pfCurrencyLabel(key) {
   const labels = {
@@ -1873,7 +1876,7 @@ function pfSyncCurrencyToggleUI() {
   const body = document.getElementById('pfCurrencyBody');
   const label = document.getElementById('pfCurrencyToggleLabel');
   if (body) body.style.display = pfCurrencyOpen ? '' : 'none';
-  if (label) label.textContent = pfCurrencyOpen ? pfT('閉じる ▲', 'Close ▲') : pfT('開く ▼', 'Open ▼');
+  if (label) label.textContent = pfCurrencyOpen ? pfT('閉じる', 'Close') : pfT('開く', 'Open');
 }
 
 function pfOpenModal() {
@@ -1935,7 +1938,7 @@ function pfRenderModal() {
       ? `<p class="pf-row-titles-empty">${escapeHtmlPf(pfT('まだ称号を獲得していません', 'No titles earned yet'))}</p>`
       : `
         <button type="button" class="pf-row-titles-toggle" aria-expanded="${titlesExpanded}" onclick="pfToggleProfileTitles('${p.id}')">
-          <span class="pf-row-titles-caret">▾</span>${escapeHtmlPf(pfT(`🏆 ${earnedTitles.length}個の称号`, `🏆 ${earnedTitles.length} title${earnedTitles.length === 1 ? '' : 's'}`))}
+          <svg class="pf-row-titles-caret inline-icon" width="13" height="13"><use href="#i-chevron-down"/></svg><svg class="inline-icon" width="13" height="13"><use href="#i-trophy"/></svg> ${escapeHtmlPf(pfT(`${earnedTitles.length}個の称号`, `${earnedTitles.length} title${earnedTitles.length === 1 ? '' : 's'}`))}
         </button>
         ${titlesExpanded ? `<div class="pf-row-titles-list">${earnedTitles.map(t => `
           <div class="pf-row-title-item">
@@ -1950,10 +1953,10 @@ function pfRenderModal() {
       <div class="pf-row ${isActive ? 'active' : ''}">
         <input type="color" class="pf-color-input" value="${colorVal}" title="${pfT('アカウントカラー','Account color')}"
           onchange="pfSetProfileColor('${p.id}', this.value)">
-        <span class="pf-row-name" onclick="switchProfile('${p.id}')">${isActive ? '✅ ' : ''}${escapeHtmlPf(pfDisplayName(p))}</span>
-        ${p.color ? `<button type="button" class="pf-icon-btn pf-color-clear-btn" title="${pfT('カラーを初期値に戻す','Reset color to default')}" onclick="pfClearProfileColor('${p.id}')">↺</button>` : ''}
-        <button type="button" class="pf-icon-btn" title="${pfT('名前を変更','Rename')}" onclick="pfStartRename('${p.id}')">✏️</button>
-        ${list.length > 1 ? `<button type="button" class="pf-icon-btn" title="${pfT('削除','Delete')}" onclick="pfStartDelete('${p.id}')">🗑️</button>` : ''}
+        <span class="pf-row-name" onclick="switchProfile('${p.id}')">${isActive ? '<svg class="inline-icon ok" width="14" height="14"><use href="#i-check"/></svg> ' : ''}${escapeHtmlPf(pfDisplayName(p))}</span>
+        ${p.color ? `<button type="button" class="pf-icon-btn pf-color-clear-btn" title="${pfT('カラーを初期値に戻す','Reset color to default')}" onclick="pfClearProfileColor('${p.id}')"><svg class="inline-icon" width="14" height="14"><use href="#i-sync"/></svg></button>` : ''}
+        <button type="button" class="pf-icon-btn" title="${pfT('名前を変更','Rename')}" onclick="pfStartRename('${p.id}')"><svg class="inline-icon" width="14" height="14"><use href="#i-edit"/></svg></button>
+        ${list.length > 1 ? `<button type="button" class="pf-icon-btn" title="${pfT('削除','Delete')}" onclick="pfStartDelete('${p.id}')"><svg class="inline-icon" width="14" height="14"><use href="#i-trash"/></svg></button>` : ''}
         <div class="pf-row-titles">${titlesBlock}</div>
       </div>`;
   }).join('');
@@ -2146,7 +2149,7 @@ function pfIconSave() {
     return;
   }
   pfIconApply(dataUrl);
-  document.getElementById('iconSaveStatus').textContent = pfT('✅ 保存しました。これでホーム画面に追加すると反映されます', '✅ Saved. It will be applied next time you add this site to your home screen');
+  document.getElementById('iconSaveStatus').textContent = pfT('保存しました。これでホーム画面に追加すると反映されます', 'Saved. It will be applied next time you add this site to your home screen');
 }
 
 function pfIconReset() {
@@ -2195,7 +2198,166 @@ function pfToolsClose() {
   document.getElementById('toolsDrawerPanel').classList.remove('open');
 }
 
+// 季節ペンダントのアイコン画像（necklace.htmlのITEMS_DATAのevent/imgフィールドと同じ内容を、
+// 季節名で引けるように複製したもの）。ダッシュボードやコスト管理・楽譜管理などで「季節名」を
+// 表示する際、汎用の線アイコンの代わりにその季節の実際のペンダント画像を出すために使う。
+const SEASON_PENDANT_ICON = {
+  '感謝の季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/7/73/1_Gratitude.png/revision/latest/scale-to-width-down/51',
+  '光の探求者の季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/51/2_Lightseekers.png/revision/latest/scale-to-width-down/51',
+  '想いを編む季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/d/dc/3_Belonging.png/revision/latest/scale-to-width-down/51',
+  'リズムが弾ける季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/2/25/4_Rhythm.png/revision/latest/scale-to-width-down/51',
+  '魔法の季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/e/e8/5_Enchantment.png/revision/latest/scale-to-width-down/51',
+  '楽園の季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/a/a4/6_Sanctuary.png/revision/latest/scale-to-width-down/51',
+  '預言者の季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/7/76/7_Prophecy.png/revision/latest/scale-to-width-down/51',
+  '夢かなう季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/a/a7/8_Dreams.png/revision/latest/scale-to-width-down/51',
+  '大樹に集う季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/4/47/9_Assembly.png/revision/latest/scale-to-width-down/51',
+  '星の王子さまの季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/2/20/10_Little_Prince.png/revision/latest/scale-to-width-down/51',
+  '羽ばたく季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/4/41/11_Flight.png/revision/latest/scale-to-width-down/51',
+  '深淵の季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/1/15/Season-of-Abyss-Icon.png/revision/latest/scale-to-width-down/51',
+  '表現者たちの季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/1/16/13_SOPerformance_logo.png/revision/latest/scale-to-width-down/51',
+  '砕ケル闇ノ季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/d/d0/14_SOShattering.png/revision/latest/scale-to-width-down/51',
+  'AURORAの季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3a/15-Aurora.png/revision/latest/scale-to-width-down/51',
+  '追慕の季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/d/da/16_SORemembrance_logo.png/revision/latest/scale-to-width-down/51',
+  'ならいの季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/c/c3/17_SOPassage_logo.png/revision/latest/scale-to-width-down/51',
+  '瞬きの季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/5c/Season-of-Moments-icon.png/revision/latest/scale-to-width-down/51',
+  '復古の季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/6/60/Season-of-Revival-icon.png/revision/latest/scale-to-width-down/51',
+  '九色の鹿の季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/5a/Season-of-The-Nine-Colored-Deer-icon.png/revision/latest/scale-to-width-down/51',
+  '巣づくりの季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/8/87/Season-of-Nesting-icon.png/revision/latest/scale-to-width-down/51',
+  '重なる音色の季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3f/Season-of-Duets-icon.png/revision/latest/scale-to-width-down/51',
+  'ムーミンの季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3a/Season-of-Moomin-icon.png/revision/latest/scale-to-width-down/51',
+  '光に染まる季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/b/b0/Season-of-Radiance-icon.png/revision/latest/scale-to-width-down/51',
+  '青い鳥の季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/6/63/Season-of-Blue-Bird-icon.png/revision/latest/scale-to-width-down/51',
+  'ふたつの灯火の季節　前編': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/9/98/Season-of-the-Two-Embers-icon.png/revision/latest/scale-to-width-down/51',
+  '渡りの季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/59/Season-of-Migration-icon.png/revision/latest/scale-to-width-down/51',
+  '光の修繕者の季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/6/60/Season-of-Lightmending-icon.png/revision/latest/scale-to-width-down/51',
+  'カーニバルの季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/51/Season-of-Carnival-icon.png/revision/latest/scale-to-width-down/51',
+  '親愛なるファン・ゴッホへ': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/9/9d/Dear-Van-Gogh-icon.png/revision/latest/scale-to-width-down/51',
+};
+// 季節名からその季節のペンダント画像を小さな丸アイコンとして返す。対応する季節が無い場合
+// （日々イベント等）は従来通り線アイコン（fallbackSymbolId）にフォールバックする。
+function seasonPendantIconHtml(seasonName, size, fallbackSymbolId) {
+  const url = SEASON_PENDANT_ICON[seasonName];
+  if (!url) return `<svg class="inline-icon" width="${size}" height="${size}"><use href="#${fallbackSymbolId}"/></svg>`;
+  const fallbackSvg = `<svg class=&quot;inline-icon&quot; width=&quot;${size}&quot; height=&quot;${size}&quot;><use href=&quot;#${fallbackSymbolId}&quot;/></svg>`;
+  return `<img src="${url}" alt="" loading="lazy" referrerpolicy="no-referrer" width="${size}" height="${size}" style="border-radius:50%;object-fit:cover;vertical-align:-${Math.round(size*0.2)}px;flex-shrink:0;display:inline-block;" onerror="this.outerHTML='${fallbackSvg}'">`;
+}
+
+// 🖼️ 絵文字の代替アイコン一式（線アイコン、24x24、Material Design風）。
+// Canvas 2D APIで各パスを描画・目視確認した上でSVGパスとして書き出したもの。
+// 全14ページ共通のprofiles.jsから注入することで、どのページでも<use href="#i-xxx">
+// が参照できるようにする（各HTMLに個別に埋め込むと重複IDになるため一元管理）。
+function pfInjectIconSprite() {
+  if (document.getElementById('pf-icon-sprite')) return;
+  const style = document.createElement('style');
+  style.id = 'pf-icon-style';
+  style.textContent = `
+    /* 🍎 マテリアル感（Apple Design参考）: 単色の平面ではなく、上から光が当たる
+       ガラス風の質感を薄いグラデーション＋内側ハイライト＋落ち影で表現する。
+       角丸は固定pxではなく%指定にして、サイズが変わってもiOSアプリアイコンの
+       ような「スクイークル」比率を保つ。 */
+    .icon-chip {
+      display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+      background: var(--blue-bg);
+      background-image: linear-gradient(180deg, rgba(255,255,255,0.32), rgba(255,255,255,0) 60%);
+      border-radius: 26%;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35), inset 0 1px 1px rgba(255,255,255,0.5), 0 1px 2px rgba(0,0,0,0.10);
+      color: var(--blue);
+    }
+    .icon-chip svg { display: block; stroke: var(--blue); fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .inline-icon { stroke: var(--blue); fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; vertical-align: -3px; color: var(--blue); }
+    .inline-icon.warn { stroke: var(--orange); }
+    .inline-icon.ok { stroke: var(--green); }
+  `;
+  document.head.appendChild(style);
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.id = 'pf-icon-sprite';
+  svg.setAttribute('aria-hidden', 'true');
+  svg.style.cssText = 'position:absolute; width:0; height:0; overflow:hidden;';
+  svg.innerHTML = `<defs>
+    <symbol id="i-folder" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -12)"><path d="M4 6.5A1.5 1.5 0 0 1 5.5 5h4l1.6 2H18.5A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5Z"/></g></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.458) translate(-12 -12)"><path d="M6 6l12 12M18 6L6 18"/></g></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14Z"/><path d="M21 21l-4.8-4.8"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><path d="M4.5 5.5h15a1 1 0 0 1 1 1V19a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1Z"/><path d="M8 3.5v4M16 3.5v4M3.5 10h17"/></symbol>
+    <symbol id="i-warning" viewBox="0 0 24 24"><path d="M12 4L3 20h18L12 4Z"/><path d="M12 10v4M12 17h.01"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.149) translate(-11.615 -12.385)"><path d="M4 20l1-4.2L15.6 5.2a1.5 1.5 0 0 1 2.1 0l1.1 1.1a1.5 1.5 0 0 1 0 2.1L8.2 19 4 20Z"/><path d="M13.8 6.8l3.4 3.4"/></g></symbol>
+    <symbol id="i-candle" viewBox="0 0 24 24"><path d="M9.5 21h5a1 1 0 0 0 1-1v-7.5a3 3 0 0 0-3-3h-1a3 3 0 0 0-3 3V20a1 1 0 0 0 1 1Z"/><path d="M12 9.5V5M10.3 5.2C10.3 3.7 12 3.5 12 2c0 1.5 1.7 1.7 1.7 3.2 0 .9-.75 1.3-1.7 1.3s-1.7-.4-1.7-1.3Z"/></symbol>
+    <symbol id="i-star-candle" viewBox="0 0 24 24"><path d="M9.5 21h5a1 1 0 0 0 1-1v-7.5a3 3 0 0 0-3-3h-1a3 3 0 0 0-3 3V20a1 1 0 0 0 1 1Z"/><path d="M12 9.5V5M10.3 5.2C10.3 3.7 12 3.5 12 2c0 1.5 1.7 1.7 1.7 3.2 0 .9-.75 1.3-1.7 1.3s-1.7-.4-1.7-1.3Z"/><path fill="currentColor" stroke="none" d="M18 4.7L18.7 6.3L20.3 7L18.7 7.7L18 9.3L17.3 7.7L15.7 7L17.3 6.3Z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.129) translate(-12.25 -12)"><path d="M4.5 12.5l5 5L20 6.5"/></g></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.5l2.5 5.6 6.1.6-4.6 4.1 1.3 6-5.3-3.2-5.3 3.2 1.3-6-4.6-4.1 6.1-.6Z"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20.5c-5-3.5-9-7-9-11.2C3 6 5 4 7.7 4c1.7 0 3.3.9 4.3 2.4C13 4.9 14.6 4 16.3 4 19 4 21 6 21 9.3c0 4.2-4 7.7-9 11.2Z"/></symbol>
+    <symbol id="i-coin" viewBox="0 0 24 24"><path d="M6 3l6 9m6-9l-6 9M12 12v9M8.5 14.5h7M8.5 17.5h7"/></symbol>
+    <symbol id="i-ticket" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -12)"><path d="M4 9a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1.3a1.5 1.5 0 0 0 0 3.4V15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1.3a1.5 1.5 0 0 0 0-3.4Z"/><path d="M12 7v10" stroke-dasharray="1.5 2"/></g></symbol>
+    <symbol id="i-cart" viewBox="0 0 24 24"><path d="M3 4h2l2.5 11h10L20 8H6"/><path d="M9 19a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM17 19a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -12)"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 13v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6"/></g></symbol>
+    <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 4a8 8 0 0 0 0 16c1.2 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1 .8-1.9 1.8-1.9H16a4 4 0 0 0 4-4c0-3.9-3.6-7-8-7Z"/><path d="M9 9v.01M13 7.5v.01M16.5 10v.01M9.5 13.5v.01"/></symbol>
+    <symbol id="i-question" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.167) translate(-12 -12)"><path d="M12 4.5a7.5 7.5 0 1 0 0 15 7.5 7.5 0 0 0 0-15Z"/><path d="M9.5 9.3a2.5 2.5 0 0 1 4.6 1.3c0 1.7-2.1 1.9-2.1 3.4"/><path d="M12 17v.01"/></g></symbol>
+    <symbol id="i-masks" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -12)"><path d="M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16Z"/><path d="M9 10v.01M15 10v.01"/><path d="M8.5 14.5q3.5 3 7 0"/></g></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-6.5-6.1-6.5-11A6.5 6.5 0 0 1 18.5 10c0 4.9-6.5 11-6.5 11Z"/><path d="M12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/></symbol>
+    <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.5 6L20 12l-6.5 1.5L12 21l-1.5-6L4 12l6.5-1.5Z"/></symbol>
+    <symbol id="i-wing" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.281) translate(-10.5 -12.83)"><path d="M4 19c2-6 6-11 13-13-1 6-2 9-6 12-3 2-5 2-7 1Z"/><path d="M7 17c3-2 6-5 8-9"/></g></symbol>
+    <symbol id="i-music-note" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.207) translate(-13.75 -10.75)"><path d="M9 18a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/><path d="M11.5 15.5V5l7-1.5v9"/><path d="M18.5 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/></g></symbol>
+    <symbol id="i-sync" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -12)"><path d="M17 7h-8a4 4 0 0 0-4 4"/><path d="M11 4l-2 3 2 3"/><path d="M7 17h8a4 4 0 0 0 4-4"/><path d="M13 20l2-3-2-3"/></g></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></symbol>
+    <symbol id="i-person" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -12)"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></g></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -12)"><path d="M4 7h16M4 12h16M4 17h16"/></g></symbol>
+    <symbol id="i-lightbulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-6 6c0 2.5 1.5 4 2.5 5.5.5.7.5 1 .5 1.5h6c0-.5 0-.8.5-1.5C16.5 13 18 11.5 18 9a6 6 0 0 0-6-6Z"/></symbol>
+    <symbol id="i-sheet-music" viewBox="0 0 24 24"><path d="M6 4h9l3 3v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z"/><path d="M8 10h8M8 13h8M8 16h5"/></symbol>
+    <symbol id="i-dice" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.25) translate(-12 -12)"><path d="M5 6.5A1.5 1.5 0 0 1 6.5 5h11A1.5 1.5 0 0 1 19 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 17.5Z"/><path d="M8.5 8.5v.01M15.5 8.5v.01M12 12v.01M8.5 15.5v.01M15.5 15.5v.01"/></g></symbol>
+    <symbol id="i-hanger" viewBox="0 0 24 24"><path d="M12 4.2a1.8 1.8 0 1 0-1.8 1.8"/><path d="M12 6v1.6"/><path d="M3.5 17.5 12 11l8.5 6.5"/><path d="M3.5 17.5h17"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.167) translate(-12 -12)"><path d="M4.5 4.5h15v15h-15Z"/><path d="M4.5 15.5l4.2-4.5a1 1 0 0 1 1.5 0l2.3 2.5 2.5-3a1 1 0 0 1 1.5 0l3 4.5"/><path d="M9 9.5a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4Z"/></g></symbol>
+    <symbol id="i-monitor" viewBox="0 0 24 24"><path d="M4 5.5h16a1 1 0 0 1 1 1V16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1Z"/><path d="M9 20.5h6M12 17v3.5"/></symbol>
+    <symbol id="i-keyboard" viewBox="0 0 24 24"><path d="M3.5 7.5A1.5 1.5 0 0 1 5 6h14a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 19 18H5a1.5 1.5 0 0 1-1.5-1.5Z"/><path d="M6.5 9.5h.01M9.5 9.5h.01M12.5 9.5h.01M15.5 9.5h.01M17.5 9.5h.01M6.5 12.5h.01M9.5 12.5h.01M12.5 12.5h.01M15.5 12.5h.01M17.5 12.5h.01M8 15.5h8"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><path d="M12 6.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z"/><path d="M12 2v2M12 20v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2 12h2M20 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.049) translate(-11.66 -12.34)"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></g></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -12)"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/><path d="M4.5 9h15M4.5 15h15"/><path d="M12 4a12 12 0 0 1 0 16"/><path d="M12 4a12 12 0 0 0 0 16"/></g></symbol>
+    <symbol id="i-crown" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -12)"><path d="M4 10l4 3 4-6 4 6 4-3v7H4Z"/></g></symbol>
+    <symbol id="i-medal" viewBox="0 0 24 24"><path d="M8 3l3 8M16 3l-3 8"/><path d="M12 20a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11Z"/><path d="M10 14.5l2-1.2 2 1.2"/></symbol>
+    <symbol id="i-trophy" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.061) translate(-12 -12.25)"><path d="M8 4h8v6a4 4 0 0 1-8 0V4Z"/><path d="M8 5H5.5A1.5 1.5 0 0 0 4 6.5 3.5 3.5 0 0 0 7.5 10H8"/><path d="M16 5h2.5A1.5 1.5 0 0 1 20 6.5 3.5 3.5 0 0 1 16.5 10H16"/><path d="M12 14v3M9 20.5h6M9.5 17.5h5v3h-5Z"/></g></symbol>
+    <symbol id="i-gift" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -12.5)"><path d="M4 9h16v3H4Z"/><path d="M5 12h14v8H5Z"/><path d="M12 9v11"/><path d="M9 9c-1.3 0-2.3-.9-2.3-2S7.7 5 9 5c1.3 0 3 1.7 3 4M15 9c1.3 0 2.3-.9 2.3-2S16.3 5 15 5c-1.3 0-3 1.7-3 4"/></g></symbol>
+    <symbol id="i-gem" viewBox="0 0 24 24"><path d="M6.5 9L12 3l5.5 6L12 20Z"/><path d="M6.5 9h11"/></symbol>
+    <symbol id="i-map" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.074) translate(-12 -12.15)"><path d="M4 6l6-2 4 2 6-2v14l-6 2-4-2-6 2Z"/><path d="M10 4.3v14M14 6.3v14"/></g></symbol>
+    <symbol id="i-compass" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -12)"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/><path d="M14.5 9.5l-1.8 4.2-4.2 1.8 1.8-4.2Z"/></g></symbol>
+    <symbol id="i-flashlight" viewBox="0 0 24 24"><path d="M9 4h6l1.5 2.5v3l-1.5 1.5v9a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-9L7.5 9.5v-3Z"/><path d="M9.5 4V2.5h5V4"/></symbol>
+    <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M12 3c-5 2-8 6-8 11a8 8 0 0 0 8 7c5-2 8-6 8-11a8 8 0 0 0-8-7Z"/><path d="M12 21V9"/></symbol>
+    <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 21c4 0 6-3 6-6.5 0-2-1-3.5-2-5 0 2-1.5 3-2.5 2C14 9 13 6 10 4c1 3-1 5-2.5 7-1 1.3-1.5 2.5-1.5 3.5C6 18 8 21 12 21Z"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3L5 14h5l-1 7 9-12h-5Z"/></symbol>
+    <symbol id="i-hammer" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.389) translate(-11.5 -12.1)"><path d="M14.8 6.2l3 3-2.1 2.1-3-3Z"/><path d="M12.7 8.3l-7.5 7.5v2.2h2.2l7.5-7.5Z"/></g></symbol>
+    <symbol id="i-building" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -12.75)"><path d="M4 20.5h16"/><path d="M5.5 20.5V10L12 5l6.5 5v10.5"/><path d="M8 20.5v-6M12 20.5v-6M16 20.5v-6"/></g></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.097) translate(-12 -12.475)"><path d="M5 7h14"/><path d="M9 7V5.5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1V7"/><path d="M7 7l1 12.5a1 1 0 0 0 1 .95h6a1 1 0 0 0 1-.95L17 7"/><path d="M10 11v5M14 11v5"/></g></symbol>
+    <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M4 7.5A1.5 1.5 0 0 1 5.5 6h11A1.5 1.5 0 0 1 18 7.5V9h1.5A1.5 1.5 0 0 1 21 10.5v7A1.5 1.5 0 0 1 19.5 19h-14A1.5 1.5 0 0 1 4 17.5Z"/><path d="M15.5 14.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -12)"><path d="M6.5 11h11a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1Z"/><path d="M8 11V8a4 4 0 1 1 8 0v3"/></g></symbol>
+    <symbol id="i-tree" viewBox="0 0 24 24"><path d="M12 4a6 6 0 1 0 0 12 6 6 0 0 0 0-12Z"/><path d="M12 16v5"/></symbol>
+    <symbol id="i-scroll" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-13 -12)"><path d="M5 7a2 2 0 1 1 0 4h1.5"/><path d="M19 17a2 2 0 1 0 0-4h-1.5"/><path d="M6.5 7H17a1.5 1.5 0 0 1 1.5 1.5v7a1.5 1.5 0 0 1-1.5 1.5H6.5"/><path d="M9 10.5h6M9 13.5h4"/></g></symbol>
+    <symbol id="i-geyser" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.25) translate(-12 -12)"><path d="M5 19h14"/><path d="M8 19c0-3 1.5-5 4-5s4 2 4 5"/><path d="M12 12V5"/><path d="M9.5 8l2.5-3 2.5 3"/></g></symbol>
+    <symbol id="i-bread" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -13.75)"><path d="M4 14a8 5 0 0 1 16 0v2.5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="M9 12l1-3M13.5 12l1-3"/></g></symbol>
+    <symbol id="i-turtle" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.389) translate(-12 -12)"><path d="M12 8a6 4.2 0 0 0-6 4.2A6 4.2 0 0 0 12 16.4a6 4.2 0 0 0 6-4.2A6 4.2 0 0 0 12 8Z"/><path d="M12 8V6M8 10.5l-2.3-1.2M16 10.5l2.3-1.2M8.3 14l-2 1.4M15.7 14l2 1.4M10.3 16l-1 2M13.7 16l1 2"/></g></symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.458) translate(-12 -12)"><path d="M6 9l6 6 6-6"/></g></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.458) translate(-12 -12)"><path d="M9 6l6 6-6 6"/></g></symbol>
+    <symbol id="i-chevron-left" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.25) translate(-11.5 -12)"><path d="M15 5l-7 7 7 7"/></g></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.25) translate(-12 -12)"><path d="M12 5v14M5 12h14"/></g></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.25) translate(-12 -12)"><path d="M5 12h14"/></g></symbol>
+    <symbol id="i-tap" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12.5 -11)"><path d="M6 3l4.5 15.5 2-6 6-2L6 3Z"/><path d="M14 14l5 5"/></g></symbol>
+    <symbol id="i-shoe" viewBox="0 0 24 24"><path d="M4 18v-3.2c0-.8.5-1.5 1.3-1.8L9 11.5l3-3a2 2 0 0 1 2.6-.2L17 10h2a2 2 0 0 1 2 2v3a3 3 0 0 1-3 3H5a1 1 0 0 1-1-1Z"/><path d="M4 18h17"/></symbol>
+    <symbol id="i-necklace" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -12)"><path d="M5 4c0 5.5 3 9 7 9s7-3.5 7-9"/><path d="M12 13v2.3"/><circle cx="12" cy="17.7" r="2.3"/></g></symbol>
+    <symbol id="i-scissors" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.207) translate(-12.75 -12)"><circle cx="7.5" cy="8" r="2"/><circle cx="7.5" cy="16" r="2"/><path d="M9 9.5L20 17M9 14.5L20 7"/></g></symbol>
+    <symbol id="i-hat" viewBox="0 0 24 24"><path d="M4 13c0-4.5 3.5-8 8-8s8 3.5 8 8"/><path d="M2.5 13h19"/><path d="M6 13v1.5A2.5 2.5 0 0 0 8.5 17h7a2.5 2.5 0 0 0 2.5-2.5V13"/></symbol>
+    <symbol id="i-headphones" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -11.25)"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><path d="M4 14a1.5 1.5 0 0 1 1.5-1.5h1A1.5 1.5 0 0 1 8 14v3a1.5 1.5 0 0 1-1.5 1.5h-1A1.5 1.5 0 0 1 4 17Z"/><path d="M16 14a1.5 1.5 0 0 1 1.5-1.5h1a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-1a1.5 1.5 0 0 1-1.5-1.5Z"/></g></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.167) translate(-12.5 -11.5)"><path d="M9 5H6.5A1.5 1.5 0 0 0 5 6.5v11A1.5 1.5 0 0 0 6.5 19h11a1.5 1.5 0 0 0 1.5-1.5V15"/><path d="M14 4h6v6"/><path d="M20 4L10 14"/></g></symbol>
+    <symbol id="i-flower" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -12)"><circle cx="12" cy="12" r="2"/><path d="M12 4a3 3 0 0 1 3 3 3 3 0 0 1-3 3 3 3 0 0 1-3-3 3 3 0 0 1 3-3ZM12 20a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3ZM4 12a3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3 3 3 0 0 1-3-3ZM20 12a3 3 0 0 1-3 3 3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3Z"/></g></symbol>
+    <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18a4 4 0 0 1-.5-7.97A5 5 0 0 1 16.2 8.1 4.5 4.5 0 0 1 17.5 18Z"/></symbol>
+    <symbol id="i-peach" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.108) translate(-12 -11.1)"><path d="M12 6c-3 0-5.5 2.5-5.5 6s2 7 5.5 7 5.5-3.5 5.5-7S15 6 12 6Z"/><path d="M12 6c0-1.2.6-2.2 1.8-2.8"/><path d="M8.6 8.3c0-2 .6-3.3 1.8-4.2"/></g></symbol>
+    <symbol id="i-x-logo" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.25) translate(-12 -12)"><path d="M5 5l14 14M19 5L5 19"/></g></symbol>
+    <symbol id="i-ribbon" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.25) translate(-12 -13.5)"><path d="M12 12L5 6.5v3.5c0 1.2 1 2.2 2.2 2.2H12ZM12 12l7-5.5v3.5c0 1.2-1 2.2-2.2 2.2H12Z"/><circle cx="12" cy="12" r="1.6"/><path d="M12 13.6v6.9M9.3 20.5h5.4"/></g></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.167) translate(-12 -12)"><path d="M4.5 4.5h6.5v6.5h-6.5Z"/><path d="M13 4.5h6.5v6.5h-6.5Z"/><path d="M4.5 13h6.5v6.5h-6.5Z"/><path d="M13 13h6.5v6.5h-6.5Z"/></g></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -12)"><path d="M12 4v11M8 11l4 4 4-4"/><path d="M5 13v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6"/></g></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M12 3.2a1.3 1.3 0 0 0-1.3 1.3v.4C8.6 5.5 7 7.8 7 10.4V14l-1.8 2.8h13.6L17 14v-3.6c0-2.6-1.6-4.9-3.7-5.5v-.4A1.3 1.3 0 0 0 12 3.2Z"/><path d="M9.8 18.3a2.2 2.2 0 0 0 4.4 0"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.167) translate(-12 -12)"><path d="M12 4.5a7.5 7.5 0 1 0 0 15 7.5 7.5 0 0 0 0-15Z"/><path d="M12 8.2V12.3l3 1.8"/></g></symbol>
+  </defs>`;
+  document.body.insertAdjacentElement('afterbegin', svg);
+}
+
 function pfInit() {
+  pfInjectIconSprite();
   ensureProfilesInit();
   pfInjectStyle();
   pfApplyThemeColor(getActiveProfile().color);
@@ -2242,7 +2404,7 @@ function pfInit() {
   overlay.onclick = (e) => { if (e.target === overlay) pfCloseModal(); };
   overlay.innerHTML = `
     <div class="pf-modal-card">
-      <h3>🗂️ ${pfT('プロフィール（保存枠）','Profiles')}</h3>
+      <h3><svg class="inline-icon" width="20" height="20"><use href="#i-folder"/></svg> ${pfT('プロフィール（保存枠）','Profiles')}</h3>
       <div id="pfModalBody"></div>
       <div class="pf-add-row">
         <input type="text" class="pf-input" id="pfNewName" placeholder="${pfT('例: サブ垢1','e.g. Sub Account 1')}" maxlength="30">
@@ -2254,12 +2416,12 @@ function pfInit() {
       )}</div>
       <div class="pf-currency-section">
         <div class="pf-currency-title" onclick="pfToggleCurrency()">
-          <span>💰 ${pfT('所持通貨', 'Owned Currency')}</span>
-          <span class="pf-currency-toggle-label" id="pfCurrencyToggleLabel">${pfT('閉じる ▲', 'Close ▲')}</span>
+          <span><svg class="inline-icon" width="15" height="15"><use href="#i-wallet"/></svg> ${pfT('所持通貨', 'Owned Currency')}</span>
+          <span class="pf-currency-toggle-label" id="pfCurrencyToggleLabel">${pfT('閉じる', 'Close')}</span>
         </div>
         <div id="pfCurrencyBody"></div>
       </div>
-      <button type="button" class="pf-icon-btn" style="width:100%; margin-top:10px; padding:8px;" onclick="dmOpenModal()">💾 ${pfT('データのバックアップ・復元・削除','Backup / restore / erase data')}</button>
+      <button type="button" class="pf-icon-btn" style="width:100%; margin-top:10px; padding:8px;" onclick="dmOpenModal()"><svg class="inline-icon" width="14" height="14"><use href="#i-sync"/></svg> ${pfT('データのバックアップ・復元・削除','Backup / restore / erase data')}</button>
       <button type="button" class="pf-close-btn" onclick="pfCloseModal()">${pfT('閉じる','Close')}</button>
     </div>`;
   document.body.appendChild(overlay);
@@ -2270,14 +2432,14 @@ function pfInit() {
   searchOverlay.onclick = (e) => { if (e.target === searchOverlay) srchClose(); };
   searchOverlay.innerHTML = `
     <div class="pf-modal-card srch-modal-card">
-      <h3>🔍 ${pfT('横断検索', 'Cross-site Search')}</h3>
+      <h3><svg class="inline-icon" width="20" height="20"><use href="#i-search"/></svg> ${pfT('横断検索', 'Cross-site Search')}</h3>
       <input type="search" class="srch-input" id="srchInput" placeholder="${pfT('名前で検索（例: ケープ、砕ケル、バイオリン…）', 'Search by name…')}" oninput="srchOnInput()">
       <div class="srch-status" id="srchStatus">${pfT('2文字以上で検索できます', 'Type at least 2 characters')}</div>
       <div class="srch-bulk-bar" id="srchBulkBar">
         <span class="srch-bulk-count" id="srchBulkCount"></span>
         <div class="srch-bulk-actions">
-          <button type="button" class="pf-icon-btn" onclick="srchBulkAddFav()">⭐ ${pfT('お気に入りに追加', 'Add to Favorites')}</button>
-          <button type="button" class="pf-icon-btn" onclick="srchBulkAddWish()">🛒 ${pfT('ウィッシュリストに追加', 'Add to Wishlist')}</button>
+          <button type="button" class="pf-icon-btn" onclick="srchBulkAddFav()"><svg class="inline-icon" width="14" height="14"><use href="#i-star"/></svg> ${pfT('お気に入りに追加', 'Add to Favorites')}</button>
+          <button type="button" class="pf-icon-btn" onclick="srchBulkAddWish()"><svg class="inline-icon" width="14" height="14"><use href="#i-cart"/></svg> ${pfT('ウィッシュリストに追加', 'Add to Wishlist')}</button>
           <button type="button" class="pf-icon-btn" onclick="srchClearSelection()">${pfT('選択を解除', 'Clear Selection')}</button>
         </div>
       </div>
@@ -2292,17 +2454,17 @@ function pfInit() {
   dmOverlay.onclick = (e) => { if (e.target === dmOverlay) dmCloseModal(); };
   dmOverlay.innerHTML = `
     <div class="pf-modal-card">
-      <h3>💾 ${pfT('データのバックアップ・復元・削除', 'Backup / Restore / Erase Data')}</h3>
+      <h3><svg class="inline-icon" width="20" height="20"><use href="#i-sync"/></svg> ${pfT('データのバックアップ・復元・削除', 'Backup / Restore / Erase Data')}</h3>
       <div class="pf-hint" style="margin:0 0 14px;">${pfT(
         'このブラウザに保存されている taipak5000.github.io 系ツール（item・wings・companion 等）のデータをまとめて書き出し・読み込み・削除できます。全プロフィール分がまとめて対象になります。',
         'Back up, restore, or erase all locally-stored data for the taipak5000.github.io tool suite (item, wings, companion, etc.) at once. This covers all profiles together.'
       )}</div>
-      <button type="button" class="pf-add-btn" style="width:100%; margin-bottom:8px;" onclick="dmExport()">⬇️ ${pfT('データをエクスポート（ファイルに保存）','Export data (save to file)')}</button>
+      <button type="button" class="pf-add-btn" style="width:100%; margin-bottom:8px;" onclick="dmExport()"><svg class="inline-icon" width="14" height="14"><use href="#i-download"/></svg> ${pfT('データをエクスポート（ファイルに保存）','Export data (save to file)')}</button>
       <input type="file" id="dmImportFile" accept="application/json" style="display:none" onchange="dmImportFileSelected(event)">
-      <button type="button" class="pf-icon-btn" style="width:100%; margin-bottom:8px; padding:8px;" onclick="document.getElementById('dmImportFile').click()">⬆️ ${pfT('ファイルからインポート','Import from file')}</button>
+      <button type="button" class="pf-icon-btn" style="width:100%; margin-bottom:8px; padding:8px;" onclick="document.getElementById('dmImportFile').click()"><svg class="inline-icon" width="14" height="14"><use href="#i-upload"/></svg> ${pfT('ファイルからインポート','Import from file')}</button>
       <div id="dmImportConfirmArea"></div>
       <div id="dmWipeArea">
-        <button type="button" class="pf-icon-btn pf-row-btn-danger" style="width:100%; padding:8px;" onclick="dmStartWipe()">🗑️ ${pfT('全データを削除','Erase all data')}</button>
+        <button type="button" class="pf-icon-btn pf-row-btn-danger" style="width:100%; padding:8px;" onclick="dmStartWipe()"><svg class="inline-icon" width="14" height="14"><use href="#i-trash"/></svg> ${pfT('全データを削除','Erase all data')}</button>
       </div>
       <div id="dmStatus" class="pf-hint"></div>
       <button type="button" class="pf-close-btn" onclick="dmCloseModal()">${pfT('閉じる', 'Close')}</button>
@@ -2315,18 +2477,18 @@ function pfInit() {
   dashOverlay.onclick = (e) => { if (e.target === dashOverlay) pfDashClose(); };
   dashOverlay.innerHTML = `
     <div class="pf-modal-card">
-      <h3>🗓️ ${pfT('今日・今週・今月', 'Today / This Week / This Month')}</h3>
+      <h3><svg class="inline-icon" width="20" height="20"><use href="#i-calendar"/></svg> ${pfT('今日・今週・今月', 'Today / This Week / This Month')}</h3>
       <div id="dashBody"><div class="pf-hint">${pfT('読み込み中…', 'Loading…')}</div></div>
       <div class="dash-section">
-        <p class="dash-section-label">🔔 ${pfT('通知リマインダー', 'Reminder Notifications')}</p>
+        <p class="dash-section-label"><svg class="inline-icon" width="15" height="15"><use href="#i-bell"/></svg> ${pfT('通知リマインダー', 'Reminder Notifications')}</p>
         <div class="dash-row" style="align-items:center;">
-          <span class="dash-row-icon">🔔</span>
+          <span class="dash-row-icon icon-chip" style="width:22px; height:22px;"><svg width="17" height="17"><use href="#i-bell"/></svg></span>
           <span class="dash-row-text">${pfT('季節・イベントの終了やリセットが近づいたら通知する', 'Notify me when a season, event, or reset is about to end')}</span>
           <input type="checkbox" id="dashReminderCheckbox" style="width:19px; height:19px; flex-shrink:0; cursor:pointer;"
             onchange="pfReminderToggle(this.checked)">
         </div>
         <div class="dash-row" style="align-items:center;">
-          <span class="dash-row-icon">⏱️</span>
+          <span class="dash-row-icon icon-chip" style="width:22px; height:22px;"><svg width="17" height="17"><use href="#i-clock"/></svg></span>
           <span class="dash-row-text">${pfT('通知するタイミング', 'Remind me')}</span>
           <select id="dashReminderMinutes" class="pf-icon-btn" onchange="pfReminderSaveMinutes(this.value)">
             <option value="10">${pfT('10分前', '10 min before')}</option>
@@ -2349,21 +2511,21 @@ function pfInit() {
   settingsOverlay.onclick = (e) => { if (e.target === settingsOverlay) settingsClose(); };
   settingsOverlay.innerHTML = `
     <div class="pf-modal-card">
-      <h3>⚙️ ${pfT('表示設定', 'Display Settings')}</h3>
+      <h3><svg class="inline-icon" width="20" height="20"><use href="#i-settings"/></svg> ${pfT('表示設定', 'Display Settings')}</h3>
 
       <div class="dash-section">
-        <p class="dash-section-label">🌙 ${pfT('表示', 'Display')}</p>
+        <p class="dash-section-label"><svg class="inline-icon" width="15" height="15"><use href="#i-monitor"/></svg> ${pfT('表示', 'Display')}</p>
         <div class="dash-row" style="align-items:center;">
-          <span class="dash-row-icon">🎨</span>
+          <span class="dash-row-icon icon-chip" style="width:22px; height:22px;"><svg width="17" height="17"><use href="#i-palette"/></svg></span>
           <span class="dash-row-text">${pfT('テーマ', 'Theme')}</span>
           <button type="button" class="pf-icon-btn" id="settingsThemeBtn" onclick="toggleTheme()"></button>
         </div>
       </div>
 
       <div class="dash-section">
-        <p class="dash-section-label">⌨️ ${pfT('キーボードショートカット', 'Keyboard Shortcuts')}</p>
+        <p class="dash-section-label"><svg class="inline-icon" width="15" height="15"><use href="#i-keyboard"/></svg> ${pfT('キーボードショートカット', 'Keyboard Shortcuts')}</p>
         <div class="dash-row" style="align-items:center;">
-          <span class="dash-row-icon">⌨️</span>
+          <span class="dash-row-icon icon-chip" style="width:22px; height:22px;"><svg width="17" height="17"><use href="#i-keyboard"/></svg></span>
           <span class="dash-row-text">${pfT('ショートカットを有効にする', 'Enable keyboard shortcuts')}</span>
           <input type="checkbox" id="settingsShortcutsCheckbox" style="width:19px; height:19px; flex-shrink:0; cursor:pointer;"
             onchange="settingsSaveShortcutsPref(this.checked)">
@@ -2383,16 +2545,16 @@ function pfInit() {
       </div>
 
       <div class="dash-section">
-        <p class="dash-section-label">🎨 ${pfT('表示のカスタマイズ', 'Display Customization')}</p>
+        <p class="dash-section-label"><svg class="inline-icon" width="15" height="15"><use href="#i-palette"/></svg> ${pfT('表示のカスタマイズ', 'Display Customization')}</p>
         <div class="dash-row" style="align-items:center;">
-          <span class="dash-row-icon">🎨</span>
+          <span class="dash-row-icon icon-chip" style="width:22px; height:22px;"><svg width="17" height="17"><use href="#i-palette"/></svg></span>
           <span class="dash-row-text">${pfT('ホーム画面アイコン', 'Home Screen Icon')}</span>
           <button type="button" class="pf-icon-btn" onclick="settingsClose(); pfIconOpenModal();">${pfT('開く', 'Open')}</button>
         </div>
       </div>
 
       <div class="dash-section">
-        <p class="dash-section-label">🌐 ${pfT('言語 / Language', 'Language')}</p>
+        <p class="dash-section-label"><svg class="inline-icon" width="15" height="15"><use href="#i-globe"/></svg> ${pfT('言語 / Language', 'Language')}</p>
         <div style="display:flex; gap:8px;">
           <button type="button" class="pf-icon-btn" id="settingsLangJaBtn" onclick="if(getLang()!=='ja')setLang('ja')">日本語</button>
           <button type="button" class="pf-icon-btn" id="settingsLangEnBtn" onclick="if(getLang()!=='en')setLang('en')">English</button>
@@ -2415,19 +2577,19 @@ function pfInit() {
   dock.setAttribute('aria-label', pfT('クイックメニュー', 'Quick menu'));
   dock.innerHTML = `
     <button type="button" onclick="pfOpenModal()">
-      <span class="site-dock-icon">🗂️</span>
+      <span class="site-dock-icon"><span class="icon-chip" style="width:28px; height:28px;"><svg width="22" height="22"><use href="#i-folder"/></svg></span></span>
       <span class="site-dock-label" id="siteDockProfileLabel">${pfT('プロフィール', 'Profiles')}</span>
     </button>
     <button type="button" onclick="pfDashOpen()">
-      <span class="site-dock-icon">🗓️<span class="pf-dash-urgent-dot" aria-hidden="true" title="${pfT('季節・イベントの終了が近づいています', 'A season or event is ending soon')}"></span></span>
+      <span class="site-dock-icon"><span class="icon-chip" style="width:28px; height:28px;"><svg width="22" height="22"><use href="#i-calendar"/></svg></span><span class="pf-dash-urgent-dot" aria-hidden="true" title="${pfT('季節・イベントの終了が近づいています', 'A season or event is ending soon')}"></span></span>
       <span class="site-dock-label">${pfT('ダッシュボード', 'Dashboard')}</span>
     </button>
     <button type="button" onclick="pfToolsOpen()">
-      <span class="site-dock-icon">☰</span>
+      <span class="site-dock-icon"><span class="icon-chip" style="width:28px; height:28px;"><svg width="22" height="22"><use href="#i-menu"/></svg></span></span>
       <span class="site-dock-label">${pfT('他のツール', 'Other Tools')}</span>
     </button>
     <button type="button" onclick="settingsOpen()">
-      <span class="site-dock-icon">⚙️</span>
+      <span class="site-dock-icon"><span class="icon-chip" style="width:28px; height:28px;"><svg width="22" height="22"><use href="#i-settings"/></svg></span></span>
       <span class="site-dock-label">${pfT('表示設定', 'Settings')}</span>
     </button>`;
   document.body.appendChild(dock);
@@ -2440,14 +2602,14 @@ function pfInit() {
   iconOverlay.onclick = (e) => { if (e.target === iconOverlay) pfIconCloseModal(); };
   iconOverlay.innerHTML = `
     <div class="pf-modal-card">
-      <h3>🎨 ${pfT('ホーム画面アイコンをカスタマイズ', 'Customize Home Screen Icon')}</h3>
+      <h3><svg class="inline-icon" width="20" height="20"><use href="#i-palette"/></svg> ${pfT('ホーム画面アイコンをカスタマイズ', 'Customize Home Screen Icon')}</h3>
       <p class="pf-hint">${pfT(
         'スマホの「ホーム画面に追加」をしたときのアイコンを、好きな絵文字や画像に変更できます。追加する前に設定してください。追加した後に変更しても、既に追加済みのアイコンは自動更新されません（変更したい場合は一度削除して追加し直してください）。',
         "You can change the icon used when adding this site to your phone's home screen. Set this up before adding it — changing it afterward won't update an icon that's already been added (remove and re-add it if you want to change it later)."
       )}</p>
       <div style="display:flex; gap:8px; margin:16px 0 14px;">
-        <button type="button" class="pf-icon-btn" id="iconModeEmojiBtn" onclick="pfIconSetMode('emoji')">😀 ${pfT('絵文字', 'Emoji')}</button>
-        <button type="button" class="pf-icon-btn" id="iconModeImageBtn" onclick="pfIconSetMode('image')">🖼️ ${pfT('画像', 'Image')}</button>
+        <button type="button" class="pf-icon-btn" id="iconModeEmojiBtn" onclick="pfIconSetMode('emoji')"><svg class="inline-icon" width="14" height="14"><use href="#i-masks"/></svg> ${pfT('絵文字', 'Emoji')}</button>
+        <button type="button" class="pf-icon-btn" id="iconModeImageBtn" onclick="pfIconSetMode('image')"><svg class="inline-icon" width="14" height="14"><use href="#i-image"/></svg> ${pfT('画像', 'Image')}</button>
       </div>
       <div id="iconEmojiPanel">
         <p class="dash-section-label">${pfT('絵文字', 'Emoji')}</p>
@@ -2458,7 +2620,7 @@ function pfInit() {
           ${['#FF9500','#007AFF','#34C759','#FF2D55','#AF52DE','#8E8E93','#FFCC00','#00C7BE','#5856D6','#A2845E','#32ADE6','#48484A']
             .map(hex => `<button type="button" onclick="pfIconPickSwatch('${hex}')" style="width:32px; height:32px; border-radius:50%; background:${hex}; border:2px solid transparent;"></button>`).join('')}
         </div>
-        <p style="font-size:11.5px; color:var(--text-2); margin:0 0 6px;">🎨 ${pfT('タップして好きな色を自由に選ぶこともできます', 'Or tap below to pick any color freely')}</p>
+        <p style="font-size:11.5px; color:var(--text-2); margin:0 0 6px;"><svg class="inline-icon" width="12" height="12"><use href="#i-palette"/></svg> ${pfT('タップして好きな色を自由に選ぶこともできます', 'Or tap below to pick any color freely')}</p>
         <input type="color" id="iconBgColorInput" value="#FF9500" oninput="pfIconUpdatePreview()" style="width:100%; height:40px; border:none; border-radius:var(--r-sm); background:none;">
       </div>
       <div id="iconImagePanel" style="display:none;">
@@ -2492,23 +2654,24 @@ function pfInit() {
   const toolsDrawer = document.createElement('aside');
   toolsDrawer.className = 'pf-drawer';
   toolsDrawer.id = 'toolsDrawerPanel';
+  const svgIcon = (name) => `<svg class="inline-icon" width="19" height="19"><use href="#${name}"/></svg>`;
   const SITE_LINKS = [
-    { icon: '🗂️', ja: 'アイテム所持管理', en: 'Item Collection Tracker', href: 'https://taipak5000.github.io/tai-item/', current: true },
-    { icon: '🎭', ja: 'エモート所持率管理', en: 'Emote Collection Tracker', href: 'https://taipak5000.github.io/tai-emote/' },
-    { icon: '📍', ja: '創作物管理ツール', en: 'Creation Manager', href: 'https://taipak5000.github.io/share/' },
-    { icon: '🕯️', ja: 'ノマキャン計算機', en: 'Candle Calculator', href: 'https://taipak5000.github.io/tai-nomacan/' },
-    { icon: '🕯️', ja: '星のキャンドル計算機', en: 'Star Candle Calculator', href: 'https://taipak5000.github.io/star-candle/' },
-    { icon: '✨', ja: '精霊同行ツール', en: 'Spirit Companion Tool', href: 'https://taipak5000.github.io/companion/' },
-    { icon: '🪽', ja: '羽トラッカー', en: 'Wing Tracker', href: 'https://taipak5000.github.io/wings/' },
-    { icon: '🎵', ja: '楽譜づくり', en: 'Sheet Music Maker', href: 'https://taipak5000.github.io/tai-score/', badgeTest: true },
-    { icon: '🔄', ja: 'データ引継ぎ', en: 'Data Transfer', href: 'https://taipak5000.github.io/tai-transfer/' },
-    { icon: '⚙️', ja: '設定・更新情報', en: 'Settings & Updates', href: 'https://taipak5000.github.io/tai-info/' },
-    { icon: '👤', ja: '作者プロフィール', en: 'Creator Profile', href: 'https://taipak5000.github.io/skyzztai-profile/' },
+    { icon: svgIcon('i-folder'), ja: 'アイテム所持管理', en: 'Item Collection Tracker', href: 'https://taipak5000.github.io/tai-item/', current: true },
+    { icon: svgIcon('i-masks'), ja: 'エモート所持率管理', en: 'Emote Collection Tracker', href: 'https://taipak5000.github.io/tai-emote/' },
+    { icon: svgIcon('i-pin'), ja: '創作物管理ツール', en: 'Creation Manager', href: 'https://taipak5000.github.io/share/' },
+    { icon: svgIcon('i-candle'), ja: 'ノマキャン計算機', en: 'Candle Calculator', href: 'https://taipak5000.github.io/tai-nomacan/' },
+    { icon: svgIcon('i-star-candle'), ja: '星のキャンドル計算機', en: 'Star Candle Calculator', href: 'https://taipak5000.github.io/star-candle/' },
+    { icon: svgIcon('i-sparkle'), ja: '精霊同行ツール', en: 'Spirit Companion Tool', href: 'https://taipak5000.github.io/companion/' },
+    { icon: svgIcon('i-wing'), ja: '羽トラッカー', en: 'Wing Tracker', href: 'https://taipak5000.github.io/wings/' },
+    { icon: svgIcon('i-music-note'), ja: '楽譜づくり', en: 'Sheet Music Maker', href: 'https://taipak5000.github.io/tai-score/', badgeTest: true },
+    { icon: svgIcon('i-sync'), ja: 'データ引継ぎ', en: 'Data Transfer', href: 'https://taipak5000.github.io/tai-transfer/' },
+    { icon: svgIcon('i-settings'), ja: '設定・更新情報', en: 'Settings & Updates', href: 'https://taipak5000.github.io/tai-info/' },
+    { icon: svgIcon('i-person'), ja: '作者プロフィール', en: 'Creator Profile', href: 'https://taipak5000.github.io/skyzztai-profile/' },
   ];
   toolsDrawer.innerHTML = `
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
-      <div class="pf-drawer-label">☰ ${pfT('関連ツール', 'Related Tools')}</div>
-      <button class="pf-drawer-close-btn" onclick="pfToolsClose()">×</button>
+      <div class="pf-drawer-label"><svg class="inline-icon" width="20" height="20"><use href="#i-menu"/></svg> ${pfT('関連ツール', 'Related Tools')}</div>
+      <button class="pf-drawer-close-btn" onclick="pfToolsClose()"><span class="icon-chip" style="width:22px; height:22px;"><svg width="16" height="16"><use href="#i-close"/></svg></span></button>
     </div>
     <div class="pf-drawer-nav">
       ${SITE_LINKS.map(s => `
@@ -2640,7 +2803,7 @@ let dmWipeConfirming = false;
 function dmRenderWipeArea() {
   const area = document.getElementById('dmWipeArea');
   if (!dmWipeConfirming) {
-    area.innerHTML = `<button type="button" class="pf-icon-btn pf-row-btn-danger" style="width:100%; padding:8px;" onclick="dmStartWipe()">🗑️ ${pfT('全データを削除','Erase all data')}</button>`;
+    area.innerHTML = `<button type="button" class="pf-icon-btn pf-row-btn-danger" style="width:100%; padding:8px;" onclick="dmStartWipe()"><svg class="inline-icon" width="14" height="14"><use href="#i-trash"/></svg> ${pfT('全データを削除','Erase all data')}</button>`;
     return;
   }
   area.innerHTML = `
@@ -2862,7 +3025,7 @@ async function srchRun() {
     ${rows.slice(0, LIMIT).join('')}`;
 
   resultsEl.innerHTML =
-    group(pfT('アイテム', 'Items'), '🗂️', items.map(it => {
+    group(pfT('アイテム', 'Items'), '<svg class="inline-icon" width="18" height="18"><use href="#i-folder"/></svg>', items.map(it => {
       // catKey/id が取れているアイテムだけ、一括選択用チェックボックスと
       // 既存の状態バッジ（お気に入り／ウィッシュリスト）を表示する
       // （抽出失敗など想定外にidが無い場合でも検索結果自体は今まで通り表示する）
@@ -2872,46 +3035,46 @@ async function srchRun() {
           onclick="event.stopPropagation()" onchange="srchToggleSelect('${it.catKey}', '${it.id}', this.checked)"
           ${srchSelected.has(skey) ? 'checked' : ''}>` : '';
       const badges = canSelect ? (
-        (isItemFav(it.catKey, it.id) ? `<span class="srch-badge" title="${pfT('お気に入り済み', 'Favorited')}">⭐</span>` : '') +
-        (isWishItem(it.catKey, it.id) ? `<span class="srch-badge" title="${pfT('ウィッシュリスト済み', 'On wishlist')}">🛒</span>` : '')
+        (isItemFav(it.catKey, it.id) ? `<span class="srch-badge" title="${pfT('お気に入り済み', 'Favorited')}"><svg class="inline-icon" width="14" height="14"><use href="#i-star"/></svg></span>` : '') +
+        (isWishItem(it.catKey, it.id) ? `<span class="srch-badge" title="${pfT('ウィッシュリスト済み', 'On wishlist')}"><svg class="inline-icon" width="14" height="14"><use href="#i-cart"/></svg></span>` : '')
       ) : '';
       return `
       <a class="srch-row" href="${it.url}">
         ${checkbox}
-        <div class="srch-icon">${it.img ? `<img src="${it.img}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : '🗂️'}</div>
+        <div class="srch-icon">${it.img ? `<img src="${it.img}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : '<svg class="inline-icon" width="22" height="22"><use href="#i-folder"/></svg>'}</div>
         <div class="srch-info">
           <div class="srch-name">${escapeHtmlPf(trItem(it))}${badges}</div>
           <div class="srch-meta">${escapeHtmlPf(trCat(it.catName))} ・ ${escapeHtmlPf(trEvent(it.event))}</div>
         </div>
-        <span class="srch-arrow">›</span>
+        <span class="srch-arrow"><svg class="inline-icon" width="14" height="14"><use href="#i-chevron-right"/></svg></span>
       </a>`;
     })) +
-    group(pfT('エモート', 'Emotes'), '🎭', emotes.map(em => `
+    group(pfT('エモート', 'Emotes'), '<svg class="inline-icon" width="18" height="18"><use href="#i-masks"/></svg>', emotes.map(em => `
       <a class="srch-row" href="${em.url}">
-        <div class="srch-icon">🎭</div>
+        <div class="srch-icon"><svg class="inline-icon" width="22" height="22"><use href="#i-masks"/></svg></div>
         <div class="srch-info">
           <div class="srch-name">${escapeHtmlPf(trItem(em))}</div>
           <div class="srch-meta">${escapeHtmlPf(em.location || '')}${em.maxLevel ? ` ・ Lv1〜${em.maxLevel}` : ''}</div>
         </div>
-        <span class="srch-arrow">›</span>
+        <span class="srch-arrow"><svg class="inline-icon" width="14" height="14"><use href="#i-chevron-right"/></svg></span>
       </a>`)) +
-    group(pfT('精霊', 'Spirits'), '✨', spirits.map(sp => `
+    group(pfT('精霊', 'Spirits'), '<svg class="inline-icon" width="18" height="18"><use href="#i-sparkle"/></svg>', spirits.map(sp => `
       <a class="srch-row" href="${sp.url}">
-        <div class="srch-icon">✨</div>
+        <div class="srch-icon"><svg class="inline-icon" width="22" height="22"><use href="#i-sparkle"/></svg></div>
         <div class="srch-info">
           <div class="srch-name">${escapeHtmlPf(sp.name)}</div>
           <div class="srch-meta">${escapeHtmlPf(trEvent(sp.season))}</div>
         </div>
-        <span class="srch-arrow">›</span>
+        <span class="srch-arrow"><svg class="inline-icon" width="14" height="14"><use href="#i-chevron-right"/></svg></span>
       </a>`)) +
-    group(pfT('季節・イベント', 'Seasons/Events'), '🍁', events.map(ev => `
+    group(pfT('季節・イベント', 'Seasons/Events'), '<svg class="inline-icon" width="18" height="18"><use href="#i-calendar"/></svg>', events.map(ev => `
       <a class="srch-row" href="${ev.url}">
-        <div class="srch-icon">🍁</div>
+        <div class="srch-icon">${seasonPendantIconHtml(ev.name, 22, 'i-calendar')}</div>
         <div class="srch-info">
           <div class="srch-name">${escapeHtmlPf(trEvent(ev.name))}</div>
           <div class="srch-meta">${pfT('アイテム検索で絞り込みができます', 'Refine in item search')}</div>
         </div>
-        <span class="srch-arrow">›</span>
+        <span class="srch-arrow"><svg class="inline-icon" width="14" height="14"><use href="#i-chevron-right"/></svg></span>
       </a>`));
 }
 
@@ -2962,7 +3125,7 @@ function srchBulkAddFav() {
   });
   const noteJa = already > 0 ? `（${already}件は追加済みでした）` : '';
   const noteEn = already > 0 ? ` (${already} already favorited)` : '';
-  showToast(pfT(`⭐ ${added}件をお気に入りに追加しました${noteJa}`, `⭐ Added ${added} to favorites${noteEn}`));
+  showToast(pfT(`${added}件をお気に入りに追加しました${noteJa}`, `Added ${added} to favorites${noteEn}`));
   srchClearSelection();
   srchRun();
 }
@@ -2983,7 +3146,7 @@ function srchBulkAddWish() {
   let noteJa = '', noteEn = '';
   if (owned > 0) { noteJa += `（所持済みのため${owned}件はスキップ）`; noteEn += ` (skipped ${owned} already owned)`; }
   if (already > 0) { noteJa += `（${already}件は追加済みでした）`; noteEn += ` (${already} already on wishlist)`; }
-  showToast(pfT(`🛒 ${added}件をウィッシュリストに追加しました${noteJa}`, `🛒 Added ${added} to wishlist${noteEn}`));
+  showToast(pfT(`${added}件をウィッシュリストに追加しました${noteJa}`, `Added ${added} to wishlist${noteEn}`));
   srchClearSelection();
   srchRun();
 }

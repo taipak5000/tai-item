@@ -312,7 +312,7 @@
     <div class="cat-header-card" style="flex-direction: column; align-items: stretch; gap: 12px;">
       <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
         <div class="cat-header-info">
-          <div class="cat-header-icon">🎼</div>
+          <div class="cat-header-icon"><svg class="inline-icon" width="24" height="24"><use href="#i-sheet-music"/></svg></div>
           <div>
             <div class="cat-header-name" data-i18n-en="Music Sheets">楽譜</div>
             <div class="cat-header-count" id="catCount">-- / -- 所持</div>
@@ -328,7 +328,8 @@
       <!-- 名前検索 -->
       <div class="control-row">
         <span class="control-label" data-i18n-en="Name Search">名前検索</span>
-        <input type="text" class="select-box search-input" id="searchName" placeholder="🔍 楽譜名・番号で絞り込み..." data-i18n-en-placeholder="🔍 Filter by name or number..." oninput="filterAndRender()">
+        <svg class="inline-icon" width="16" height="16"><use href="#i-search"/></svg>
+        <input type="text" class="select-box search-input" id="searchName" placeholder="楽譜名・番号で絞り込み..." data-i18n-en-placeholder="Filter by name or number..." oninput="filterAndRender()">
       </div>
       <!-- 絞り込み -->
       <div class="control-row">
@@ -340,7 +341,7 @@
         </select>
         <select class="select-box" id="filterFav" onchange="filterAndRender()">
           <option value="all" data-i18n-en="All favorites">すべてのお気に入り</option>
-          <option value="fav" data-i18n-en="★ Favorites only">★ お気に入り指定のみ</option>
+          <option value="fav" data-i18n-en="Favorites only">お気に入り指定のみ</option>
         </select>
         <select class="select-box" id="filterMethod" onchange="filterAndRender()">
           <option value="all" data-i18n-en="All acquisition methods">すべての入手方法</option>
@@ -393,7 +394,7 @@
       <!-- フィルターを全てクリア -->
       <div class="control-row control-reset-row">
         <button type="button" class="control-reset-btn" onclick="resetFilterPanel('.control-panel', filterAndRender)">
-          <span data-i18n-en="🧹 Clear All Filters">🧹 フィルターを全てクリア</span>
+          <svg class="inline-icon" width="16" height="16"><use href="#i-close"/></svg> <span data-i18n-en="Clear All Filters">フィルターを全てクリア</span>
         </button>
       </div>
     </div>
@@ -402,8 +403,8 @@
     <div class="list-header-row">
       <p class="sec-label" data-i18n-en="Music Sheet List">楽譜一覧</p>
       <div class="view-toggle" role="group" aria-label="表示切替" data-i18n-en-aria-label="View mode">
-        <button type="button" class="view-toggle-btn" id="viewBtnGrid" onclick="setViewMode('grid')" aria-pressed="true" data-i18n-en="▦ Grid">▦ グリッド</button>
-        <button type="button" class="view-toggle-btn" id="viewBtnList" onclick="setViewMode('list')" aria-pressed="false" data-i18n-en="☰ List">☰ リスト</button>
+        <button type="button" class="view-toggle-btn" id="viewBtnGrid" onclick="setViewMode('grid')" aria-pressed="true"><svg class="inline-icon" width="14" height="14"><use href="#i-grid"/></svg> <span data-i18n-en="Grid">グリッド</span></button>
+        <button type="button" class="view-toggle-btn" id="viewBtnList" onclick="setViewMode('list')" aria-pressed="false"><svg class="inline-icon" width="14" height="14"><use href="#i-menu"/></svg> <span data-i18n-en="List">リスト</span></button>
       </div>
     </div>
     <div class="item-grid" id="itemList">
@@ -618,7 +619,7 @@ function toggleFav(id, btn) {
   userStates.fav[id] = !userStates.fav[id];
   saveUserData();
   btn.classList.toggle('is-fav', userStates.fav[id]);
-  btn.textContent = userStates.fav[id] ? '★' : '☆';
+  btn.innerHTML = '<svg class="inline-icon" width="16" height="16" style="stroke:currentColor;color:inherit;fill:' + (userStates.fav[id] ? 'currentColor' : 'none') + '"><use href="#i-star"/></svg>';
 }
 
 // ウィッシュリストの切り替え（profiles.js の toggleWishItem を利用する共通処理）
@@ -705,7 +706,7 @@ function filterAndRender() {
     return;
   }
 
-  const priceLabel = (s) => s.price === null ? `<span class="badge price-unknown">${en ? 'Price: -' : '価格: -'}</span>` : `<span class="badge">🕯️${s.price}</span>`;
+  const priceLabel = (s) => s.price === null ? `<span class="badge price-unknown">${en ? 'Price: -' : '価格: -'}</span>` : `<span class="badge"><svg class="inline-icon" width="12" height="12"><use href="#i-candle"/></svg> ${s.price}</span>`;
 
   const renderGrid = (s) => {
     const isOwned = !!userStates.owned[s.id];
@@ -718,7 +719,7 @@ function filterAndRender() {
       en ? METHOD_LABEL_EN[s.method] : METHOD_LABEL_JA[s.method],
       trEvent(s.season),
       spiritName ? (en ? `Spirit: ${spiritName}` : `精霊: ${spiritName}`) : '',
-      s.price === null ? (en ? 'Price unlisted on wiki' : '価格: Wiki未記載') : `🕯️${s.price}`,
+      s.price === null ? (en ? 'Price unlisted on wiki' : '価格: Wiki未記載') : (en ? `Price: ${s.price}` : `価格: ${s.price}`),
       trKey(s.key),
       `${en ? 'Melody' : '旋律'}${s.diff.m} / ${en ? 'Wind' : '管楽器'}${s.diff.w} / ${en ? 'Bass' : '低音'}${s.diff.b} / ${en ? 'Percussion' : '打楽器'}${s.diff.p}`,
       s.note ? (en ? (s.noteEn || s.note) : s.note) : ''
@@ -729,15 +730,15 @@ function filterAndRender() {
       <div class="item-tile">
         <div class="sheet-frame ${isOwned ? 'is-owned' : ''}" id="card_${s.id}" title="${escapeHtml(tip)}" onclick="toggleOwned('${s.id}')" tabindex="0" role="button" aria-pressed="${isOwned}" onkeydown="if(event.target===event.currentTarget&&(event.key==='Enter'||event.key===' ')){event.preventDefault();toggleOwned('${s.id}');}">
           <!-- お気に入り／ウィッシュリストボタン（タイル選択とバブリングしないようストップ） -->
-          <button class="tile-fav-btn ${isFav ? 'is-fav' : ''}" onclick="event.stopPropagation(); toggleFav('${s.id}', this)" aria-label="${en ? 'Favorite' : 'お気に入り'}">${isFav ? '★' : '☆'}</button>
-          <button class="tile-wish-btn ${isWish ? 'is-wish' : ''}" onclick="event.stopPropagation(); toggleWishBtn('${s.id}', this)" aria-label="${en ? 'Wishlist' : 'ウィッシュリスト'}" title="${en ? 'Add to wishlist' : 'ウィッシュリストに追加'}">🛒</button>
+          <button class="tile-fav-btn ${isFav ? 'is-fav' : ''}" onclick="event.stopPropagation(); toggleFav('${s.id}', this)" aria-label="${en ? 'Favorite' : 'お気に入り'}"><svg class="inline-icon" width="16" height="16" style="stroke:currentColor;color:inherit;fill:${isFav ? 'currentColor' : 'none'}"><use href="#i-star"/></svg></button>
+          <button class="tile-wish-btn ${isWish ? 'is-wish' : ''}" onclick="event.stopPropagation(); toggleWishBtn('${s.id}', this)" aria-label="${en ? 'Wishlist' : 'ウィッシュリスト'}" title="${en ? 'Add to wishlist' : 'ウィッシュリストに追加'}"><svg class="inline-icon" width="16" height="16" style="stroke:currentColor;color:inherit"><use href="#i-cart"/></svg></button>
           <div class="sheet-img-wrap">
             <img src="${s.img}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('img-fallback')">
-            <span class="sheet-note-icon">🎵</span>
+            <span class="sheet-note-icon"><svg class="inline-icon" width="18" height="18"><use href="#i-music-note"/></svg></span>
           </div>
           <span class="sheet-method-dot m-${s.method}" aria-hidden="true"></span>
           <span class="sheet-num-badge">${s.num}</span>
-          <span class="tile-owned-check">✓</span>
+          <span class="tile-owned-check"><svg class="inline-icon" width="12" height="12" style="stroke:currentColor;color:inherit"><use href="#i-check"/></svg></span>
         </div>
         <a href="${wikiUrl}" target="_blank" rel="noopener noreferrer" class="item-tile-name">${dispName}</a>
       </div>
@@ -758,13 +759,13 @@ function filterAndRender() {
         <div class="item-left" onclick="toggleOwned('${s.id}')" tabindex="0" role="button" aria-pressed="${isOwned}" onkeydown="if(event.target===event.currentTarget&&(event.key==='Enter'||event.key===' ')){event.preventDefault();toggleOwned('${s.id}');}">
           <div class="sheet-thumb">
             <img src="${s.img}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('img-fallback')">
-            <span class="sheet-note-icon">🎵</span>
+            <span class="sheet-note-icon"><svg class="inline-icon" width="15" height="15"><use href="#i-music-note"/></svg></span>
             <span class="sheet-thumb-num-badge">${s.num}</span>
-            <span class="sheet-thumb-check">✓</span>
+            <span class="sheet-thumb-check"><svg class="inline-icon" width="11" height="11" style="stroke:currentColor;color:inherit"><use href="#i-check"/></svg></span>
           </div>
           <div class="item-details">
             <a href="${wikiUrl}" target="_blank" rel="noopener noreferrer" class="item-name-link" onclick="event.stopPropagation();">
-              ${dispName} 🔗
+              ${dispName} <svg class="inline-icon" width="12" height="12"><use href="#i-link"/></svg>
             </a>
             <div class="item-meta-row">
               <span class="badge method-${s.method}">${en ? METHOD_LABEL_EN[s.method] : METHOD_LABEL_JA[s.method]}</span>
@@ -772,13 +773,13 @@ function filterAndRender() {
               <span class="badge">${trKey(s.key)}</span>
               ${s.note ? `<span class="badge">${en ? (s.noteEn || s.note) : s.note}</span>` : ''}
             </div>
-            <div class="source-row">🌸 ${trEvent(s.season)}${spiritName ? ` ・ ${en ? 'Spirit' : '精霊'}: ${spiritName}` : ''}</div>
+            <div class="source-row">${seasonPendantIconHtml(s.season, 12, 'i-calendar')} ${trEvent(s.season)}${spiritName ? ` ・ ${en ? 'Spirit' : '精霊'}: ${spiritName}` : ''}</div>
             <div class="diff-row">${diffText}</div>
           </div>
         </div>
         <!-- お気に入り／ウィッシュリストボタン -->
-        <button class="fav-btn ${isFav ? 'is-fav' : ''}" onclick="toggleFav('${s.id}', this)">${isFav ? '★' : '☆'}</button>
-        <button class="wish-btn ${isWish ? 'is-wish' : ''}" onclick="toggleWishBtn('${s.id}', this)" aria-label="${en ? 'Wishlist' : 'ウィッシュリスト'}" title="${en ? 'Add to wishlist' : 'ウィッシュリストに追加'}">🛒</button>
+        <button class="fav-btn ${isFav ? 'is-fav' : ''}" onclick="toggleFav('${s.id}', this)"><svg class="inline-icon" width="16" height="16" style="stroke:currentColor;color:inherit;fill:${isFav ? 'currentColor' : 'none'}"><use href="#i-star"/></svg></button>
+        <button class="wish-btn ${isWish ? 'is-wish' : ''}" onclick="toggleWishBtn('${s.id}', this)" aria-label="${en ? 'Wishlist' : 'ウィッシュリスト'}" title="${en ? 'Add to wishlist' : 'ウィッシュリストに追加'}"><svg class="inline-icon" width="16" height="16" style="stroke:currentColor;color:inherit"><use href="#i-cart"/></svg></button>
       </div>
     `;
   };

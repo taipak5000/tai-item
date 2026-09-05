@@ -89,15 +89,36 @@ html:not([data-input-modality="mouse"]) *:focus-visible { outline: 2px solid var
   /* 狭い画面では「戻る」はシェブロンのみ、「更新」はアイコンのみにして小タイトルの幅を確保する
      (文言は要素内に残るため読み上げには影響しない) */
   .nav-bar .nav-back { width: 36px; overflow: hidden; white-space: nowrap; color: transparent; justify-content: flex-start; flex-shrink: 0; }
-  .nav-bar .nav-back::before { color: var(--blue); font-size: 1.9rem; line-height: 1; margin: 0; }
+  .nav-bar .nav-back::before { color: var(--blue); margin: 0; }
   .nav-bar .nav-title { font-size: 1rem; max-width: calc(100% - 160px); }
   .nav-bar .nav-action[onclick^="refreshData"] {
     font-size: 0; width: 34px; height: 34px; padding: 0;
     display: inline-flex; align-items: center; justify-content: center;
   }
-  .nav-bar .nav-action[onclick^="refreshData"]::before { content: '\21BB'; font-size: 18px; line-height: 1; }
+  .nav-bar .nav-action[onclick^="refreshData"]::before {
+  content: '';
+  display: inline-block; width: 18px; height: 18px;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 7h-8a4 4 0 0 0-4 4'/%3E%3Cpath d='M11 4l-2 3 2 3'/%3E%3Cpath d='M7 17h8a4 4 0 0 0 4-4'/%3E%3Cpath d='M13 20l2-3-2-3'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 7h-8a4 4 0 0 0-4 4'/%3E%3Cpath d='M11 4l-2 3 2 3'/%3E%3Cpath d='M7 17h8a4 4 0 0 0 4-4'/%3E%3Cpath d='M13 20l2-3-2-3'/%3E%3C/svg%3E") center / contain no-repeat;
 }
-.nav-bar .nav-back::before { content: '\2039'; font-size: 1.7em; line-height: 0; margin-right: 2px; margin-top: -0.06em; }
+}
+.nav-bar .nav-back::before {
+  content: '';
+  display: inline-block; width: 1.05em; height: 1.05em;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 5l-7 7 7 7'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 5l-7 7 7 7'/%3E%3C/svg%3E") center / contain no-repeat;
+  margin-right: 2px; margin-top: -0.06em;
+}
+/* 狭い画面用の上書き。.nav-bar .nav-back::before の基本ルール（直前・幅を問わず適用）と
+   詳細度が同じため、後勝ちにするには@media内であってもこの基本ルールより後ろに置く必要がある
+   （@media自体は詳細度に影響しない）。以前はこのwidth/heightをmax-width:480pxブロック内の
+   font-size指定として持たせていたが、この順序問題により基本ルールのwidth:1.05emに上書きされ、
+   意図したサイズにならなかった */
+@media (max-width: 480px) {
+  .nav-bar .nav-back::before { width: 22px; height: 22px; flex-shrink: 0; }
+}
 .nav-bar .nav-action {
   background: var(--fill-tertiary); border: none; color: var(--blue);
   font-weight: 600; font-size: 0.9375rem; padding: 6px 12px; border-radius: 999px;
@@ -220,7 +241,7 @@ html:not([data-input-modality="mouse"]) *:focus-visible { outline: 2px solid var
    すべての画面幅でボトムシートとして表示するため、幅による出し分けはしない */
 .pf-modal-overlay.open .pf-modal-card, .modal-overlay.open .modal-card { animation: sheetSlideUp 0.32s var(--ios-ease); }
 .pf-modal-card, .modal-card {
-  width: 100%; max-width: 100%; max-height: 88vh; max-height: 88dvh;
+  width: 100%; max-width: 720px; max-height: 88vh; max-height: 88dvh;
   border-radius: 20px 20px 0 0;
   padding: 30px 20px calc(24px + env(safe-area-inset-bottom));
   box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.25), inset 0 1px 0 var(--glass-edge);
@@ -232,6 +253,10 @@ html:not([data-input-modality="mouse"]) *:focus-visible { outline: 2px solid var
      衝突しないよう打ち消す */
   transition: transform 0.32s var(--ios-ease);
 }
+/* 横幅が広い画面では、シートも各ページの.wrap（コンテンツ幅720px→850px以上で960px）と
+   同じ幅に揃える。ビューポートより.wrapが狭い通常のモバイル幅ではmax-widthが効かず、
+   これまで通り画面いっぱいのボトムシートのまま（幅による出し分けという意味では変わらない） */
+@media (min-width: 850px) { .pf-modal-card, .modal-card { max-width: 960px; } }
 .pf-modal-card.is-dragging, .modal-card.is-dragging,
 .pf-modal-card.js-anim, .modal-card.js-anim { transition: none; animation: none; }
 #randomModal .modal-card, #myCoordModal .modal-card { min-height: 70vh; }

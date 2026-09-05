@@ -307,7 +307,7 @@
     <!-- ▸ Category Status Banner -->
     <div class="cat-header-card">
       <div class="cat-header-info">
-        <div class="cat-header-icon" id="catIcon">📦</div>
+        <div class="cat-header-icon" id="catIcon"></div>
         <div>
           <div class="cat-header-name" id="catName">カテゴリ名</div>
           <div class="cat-header-count" id="catCount">-- / -- 所持</div>
@@ -321,7 +321,8 @@
       <!-- 名前検索 -->
       <div class="control-row">
         <span class="control-label" data-i18n-en="Name Search">名前検索</span>
-        <input type="text" class="select-box search-input" id="searchName" placeholder="🔍 アイテム名で絞り込み..." data-i18n-en-placeholder="🔍 Filter by item name..." oninput="filterAndRender()">
+        <svg class="inline-icon" width="16" height="16"><use href="#i-search"/></svg>
+        <input type="text" class="select-box search-input" id="searchName" placeholder="アイテム名で絞り込み..." data-i18n-en-placeholder="Filter by item name..." oninput="filterAndRender()">
       </div>
       <!-- 絞り込み -->
       <div class="control-row">
@@ -333,7 +334,7 @@
         </select>
         <select class="select-box" id="filterFav" onchange="filterAndRender()">
           <option value="all" data-i18n-en="All favorites">すべてのお気に入り</option>
-          <option value="fav" data-i18n-en="★ Favorites only">★ お気に入り指定のみ</option>
+          <option value="fav" data-i18n-en="Favorites only">お気に入り指定のみ</option>
         </select>
       </div>
 
@@ -347,8 +348,8 @@
         </select>
         <select class="select-box" id="filterDye" onchange="filterAndRender()">
           <option value="all" data-i18n-en="All dye options">すべての染色可否</option>
-          <option value="dye-o" data-i18n-en="Dyeable">染色 〇</option>
-          <option value="dye-x" data-i18n-en="Not dyeable">染色 ✕</option>
+          <option value="dye-o" data-i18n-en="Dyeable">染色あり</option>
+          <option value="dye-x" data-i18n-en="Not dyeable">染色なし</option>
         </select>
         <select class="select-box" id="filterReprint" onchange="filterAndRender()">
           <option value="all" data-i18n-en="All re-release states">すべての復刻状態</option>
@@ -373,7 +374,7 @@
       <!-- フィルターを全てクリア -->
       <div class="control-row control-reset-row">
         <button type="button" class="control-reset-btn" onclick="resetFilterPanel('.control-panel', filterAndRender)">
-          <span data-i18n-en="🧹 Clear All Filters">🧹 フィルターを全てクリア</span>
+          <svg class="inline-icon" width="16" height="16"><use href="#i-close"/></svg> <span data-i18n-en="Clear All Filters">フィルターを全てクリア</span>
         </button>
       </div>
     </div>
@@ -391,8 +392,8 @@
           <option value="6" data-i18n-en="6 columns">6列</option>
         </select>
         <div class="view-toggle" role="group" aria-label="表示切替" data-i18n-en-aria-label="View mode">
-          <button type="button" class="view-toggle-btn" id="viewBtnGrid" onclick="setViewMode('grid')" aria-pressed="true" data-i18n-en="▦ Grid">▦ グリッド</button>
-          <button type="button" class="view-toggle-btn" id="viewBtnList" onclick="setViewMode('list')" aria-pressed="false" data-i18n-en="☰ List">☰ リスト</button>
+          <button type="button" class="view-toggle-btn" id="viewBtnGrid" onclick="setViewMode('grid')" aria-pressed="true"><svg class="inline-icon" width="14" height="14"><use href="#i-grid"/></svg> <span data-i18n-en="Grid">グリッド</span></button>
+          <button type="button" class="view-toggle-btn" id="viewBtnList" onclick="setViewMode('list')" aria-pressed="false"><svg class="inline-icon" width="14" height="14"><use href="#i-menu"/></svg> <span data-i18n-en="List">リスト</span></button>
         </div>
       </div>
     </div>
@@ -412,7 +413,7 @@
 const CAT_KEY = 'necklace'; 
 
 // 2. このカテゴリの基本情報
-const CAT_INFO = { name: 'ネックレス', icon: '📿', img: 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/7/73/1_Gratitude.png/revision/latest/scale-to-width-down/51' };
+const CAT_INFO = { name: 'ネックレス', icon: '<svg class="inline-icon" width="20" height="20"><use href="#i-necklace"/></svg>', img: 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/7/73/1_Gratitude.png/revision/latest/scale-to-width-down/51' };
 
 // 2-b. アイテム画像の保存フォルダ（ファイル名は id と揃えてください。例: images/necklace/necklace_001.png）
 //      画像がまだ無いアイテムは自動でプレースホルダーアイコンが表示されます
@@ -509,7 +510,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // タイトル等UIの書き換え
   const catNameTr = trCat(CAT_INFO.name);
   document.title = CURRENT_LANG === 'en' ? `${catNameTr} Checklist - Item Collection Tracker` : `${CAT_INFO.name}所持チェック - Sky所持率管理`;
-  document.getElementById('pageTitle').textContent = CURRENT_LANG === 'en' ? `🗂️ ${catNameTr} Checklist` : `🗂️ ${CAT_INFO.name}チェック`;
+  document.getElementById('pageTitle').textContent = CURRENT_LANG === 'en' ? `${catNameTr} Checklist` : `${CAT_INFO.name}チェック`;
   document.getElementById('catName').textContent = catNameTr;
   document.getElementById('catIcon').innerHTML = CAT_INFO.img
   ? `<img src="${CAT_INFO.img}" alt="${CAT_INFO.name}" loading="lazy" referrerpolicy="no-referrer">`
@@ -639,7 +640,9 @@ function toggleFav(id, btn) {
   saveUserData();
   
   btn.classList.toggle('is-fav', userStates.fav[id]);
-  btn.textContent = userStates.fav[id] ? '★' : '☆';
+  btn.innerHTML = userStates.fav[id]
+    ? '<svg width="16" height="16" style="stroke:currentColor;fill:currentColor;stroke-width:1.6"><use href="#i-star"/></svg>'
+    : '<svg width="16" height="16" style="stroke:currentColor;fill:none;stroke-width:1.6"><use href="#i-star"/></svg>';
 }
 
 // ウィッシュリストの切り替え(profiles.js の toggleWishItem を利用する共通処理)
@@ -754,7 +757,7 @@ function filterAndRender() {
     const { isOwned, isFav, isWish, wikiUrl, imgSrc } = getItemViewData(item);
     // タップ長押し等で全情報を確認できるツールチップ
     const en = CURRENT_LANG === 'en';
-    const tip = [trItem(item), trEvent(item.event), item.cost === 'premium' ? (en ? 'Paid' : '課金') : (en ? 'Free' : '無課金'), en ? `Dye ${item.dye ? 'Yes' : 'No'}` : `染色${item.dye ? '〇' : '✕'}`, item.noReprint ? (en ? 'No Re-release' : '復刻なし') : '']
+    const tip = [trItem(item), trEvent(item.event), item.cost === 'premium' ? (en ? 'Paid' : '課金') : (en ? 'Free' : '無課金'), en ? `Dye ${item.dye ? 'Yes' : 'No'}` : `染色${item.dye ? 'あり' : 'なし'}`, item.noReprint ? (en ? 'No Re-release' : '復刻なし') : '']
       .filter(Boolean).join(' ／ ');
 
     return `
@@ -763,14 +766,14 @@ function filterAndRender() {
           ${item.cost === 'premium' ? '<span class="tile-cost-dot" aria-hidden="true"></span>' : ''}
           ${item.noReprint ? '<span class="tile-nr-badge">NR</span>' : ''}
           <!-- お気に入りボタン（タイル選択とバブリングしないようストップ） -->
-          <button class="tile-fav-btn ${isFav ? 'is-fav' : ''}" onclick="event.stopPropagation(); toggleFav('${item.id}', this)" aria-label="${CURRENT_LANG === 'en' ? 'Favorite' : 'お気に入り'}">${isFav ? '★' : '☆'}</button>
-          <button class="tile-wish-btn ${isWish ? 'is-wish' : ''}" onclick="event.stopPropagation(); toggleWishBtn('${item.id}', this)" aria-label="${CURRENT_LANG === 'en' ? 'Wishlist' : 'ウィッシュリスト'}" title="${CURRENT_LANG === 'en' ? 'Add to wishlist' : 'ウィッシュリストに追加'}">🛒</button>
+          <button class="tile-fav-btn ${isFav ? 'is-fav' : ''}" onclick="event.stopPropagation(); toggleFav('${item.id}', this)" aria-label="${CURRENT_LANG === 'en' ? 'Favorite' : 'お気に入り'}"><svg width="14" height="14" style="stroke:currentColor;fill:${isFav ? 'currentColor' : 'none'};stroke-width:1.6"><use href="#i-star"/></svg></button>
+          <button class="tile-wish-btn ${isWish ? 'is-wish' : ''}" onclick="event.stopPropagation(); toggleWishBtn('${item.id}', this)" aria-label="${CURRENT_LANG === 'en' ? 'Wishlist' : 'ウィッシュリスト'}" title="${CURRENT_LANG === 'en' ? 'Add to wishlist' : 'ウィッシュリストに追加'}"><svg width="13" height="13" style="stroke:currentColor;fill:none;stroke-width:1.8"><use href="#i-cart"/></svg></button>
           <div class="item-tile-img-wrap">
             <!-- 画像が未配置の場合は onerror でプレースホルダーアイコンに切り替え -->
             <img src="${imgSrc}" alt="${escapeHtml(trItem(item))}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('img-fallback')">
             <span class="item-tile-fallback">${CAT_INFO.icon}</span>
           </div>
-          <span class="tile-owned-check">✓</span>
+          <span class="tile-owned-check"><svg width="11" height="11" style="stroke:currentColor;fill:none;stroke-width:2.2"><use href="#i-check"/></svg></span>
         </div>
         <!-- アイテム名（クリックでWiki検索へジャンプ） -->
         <a href="${wikiUrl}" target="_blank" rel="noopener noreferrer" class="item-tile-name">${trItem(item)}</a>
@@ -789,27 +792,27 @@ function filterAndRender() {
             <!-- 画像が未配置の場合は onerror でプレースホルダーアイコンに切り替え -->
             <img src="${imgSrc}" alt="${escapeHtml(trItem(item))}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('img-fallback')">
             <span class="item-thumb-fallback">${CAT_INFO.icon}</span>
-            <span class="item-thumb-check">✓</span>
+            <span class="item-thumb-check"><svg width="10" height="10" style="stroke:currentColor;fill:none;stroke-width:2.2"><use href="#i-check"/></svg></span>
           </div>
           <div class="item-details">
             <!-- アイテム名クリックでWiki検索へジャンプ（バブリングを防ぐためストップ） -->
             <a href="${wikiUrl}" target="_blank" rel="noopener noreferrer" class="item-name-link" onclick="event.stopPropagation();">
-              ${trItem(item)} 🔗
+              ${trItem(item)} <svg class="inline-icon" width="14" height="14"><use href="#i-link"/></svg>
             </a>
             <div class="item-meta-row">
               <span class="badge">${trEvent(item.event)}</span>
               <span class="badge ${item.cost === 'premium' ? 'premium' : 'free'}">${item.cost === 'premium' ? (CURRENT_LANG === 'en' ? 'Paid' : '課金') : (CURRENT_LANG === 'en' ? 'Free' : '無課金')}</span>
-              <span class="badge ${item.dye ? 'dye-o' : ''}">${CURRENT_LANG === 'en' ? `Dye ${item.dye ? 'Yes' : 'No'}` : `染色 ${item.dye ? '〇' : '✕'}`}</span>
+              <span class="badge ${item.dye ? 'dye-o' : ''}">${CURRENT_LANG === 'en' ? 'Dye' : '染色'} ${item.dye ? '<svg class="inline-icon ok" width="14" height="14"><use href="#i-check"/></svg>' : '<svg class="inline-icon" width="14" height="14"><use href="#i-close"/></svg>'}</span>
               ${item.noReprint ? `<span class="badge no-reprint">${CURRENT_LANG === 'en' ? 'No Re-release' : '復刻なし'}</span>` : ''}
             </div>
           </div>
         </div>
         <!-- お気に入りボタン -->
         <button class="fav-btn ${isFav ? 'is-fav' : ''}" onclick="toggleFav('${item.id}', this)">
-          ${isFav ? '★' : '☆'}
+          <svg width="18" height="18" style="stroke:currentColor;fill:${isFav ? 'currentColor' : 'none'};stroke-width:1.6"><use href="#i-star"/></svg>
         </button>
         <button class="wish-btn ${isWish ? 'is-wish' : ''}" onclick="toggleWishBtn('${item.id}', this)" aria-label="${CURRENT_LANG === 'en' ? 'Wishlist' : 'ウィッシュリスト'}" title="${CURRENT_LANG === 'en' ? 'Add to wishlist' : 'ウィッシュリストに追加'}">
-          🛒
+          <svg width="16" height="16" style="stroke:currentColor;fill:none;stroke-width:1.8"><use href="#i-cart"/></svg>
         </button>
       </div>
     `;
@@ -827,7 +830,7 @@ function filterAndRender() {
   if (onesieItems.length > 0) {
     // 両グループが混在するときだけ区切り線を表示
     if (outfitItems.length > 0) {
-      html += `<div class="onesie-divider"><span>🧸 ワンジー</span></div>`;
+      html += `<div class="onesie-divider"><span><svg class="inline-icon" width="15" height="15"><use href="#i-hanger"/></svg> ワンジー</span></div>`;
     }
     html += onesieItems.map(renderItem).join('');
   }
