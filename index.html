@@ -3651,7 +3651,16 @@ function saveClosetCollage() {
     closetEditing.createdAt = new Date().toISOString();
     sets.push(closetEditing);
   }
-  saveClosetCollages(sets);
+  try {
+    saveClosetCollages(sets);
+  } catch (err) {
+    console.error(err);
+    const msg = (err && err.name === 'QuotaExceededError')
+      ? (CURRENT_LANG === 'en' ? 'Not enough storage space to save this collage' : 'コラージュを保存する容量が足りません')
+      : (CURRENT_LANG === 'en' ? 'Failed to save the collage' : 'コラージュの保存に失敗しました');
+    showToast(msg);
+    return;
+  }
   showToast(CURRENT_LANG === 'en' ? `Saved "${name}"!` : `「${name}」を保存しました！`);
   showClosetListView();
 }
@@ -4204,7 +4213,7 @@ const SHARE_THEMES = {
   pink:   { label: CURRENT_LANG === 'en' ? 'Pink'   : 'ピンク',   grad: 'linear-gradient(135deg, #B0184D 0%, #FF2D78 55%, #FF8FB3 100%)' },
   dark:   { label: CURRENT_LANG === 'en' ? 'Dark'   : 'ダーク',   grad: 'linear-gradient(135deg, #05070d 0%, #1b2333 100%)' },
 };
-const SHARE_CUSTOMIZE_KEY = 'shareCustomize_v1';
+const SHARE_CUSTOMIZE_KEY = nsKey('shareCustomize_v1');
 
 function loadShareCustomize() {
   try {
@@ -4346,8 +4355,8 @@ async function getFavoriteItems() {
 }
 
 // モーダルを開いている間だけ保持する状態（表示スタイル・背景テーマのみ次回に持ち越す）
-const FAV_SHARE_STYLE_KEY = 'favShareStyle_v1';
-const FAV_SHARE_THEME_KEY = 'favShareTheme_v1';
+const FAV_SHARE_STYLE_KEY = nsKey('favShareStyle_v1');
+const FAV_SHARE_THEME_KEY = nsKey('favShareTheme_v1');
 let favShareStyle = localStorage.getItem(FAV_SHARE_STYLE_KEY) || 'detail';
 let favShareTheme = (SHARE_THEMES[localStorage.getItem(FAV_SHARE_THEME_KEY)]) ? localStorage.getItem(FAV_SHARE_THEME_KEY) : 'orange';
 let favShareItems = [];
