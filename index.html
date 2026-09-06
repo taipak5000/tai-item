@@ -2966,7 +2966,6 @@ function loadLastRandomCoord() {
 
 function shuffleOutfit() {
   currentRandom = {};
-  currentRandomFavOnly = favOnlyMode;
 
   // お気に入りのみモード時: 排他グループはお気に入りがあるカテゴリを優先
   const exclusiveWithItems = EXCLUSIVE_KEYS.filter(key => getPickPool(key).length > 0);
@@ -2980,6 +2979,8 @@ function shuffleOutfit() {
     anyFavExists = CATS.some(c => getFavIds(c.key).length > 0);
     if (!anyFavExists) showToast(CURRENT_LANG === 'en' ? 'No favorites set. Picking randomly from all items' : 'お気に入りが未設定です。全アイテムからランダムします');
   }
+  // バナー表示はお気に入りが実在する場合のみ（無ければ全所持からの抽選なので表示しない）
+  currentRandomFavOnly = favOnlyMode && anyFavExists;
 
   CATS.forEach(cat => {
     const isExclusive = EXCLUSIVE_KEYS.includes(cat.key);
