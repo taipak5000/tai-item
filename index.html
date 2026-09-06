@@ -2497,6 +2497,16 @@ function getWishOwnCurrency() {
   catch { return { candle: 0, heart: 0, starCandle: 0 }; }
 }
 
+// <input type="number">のvalue属性用に数値を文字列化する。テンプレート内で
+// そのまま${n}と埋め込むとNumber#toStringが極端に大きい値(1e+21以上)を
+// 指数表記にしてしまい、所持数として桁を打ち間違えた場合などに"1e+24"の
+// ような表示になる。toLocaleStringは桁区切りカンマを入れるがnumber inputの
+// valueにカンマは無効(ブラウザに拒否され空欄になる)なため、useGrouping:false
+// で桁区切りなしの通常の数字文字列に変換する。
+function numInputVal(n) {
+  return Number(n).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 });
+}
+
 function saveWishOwnCurrency() {
   const candle = Math.max(0, Number(document.getElementById('wishOwnCandle')?.value) || 0);
   const heart = Math.max(0, Number(document.getElementById('wishOwnHeart')?.value) || 0);
@@ -2610,13 +2620,13 @@ function renderWishList() {
 
     <div class="wish-own-inputs">
       <label><svg class="inline-icon" width="18" height="18"><use href="#i-candle"/></svg> ${en ? 'Owned Candles' : '所持キャンドル'}
-        <input type="number" id="wishOwnCandle" min="0" value="${own.candle}" onchange="saveWishOwnCurrency()">
+        <input type="number" id="wishOwnCandle" min="0" value="${numInputVal(own.candle)}" onchange="saveWishOwnCurrency()">
       </label>
       <label><svg class="inline-icon" width="18" height="18"><use href="#i-star"/></svg> ${en ? 'Owned Star Candles' : '所持星のキャンドル'}
-        <input type="number" id="wishOwnStarCandle" min="0" value="${own.starCandle}" onchange="saveWishOwnCurrency()">
+        <input type="number" id="wishOwnStarCandle" min="0" value="${numInputVal(own.starCandle)}" onchange="saveWishOwnCurrency()">
       </label>
       <label><svg class="inline-icon" width="18" height="18"><use href="#i-heart"/></svg> ${en ? 'Owned Hearts' : '所持ハート'}
-        <input type="number" id="wishOwnHeart" min="0" value="${own.heart}" onchange="saveWishOwnCurrency()">
+        <input type="number" id="wishOwnHeart" min="0" value="${numInputVal(own.heart)}" onchange="saveWishOwnCurrency()">
       </label>
     </div>
 

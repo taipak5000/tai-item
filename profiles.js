@@ -575,6 +575,10 @@ function pfInjectStyle() {
       border-radius: 6px; padding: 5px 9px; font-size: 13px; cursor: pointer; flex-shrink: 0; }
     .pf-icon-btn:hover { background: var(--sep); }
     .pf-icon-btn.active { background: var(--orange-bg); border-color: var(--orange); color: var(--orange); font-weight: 700; }
+    /* .pf-icon-btn:hover(詳細度0,0,2,0)が.pf-row-btn-ok/-danger単体(0,0,1,0)より勝ってしまい、
+       確認・削除系ボタンのhover時に背景が薄いvar(--sep)へ戻って白文字が読めなくなるのを防ぐ */
+    .pf-icon-btn.pf-row-btn-ok:hover { background: var(--blue); color: #fff; }
+    .pf-icon-btn.pf-row-btn-danger:hover { background: #ff3b30; color: #fff; }
     .pf-add-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
     .pf-input { flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--sep); border-radius: 6px;
       padding: 8px 10px; font-size: 14px; color: var(--text); font-family: inherit; outline: none; box-sizing: border-box; }
@@ -1811,6 +1815,15 @@ function pfCurrencyLabel(key) {
   const l = labels[key] || [key, key];
   return pfT(l[0], l[1]);
 }
+// <input type="number">のvalue属性用に数値を文字列化する。テンプレート内で
+// そのまま${n}と埋め込むとNumber#toStringが極端に大きい値(1e+21以上)を
+// 指数表記にしてしまい、所持数の桁を打ち間違えた場合などに"1e+24"のような
+// 表示になる。toLocaleStringは桁区切りカンマを入れるがnumber inputのvalueに
+// カンマは無効(ブラウザに拒否され空欄になる)なため、useGrouping:falseで
+// 桁区切りなしの通常の数字文字列に変換する。
+function pfNumInputVal(n) {
+  return Number(n).toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 });
+}
 function pfCompanionDataKey() {
   const id = getActiveProfileId();
   return id === DEFAULT_PROFILE_ID ? 'sky_companion_v4_data' : ('sky_companion_v4_data__' + id);
@@ -1867,7 +1880,7 @@ function pfRenderCurrency() {
   body.innerHTML = PF_CURRENCY_FIELDS.map(f => `
     <div class="pf-currency-row">
       <span class="pf-currency-label">${f.icon} ${pfCurrencyLabel(f.key)}</span>
-      <input type="number" min="0" class="pf-currency-input" value="${c[f.key]}"
+      <input type="number" min="0" class="pf-currency-input" value="${pfNumInputVal(c[f.key])}"
         onchange="pfSaveCurrencyField('${f.key}', this.value)">
     </div>`).join('');
   pfSyncCurrencyToggleUI();
