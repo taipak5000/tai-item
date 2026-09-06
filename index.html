@@ -664,6 +664,8 @@
     .wish-cost { font-size: 12.5px; font-weight: 700; flex-shrink: 0; text-align: right; }
     .wish-cost.money { color: var(--orange-d); }
     .wish-cost.unknown { color: var(--text-3); font-weight: 500; }
+    /* ── 数字と単位に強弱（数値を主役に、単位は控えめに） ── */
+    .num-unit { font-weight: 500; font-size: 0.72em; opacity: 0.7; margin-left: 1px; }
     .wish-remove {
       flex-shrink: 0; color: var(--text-3); font-size: 15px; padding: 4px 6px;
       border-radius: 8px; line-height: 1;
@@ -780,7 +782,7 @@
     }
     .exp-comment {
       color: #fff; background: rgba(255,255,255,0.16); border-radius: 14px;
-      padding: 10px 14px; font-size: 13px; line-height: 1.6; text-align: center;
+      padding: 10px 14px; font-size: 13px; line-height: 1.6; text-align: left;
       margin-bottom: 14px; white-space: pre-wrap; word-break: break-word;
     }
     .exp-date {
@@ -1691,7 +1693,7 @@ function cardHTML(cat, data, fallbackTotal) {
   const p    = data ? pct(data.owned, data.total) : (hasFallback ? 0 : null);
   const high = p !== null && p >= 80;
   const cls  = p === null ? 'empty' : high ? 'high' : '';
-  const pTxt = p !== null ? p + '%' : '--';
+  const pTxt = p !== null ? `${p}<span class="num-unit">%</span>` : '--';
   const cTxt = data ? `${data.owned} / ${data.total}` : (hasFallback ? `0 / ${fallbackTotal}` : (CURRENT_LANG === 'en' ? 'Not registered' : '未登録'));
 
   return `
@@ -1731,7 +1733,7 @@ function loadAndRender() {
 
   const p = pct(own, tot);
 
-  document.getElementById('oPct').textContent   = p !== null ? p + '%' : '--%';
+  document.getElementById('oPct').innerHTML     = p !== null ? `${p}<span class="num-unit">%</span>` : '--%';
   document.getElementById('sOwned').textContent = tot > 0 ? own : '--';
   document.getElementById('sTotal').textContent = tot > 0 ? tot : '--';
   document.getElementById('catLabel').textContent =
@@ -2621,16 +2623,16 @@ function renderWishList() {
     <div class="wish-total-box">
       <div class="wish-total-row"><span><svg class="inline-icon" width="18" height="18"><use href="#i-candle"/></svg> ${en ? 'Candles needed' : '必要キャンドル合計'}</span><b>${sumCandle}</b></div>
       <div class="wish-total-row"><span>　→ ${en ? 'Still short' : 'あと'}</span>
-        <b class="${lackCandle > 0 ? 'lack' : 'enough'}">${lackCandle > 0 ? lackCandle + (en ? '' : ' 本') : (en ? 'Enough! ' : '足りています ') + '<svg class="inline-icon ok" width="16" height="16"><use href="#i-check"/></svg>'}</b></div>
+        <b class="${lackCandle > 0 ? 'lack' : 'enough'}">${lackCandle > 0 ? lackCandle + (en ? '' : '<span class="num-unit"> 本</span>') : (en ? 'Enough! ' : '足りています ') + '<svg class="inline-icon ok" width="16" height="16"><use href="#i-check"/></svg>'}</b></div>
       <div class="wish-total-row"><span><svg class="inline-icon" width="18" height="18"><use href="#i-star"/></svg> ${en ? 'Star Candles needed' : '必要星のキャンドル合計'}</span><b>${sumStarCandle}</b></div>
       <div class="wish-total-row"><span>　→ ${en ? 'Still short' : 'あと'}</span>
-        <b class="${lackStarCandle > 0 ? 'lack' : 'enough'}">${lackStarCandle > 0 ? lackStarCandle + (en ? '' : ' 本') : (en ? 'Enough! ' : '足りています ') + '<svg class="inline-icon ok" width="16" height="16"><use href="#i-check"/></svg>'}</b></div>
+        <b class="${lackStarCandle > 0 ? 'lack' : 'enough'}">${lackStarCandle > 0 ? lackStarCandle + (en ? '' : '<span class="num-unit"> 本</span>') : (en ? 'Enough! ' : '足りています ') + '<svg class="inline-icon ok" width="16" height="16"><use href="#i-check"/></svg>'}</b></div>
       <div class="wish-total-row"><span><svg class="inline-icon" width="18" height="18"><use href="#i-heart"/></svg> ${en ? 'Hearts needed' : '必要ハート合計'}</span><b>${sumHeart}</b></div>
       <div class="wish-total-row"><span>　→ ${en ? 'Still short' : 'あと'}</span>
-        <b class="${lackHeart > 0 ? 'lack' : 'enough'}">${lackHeart > 0 ? lackHeart + (en ? '' : ' 個') : (en ? 'Enough! ' : '足りています ') + '<svg class="inline-icon ok" width="16" height="16"><use href="#i-check"/></svg>'}</b></div>
-      ${sumMoney > 0 ? `<div class="wish-total-row"><span><svg class="inline-icon" width="18" height="18"><use href="#i-coin"/></svg> ${en ? 'Real money total' : '課金合計'}</span><b>¥${sumMoney.toLocaleString()}</b></div>` : ''}
-      ${unknownCount > 0 ? `<div class="wish-total-row"><span><svg class="inline-icon" width="18" height="18"><use href="#i-question"/></svg> ${en ? 'No price data' : '価格不明・対象外'}</span><b>${unknownCount}${en ? '' : ' 件'}</b></div>` : ''}
-      ${ownedCount > 0 ? `<div class="wish-total-row" style="color:var(--text-2);"><span><svg class="inline-icon ok" width="18" height="18"><use href="#i-check"/></svg> ${en ? 'Already owned (excluded)' : '入手済み（合計から除外）'}</span><b>${ownedCount}${en ? '' : ' 件'}</b></div>` : ''}
+        <b class="${lackHeart > 0 ? 'lack' : 'enough'}">${lackHeart > 0 ? lackHeart + (en ? '' : '<span class="num-unit"> 個</span>') : (en ? 'Enough! ' : '足りています ') + '<svg class="inline-icon ok" width="16" height="16"><use href="#i-check"/></svg>'}</b></div>
+      ${sumMoney > 0 ? `<div class="wish-total-row"><span><svg class="inline-icon" width="18" height="18"><use href="#i-coin"/></svg> ${en ? 'Real money total' : '課金合計'}</span><b><span class="num-unit">¥</span>${sumMoney.toLocaleString()}</b></div>` : ''}
+      ${unknownCount > 0 ? `<div class="wish-total-row"><span><svg class="inline-icon" width="18" height="18"><use href="#i-question"/></svg> ${en ? 'No price data' : '価格不明・対象外'}</span><b>${unknownCount}${en ? '' : '<span class="num-unit"> 件</span>'}</b></div>` : ''}
+      ${ownedCount > 0 ? `<div class="wish-total-row" style="color:var(--text-2);"><span><svg class="inline-icon ok" width="18" height="18"><use href="#i-check"/></svg> ${en ? 'Already owned (excluded)' : '入手済み（合計から除外）'}</span><b>${ownedCount}${en ? '' : '<span class="num-unit"> 件</span>'}</b></div>` : ''}
     </div>`;
 }
 
@@ -2723,9 +2725,9 @@ function renderAcquireLog() {
   body.innerHTML = `
     <div style="margin-top:10px;">${listHtml}</div>
     <div class="wish-total-box">
-      <div class="wish-total-row"><span><svg class="inline-icon" width="18" height="18"><use href="#i-folder"/></svg> ${en ? 'Total recorded' : '記録件数'}</span><b>${entries.length}${en ? '' : ' 件'}</b></div>
-      <div class="wish-total-row"><span><svg class="inline-icon" width="18" height="18"><use href="#i-calendar"/></svg> ${en ? 'Acquired this month' : '今月の入手数'}</span><b>${monthCount}${en ? '' : ' 件'}</b></div>
-      <div class="wish-total-row"><span><svg class="inline-icon" width="18" height="18"><use href="#i-calendar"/></svg> ${en ? 'Acquired this year' : '今年の入手数'}</span><b>${yearCount}${en ? '' : ' 件'}</b></div>
+      <div class="wish-total-row"><span><svg class="inline-icon" width="18" height="18"><use href="#i-folder"/></svg> ${en ? 'Total recorded' : '記録件数'}</span><b>${entries.length}${en ? '' : '<span class="num-unit"> 件</span>'}</b></div>
+      <div class="wish-total-row"><span><svg class="inline-icon" width="18" height="18"><use href="#i-calendar"/></svg> ${en ? 'Acquired this month' : '今月の入手数'}</span><b>${monthCount}${en ? '' : '<span class="num-unit"> 件</span>'}</b></div>
+      <div class="wish-total-row"><span><svg class="inline-icon" width="18" height="18"><use href="#i-calendar"/></svg> ${en ? 'Acquired this year' : '今年の入手数'}</span><b>${yearCount}${en ? '' : '<span class="num-unit"> 件</span>'}</b></div>
     </div>
     <div class="action-row" style="margin-top:12px;">
       <button class="action-btn twitter full" onclick="shareRecapOnTwitter('month')">${en ? 'Share This Month’s Recap' : '今月の振り返りを画像でシェア'}</button>
@@ -4279,7 +4281,7 @@ function readShareCustomizeFromModal() {
 
 function buildOverallExportCardEl(opts = {}) {
   const { own, tot, p } = getOverallStats();
-  const pctTxt = p !== null ? p + '%' : '--%';
+  const pctTxt = p !== null ? `${p}<span class="num-unit">%</span>` : '--%';
   const theme = SHARE_THEMES[opts.theme] ? opts.theme : 'orange';
   const selectedCats = opts.cats ? CATS.filter(c => opts.cats.includes(c.key)) : CATS;
   const comment = opts.comment || '';
@@ -4289,7 +4291,7 @@ function buildOverallExportCardEl(opts = {}) {
     const cp = d ? pct(d.owned, d.total) : null;
     const high = cp !== null && cp >= 80;
     const cls  = cp === null ? 'empty' : high ? 'high' : '';
-    const cpTxt = cp !== null ? cp + '%' : '--';
+    const cpTxt = cp !== null ? `${cp}<span class="num-unit">%</span>` : '--';
     return `
       <div class="exp-cat-cell">
         <div class="exp-cat-cell-icon">${catIconHtml(cat)}</div>
@@ -4589,26 +4591,26 @@ function showToast(msg) {
 </script>
 
 <footer style="text-align:center; padding:24px 16px; color:var(--text-2); font-size:13px; border-top:1px solid var(--sep); margin-top:40px; line-height:1.6;" data-i18n-en-html="This is an unofficial fan site for Sky: Children of the Light. thatgamecompany is not involved in any way.<br>
-   Created by / feedback: <a href=&quot;https://x.com/Skyzztai&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot; style=&quot;color: var(--blue); text-decoration: none; font-weight: bold;&quot;>@Skyzztai</a>&#12288;/&#12288;<a href=&quot;https://odaibako.net/u/Skyzztai&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot; style=&quot;color: var(--blue); text-decoration: none; font-weight: bold;&quot;>Request form</a><br>
+   Created by / feedback: <a href=&quot;https://x.com/Skyzztai&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot; style=&quot;color: var(--blue); text-decoration: underline; font-weight: bold;&quot;>@Skyzztai</a>&#12288;/&#12288;<a href=&quot;https://odaibako.net/u/Skyzztai&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot; style=&quot;color: var(--blue); text-decoration: underline; font-weight: bold;&quot;>Request form</a><br>
         <span style=&quot;color: var(--text-2); font-size: 12px; margin-top: 4px; display: inline-block;&quot;>
             References / image sources:
-            <a href=&quot;https://sky-children-of-the-light.fandom.com/ja/wiki/%E3%83%89%E3%83%AC%E3%82%B9%E3%82%A2%E3%83%83%E3%83%97%E3%82%A2%E3%82%A4%E3%83%86%E3%83%A0&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot; style=&quot;color: var(--blue);&quot;>Dress-Up Items (Sky Wiki Japanese)</a>
+            <a href=&quot;https://sky-children-of-the-light.fandom.com/ja/wiki/%E3%83%89%E3%83%AC%E3%82%B9%E3%82%A2%E3%83%83%E3%83%97%E3%82%A2%E3%82%A4%E3%83%86%E3%83%A0&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot; style=&quot;color: var(--blue); text-decoration: underline;&quot;>Dress-Up Items (Sky Wiki Japanese)</a>
     /
-    <a href=&quot;https://sky-children-of-the-light.fandom.com/wiki/Cosmetics&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot; style=&quot;color: var(--blue);&quot;>Cosmetics (Sky Wiki English)</a>
+    <a href=&quot;https://sky-children-of-the-light.fandom.com/wiki/Cosmetics&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot; style=&quot;color: var(--blue); text-decoration: underline;&quot;>Cosmetics (Sky Wiki English)</a>
         </span><br>
         <span style=&quot;color: var(--text-2); font-size: 12px; margin-top: 4px; display: inline-block;&quot;>
-            <a href=&quot;https://taipak5000.github.io/tai-info/&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot; style=&quot;color: var(--blue);&quot;>Settings / What's New / Credits / Privacy Policy</a>
+            <a href=&quot;https://taipak5000.github.io/tai-info/&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot; style=&quot;color: var(--blue); text-decoration: underline;&quot;>Settings / What's New / Credits / Privacy Policy</a>
         </span>">
   このサイトはSky 星を紡ぐ子どもたちの非公式ファンサイトです。thatgamecompanyは一切関与していません。<br>
-   作成・ご意見: <a href="https://x.com/Skyzztai" target="_blank" rel="noopener noreferrer" style="color: var(--blue); text-decoration: none; font-weight: bold;">@Skyzztai</a>　／　<a href="https://odaibako.net/u/Skyzztai" target="_blank" rel="noopener noreferrer" style="color: var(--blue); text-decoration: none; font-weight: bold;">リクエストフォーム</a><br>
+   作成・ご意見: <a href="https://x.com/Skyzztai" target="_blank" rel="noopener noreferrer" style="color: var(--blue); text-decoration: underline; font-weight: bold;">@Skyzztai</a>　／　<a href="https://odaibako.net/u/Skyzztai" target="_blank" rel="noopener noreferrer" style="color: var(--blue); text-decoration: underline; font-weight: bold;">リクエストフォーム</a><br>
         <span style="color: var(--text-2); font-size: 12px; margin-top: 4px; display: inline-block;">
             参考・画像引用元:
-            <a href="https://sky-children-of-the-light.fandom.com/ja/wiki/%E3%83%89%E3%83%AC%E3%82%B9%E3%82%A2%E3%83%83%E3%83%97%E3%82%A2%E3%82%A4%E3%83%86%E3%83%A0" target="_blank" rel="noopener noreferrer" style="color: var(--blue);">ドレスアップアイテム (Sky Wiki 日本語)</a>
+            <a href="https://sky-children-of-the-light.fandom.com/ja/wiki/%E3%83%89%E3%83%AC%E3%82%B9%E3%82%A2%E3%83%83%E3%83%97%E3%82%A2%E3%82%A4%E3%83%86%E3%83%A0" target="_blank" rel="noopener noreferrer" style="color: var(--blue); text-decoration: underline;">ドレスアップアイテム (Sky Wiki 日本語)</a>
     ／
-    <a href="https://sky-children-of-the-light.fandom.com/wiki/Cosmetics" target="_blank" rel="noopener noreferrer" style="color: var(--blue);">Cosmetics (Sky Wiki 英語)</a>
+    <a href="https://sky-children-of-the-light.fandom.com/wiki/Cosmetics" target="_blank" rel="noopener noreferrer" style="color: var(--blue); text-decoration: underline;">Cosmetics (Sky Wiki 英語)</a>
         </span><br>
         <span style="color: var(--text-2); font-size: 12px; margin-top: 4px; display: inline-block;">
-            <a href="https://taipak5000.github.io/tai-info/" target="_blank" rel="noopener noreferrer" style="color: var(--blue);">設定・更新情報・クレジット・プライバシーポリシー</a>
+            <a href="https://taipak5000.github.io/tai-info/" target="_blank" rel="noopener noreferrer" style="color: var(--blue); text-decoration: underline;">設定・更新情報・クレジット・プライバシーポリシー</a>
         </span>
     </footer>
 

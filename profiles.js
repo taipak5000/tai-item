@@ -585,7 +585,7 @@ function pfInjectStyle() {
       color: var(--text); border-radius: var(--r-sm); padding: 10px; font-size: 14px; cursor: pointer; }
     .pf-row-input { flex: 1; background: var(--bg); border: 1px solid var(--blue); border-radius: 6px;
       padding: 6px 8px; font-size: 14px; color: var(--text); font-family: inherit; outline: none; box-sizing: border-box; min-width: 0; }
-    .pf-row-confirm-text { flex: 1; font-size: 13px; color: var(--text); line-height: 1.4; }
+    .pf-row-confirm-text { flex: 1; font-size: 13px; color: var(--text); line-height: 1.5; }
     .pf-row-btn-ok { background: var(--blue); color: #fff; border: none; }
     .pf-row-btn-danger { background: #ff3b30; color: #fff; border: none; }
     .pf-color-input { width: 28px; height: 28px; padding: 0; border: 1px solid var(--sep); border-radius: 50%;
