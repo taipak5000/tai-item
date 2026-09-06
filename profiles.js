@@ -436,7 +436,13 @@ function closeTopmostOpenModal() {
     return;
   }
 
-  const localOverlay = document.querySelector('.modal-overlay.open');
+  // 複数の.modal-overlayが同時に開いている場合（例: 写真クロップが別のモーダルの上に
+  // 重なっている場合）、querySelectorは常にDOM順で先頭の要素を返してしまい、実際に一番
+  // 手前に描画されている（＝DOM順で最後の）ものを取り逃す。z-indexの指定がなく、同じ
+  // スタッキングコンテキスト内ではDOM順で後にある要素が上に重なって描画されるため、
+  // querySelectorAllで全件取得し末尾（＝一番手前）を選ぶ。
+  const localOverlays = document.querySelectorAll('.modal-overlay.open');
+  const localOverlay = localOverlays[localOverlays.length - 1];
   if (localOverlay) {
     if (localOverlay.id === 'sharedCoordModal' && typeof closeSharedCoordModal === 'function') { closeSharedCoordModal(); return; }
     if (localOverlay.id === 'photoCropModal' && typeof cancelPhotoCrop === 'function') { cancelPhotoCrop(); return; }
