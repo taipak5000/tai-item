@@ -525,12 +525,6 @@ function pfInjectStyle() {
       position: relative; }
     .pf-search-btn:hover { background: var(--sep); }
 
-    /* 🔴 ダッシュボードボタンの「まもなく終了」ドット（サイトドック・プロフィールバー共通）。
-       新規データが無い限りJSでdisplay:noneのまま維持される（初期状態もnoneにしておくことで、
-       JS実行前・実行失敗時に誤って常時表示されてしまうのを防ぐ） */
-    .pf-dash-urgent-dot { display: none; position: absolute; top: -2px; right: -4px;
-      width: 8px; height: 8px; border-radius: 50%; background: #FF3B30; box-shadow: 0 0 0 2px var(--card); }
-
     /* 💡 初回訪問ヒントバナー：.pf-barと同じ横幅・余白で揃えつつ、青枠で「案内」であることを示す */
     .pf-hint-banner { max-width: 600px; margin: 8px auto 0; background: var(--card); border: 1px solid var(--blue);
       border-radius: var(--r-sm); padding: 9px 12px; font-size: 12.5px; color: var(--text-2);
@@ -745,7 +739,7 @@ function pfRenderBar() {
   if (bar) {
     bar.innerHTML = `
       <span class="pf-bar-text" onclick="pfOpenModal()"><svg class="inline-icon" width="18" height="18"><use href="#i-folder"/></svg> <b>${escapeHtmlPf(displayName)}</b> ${pfT('に切替中（タップで切替）', 'active (tap to switch)')}</span>
-      <button type="button" class="pf-search-btn" onclick="pfDashOpen()" title="${pfT('今日・今週・今月ダッシュボード', 'Today / this week / this month')}"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-calendar"/></svg></span><span class="pf-dash-urgent-dot" aria-hidden="true" title="${pfT('季節・イベントの終了が近づいています', 'A season or event is ending soon')}"></span></button>
+      <button type="button" class="pf-search-btn" onclick="pfDashOpen()" title="${pfT('今日・今週・今月ダッシュボード', 'Today / this week / this month')}"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-calendar"/></svg></span></button>
       <button type="button" class="pf-search-btn" onclick="srchOpen()" title="${pfT('横断検索（アイテム・エモート・精霊・季節）', 'Cross-site search')}"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-search"/></svg></span></button>
       <button type="button" class="pf-search-btn" onclick="settingsOpen()" title="${pfT('表示設定', 'Display Settings')}"><span class="icon-chip" style="width:24px; height:24px;"><svg width="19" height="19"><use href="#i-settings"/></svg></span></button>`;
   }
@@ -1410,8 +1404,12 @@ function pfDashRevisitStatus(schedule) {
 }
 
 // 複数の来訪スケジュールがあるので、それぞれの状態をまとめて計算する
+// 一回限り(start/end)の期間限定来訪団はEVENT_SCHEDULE側で「〇〇が開催中」として既に
+// 表示されるため、ここではintervalDaysを持つ周期的な単独の旅する精霊のみを対象にする
+// （同じ来訪が二重に表示されるのを防ぐ）。
 function pfDashRevisitStatuses(schedules) {
   return (schedules || [])
+    .filter(schedule => !!schedule.intervalDays)
     .map(schedule => ({ schedule, status: pfDashRevisitStatus(schedule) }))
     .filter(x => x.status);
 }
@@ -1423,6 +1421,7 @@ async function pfDashLoadData() {
     revisitSchedules: srchExtractArray(html, 'REVISIT_SPIRIT_SCHEDULES') || [],
     season: srchExtractArray(html, 'CURRENT_SEASON') || null,
     eventSchedule: srchExtractArray(html, 'EVENT_SCHEDULE') || [],
+    candleBonusSchedule: srchExtractArray(html, 'CANDLE_BONUS_SCHEDULE') || [],
     nextUpdate: srchExtractArray(html, 'NEXT_UPDATE') || null,
   };
 }
@@ -1440,38 +1439,6 @@ function pfDashActiveScheduledEvents(schedule) {
 
 function pfDashRow(icon, html) {
   return `<div class="dash-row"><span class="dash-row-icon">${icon}</span><span class="dash-row-text">${html}</span></div>`;
-}
-
-/* ================================================================
-   🔴 サイトドック「まもなく終了」ドット
-   pfDashCacheに既に入っている（＝ダッシュボードを開いた時・通知リマインダーが
-   動いた時にだけ取得される）シーズン/期間限定イベントの終了日時のうち、
-   3日以内に迫っているものが1件でもあればtrueにする。新規のfetchは一切
-   追加しない（=ここではpfDashLoadData()を呼ばない）ため、まだ一度も
-   ダッシュボードを取得していないページ読み込み直後は何も表示されない。
-   デイリーリセット・週間リセットのような「毎回必ず3日以内に来る」項目は
-   対象外（pfDashReminderTargets()はそれらも含むため、ここでは専用に絞り込む）。
-   他ツールの未公開データ源には一切依存しない。
-   ================================================================ */
-const PF_DASH_URGENT_THRESHOLD_MS = 3 * 24 * 60 * 60 * 1000;
-function pfDashUrgentSoon(data) {
-  if (!data) return false;
-  const now = new Date();
-  const ends = [];
-  if (data.season && data.season.endDate) ends.push(new Date(data.season.endDate));
-  pfDashActiveScheduledEvents(data.eventSchedule).forEach(ev => ends.push(new Date(ev.end)));
-  return ends.some(end => {
-    const msLeft = end - now;
-    return msLeft > 0 && msLeft <= PF_DASH_URGENT_THRESHOLD_MS;
-  });
-}
-// サイトドック／プロフィールバー、両方のダッシュボードボタンにあるドットの表示・
-// 非表示をまとめて切り替える（同じクラス名を持つ要素が複数箇所にあるため一括更新）
-function pfDashUpdateUrgentBadge() {
-  const urgent = pfDashUrgentSoon(pfDashCache);
-  document.querySelectorAll('.pf-dash-urgent-dot').forEach(el => {
-    el.style.display = urgent ? 'block' : 'none';
-  });
 }
 
 function pfDashBuildHtml(data) {
@@ -1519,6 +1486,10 @@ function pfDashBuildHtml(data) {
   pfDashActiveScheduledEvents(data.eventSchedule).forEach(ev => {
     const endDate = new Date(ev.end);
     bucketRows[pfDashBucketFor(endDate)].push(pfDashRow(seasonPendantIconHtml(ev.name, 16, 'i-star'), `<b>${escapeHtmlPf(trEvent(ev.name))}</b> ${pfT('が開催中', 'is currently active')}<span class="dash-countdown">${pfT('終了まで', 'Ends in')} ${pfDashCountdown(endDate)}</span>`));
+  });
+  pfDashActiveScheduledEvents(data.candleBonusSchedule).forEach(ev => {
+    const bonusEnd = new Date(ev.end);
+    bucketRows[pfDashBucketFor(bonusEnd)].push(pfDashRow(`<svg class="inline-icon" width="16" height="16"><use href="#i-candle"/></svg>`, `<b>${escapeHtmlPf(trEvent(ev.name))}</b> ${pfT('が開催中', 'is currently active')}<span class="dash-countdown">${pfT('終了まで', 'Ends in')} ${pfDashCountdown(bonusEnd)}</span>`));
   });
   // 複数の来訪(周期的な単独の旅の精霊・期間限定の来訪団など)が同時に進行することがあるため、
   // それぞれ独立した行として表示する（1件にまとめると、片方の来訪が隠れてしまうため）
@@ -1600,7 +1571,6 @@ async function pfDashOpen() {
     requestAnimationFrame(() => {
       body.innerHTML = pfDashBuildHtml(pfDashCache);
       pfDashStartTimer();
-      pfDashUpdateUrgentBadge();
     });
     return;
   }
@@ -1611,7 +1581,6 @@ async function pfDashOpen() {
     pfDashCache = data;
     body.innerHTML = pfDashBuildHtml(data);
     pfDashStartTimer();
-    pfDashUpdateUrgentBadge(); // 🔴 取得したデータで「まもなく終了」ドットを更新（新規fetchは追加しない）
   } catch (e) {
     console.error('pfDashOpen', e);
     body.innerHTML = `<div class="dash-empty">${pfT('読み込みに失敗しました', 'Failed to load')}</div>`;
@@ -1687,7 +1656,6 @@ async function pfReminderCheckNow() {
     if (!pfDashCache) {
       if (!pfDashLoading) pfDashLoading = pfDashLoadData();
       pfDashCache = await pfDashLoading;
-      pfDashUpdateUrgentBadge(); // 🔴 通知リマインダー経由で取得できた場合もドットへ反映する
     }
   } catch (e) { console.error('pfReminderCheckNow', e); return; }
 
@@ -2600,7 +2568,7 @@ function pfInit() {
       <span class="site-dock-label" id="siteDockProfileLabel">${pfT('プロフィール', 'Profiles')}</span>
     </button>
     <button type="button" onclick="pfDashOpen()">
-      <span class="site-dock-icon"><span class="icon-chip" style="width:28px; height:28px;"><svg width="22" height="22"><use href="#i-calendar"/></svg></span><span class="pf-dash-urgent-dot" aria-hidden="true" title="${pfT('季節・イベントの終了が近づいています', 'A season or event is ending soon')}"></span></span>
+      <span class="site-dock-icon"><span class="icon-chip" style="width:28px; height:28px;"><svg width="22" height="22"><use href="#i-calendar"/></svg></span></span>
       <span class="site-dock-label">${pfT('ダッシュボード', 'Dashboard')}</span>
     </button>
     <button type="button" onclick="pfToolsOpen()">
@@ -2706,10 +2674,6 @@ function pfInit() {
   // 🔔 通知リマインダー：既にオプトイン＆許可済みの場合だけ静かに再開する
   // （新規の許可リクエストはここでは絶対に発生しない）
   pfReminderInit();
-
-  // 🔴 ドックのダッシュボードボタン：pfDashCacheがこの時点で既に何か入っていれば
-  // （通常は無いが念のため）ドットへ反映しておく。新規fetchはここでも行わない
-  pfDashUpdateUrgentBadge();
 }
 
 /* ================================================================

@@ -74,6 +74,7 @@ const SEASON_NAME_EN = {
   '光に染まるイベント': 'Event of Radiant Light',
   '来訪する精霊団': 'Traveling Spirit Troupe',
   '夏のキャンプ': 'Summer Camp',
+  '大キャン２倍・シーズンキャンドル２倍': 'Double Grand & Season Candles',
   // ── その他の共通ソース表記 ──
   '恒常精霊': 'Realm Spirits',
   '奏の音楽堂': 'Concert Hall',
