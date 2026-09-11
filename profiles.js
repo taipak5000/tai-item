@@ -622,6 +622,40 @@ function pfInjectStyle() {
     .dash-shard-time { color: var(--blue); font-weight: 600; font-variant-numeric: tabular-nums; }
     .dash-shard-time.past { color: var(--text-2); font-weight: 400; text-decoration: line-through; }
     .dash-empty { font-size: 12.5px; color: var(--text-2); padding: 2px 2px 4px; }
+    /* ---------- ダッシュボードのイベントカレンダー（初期状態は折りたたみ）。
+       ネイティブ<details>を使うことで、開閉のJS実装なしで済み、CLAUDE.mdの
+       「開くアニメーションはtransitionでなくkeyframesで」の制約（display:noneを
+       transitionは跨げない）自体を回避できる。矢印の回転だけ、display:noneに
+       関係しない常時表示要素へのtransitionなので問題ない。 ---------- */
+    .dash-calendar-summary {
+      display: flex; align-items: center; gap: 6px; cursor: pointer; list-style: none;
+      font-size: 12.5px; font-weight: 600; color: var(--text); padding: 9px 11px;
+      background: var(--bg); border-radius: var(--r-sm); user-select: none;
+    }
+    .dash-calendar-summary::-webkit-details-marker { display: none; }
+    .dash-calendar-summary::marker { content: ''; }
+    .dash-calendar-chevron { margin-left: auto; font-size: 13px; color: var(--text-2); transition: transform 0.2s ease; }
+    .dash-calendar[open] .dash-calendar-summary { border-radius: var(--r-sm) var(--r-sm) 0 0; }
+    .dash-calendar[open] .dash-calendar-chevron { transform: rotate(90deg); }
+    .dash-cal-grid {
+      display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px;
+      padding: 10px 11px; background: var(--bg); border-radius: 0 0 var(--r-sm) var(--r-sm);
+    }
+    .dash-cal-dow { text-align: center; font-size: 10px; font-weight: 700; color: var(--text-2); padding-bottom: 4px; }
+    .dash-cal-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 6px; gap: 2px; }
+    .dash-cal-day.is-pad { visibility: hidden; }
+    .dash-cal-daynum { font-size: 11px; font-variant-numeric: tabular-nums; color: var(--text); }
+    .dash-cal-day.is-today { background: var(--blue); }
+    .dash-cal-day.is-today .dash-cal-daynum { color: #fff; font-weight: 700; }
+    .dash-cal-dots { display: flex; gap: 2px; height: 4px; }
+    .dash-cal-dot { width: 4px; height: 4px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+    .dash-cal-dot.season { background: #eab308; }
+    .dash-cal-dot.event { background: #ec4899; }
+    .dash-cal-dot.candle { background: #f97316; }
+    .dash-cal-dot.revisit { background: #14b8a6; }
+    .dash-cal-legend { display: flex; flex-wrap: wrap; gap: 10px; padding: 8px 2px 2px; font-size: 10.5px; color: var(--text-2); }
+    .dash-cal-legend span { display: inline-flex; align-items: center; gap: 4px; }
+    .dash-cal-legend .dash-cal-dot { width: 6px; height: 6px; }
 
     .srch-modal-card { max-width: 420px; }
     .srch-input { width: 100%; box-sizing: border-box; background: var(--bg); border: 1px solid var(--sep);
@@ -1413,6 +1447,122 @@ function pfDashRevisitStatuses(schedules) {
     .filter(x => x.status);
 }
 
+/* ================================================================
+   📅 ダッシュボードのイベントカレンダー（今月の1ヶ月分を表示）
+   pfDashRevisitStatus()等はテキスト表示用に「直近の1回」だけを見れば足りるが、
+   カレンダーは表示中の月に含まれる全ての開催区間を漏れなく描画する必要があるため、
+   [rangeStart, rangeEnd]と重なる区間を全て返す専用のヘルパーを別に持つ。
+   season(CURRENT_SEASON)のようにstartを持たないスケジュールは、
+   pfDashActiveScheduledEvents()と同じ「start省略＝常に開催中→endで終了」規約に従う。
+   ================================================================ */
+function pfDashOccurrencesInRange(schedule, rangeStart, rangeEnd) {
+  if (!schedule) return [];
+  if (schedule.intervalDays) {
+    if (!schedule.anchorStart || !schedule.anchorEnd) return [];
+    const start0 = new Date(schedule.anchorStart);
+    const end0 = new Date(schedule.anchorEnd);
+    const intervalMs = schedule.intervalDays * 86400000;
+    const durationMs = end0.getTime() - start0.getTime();
+    const out = [];
+    let k = Math.floor((rangeStart.getTime() - start0.getTime()) / intervalMs) - 1;
+    for (let guard = 0; guard < 400; guard++, k++) {
+      const s = new Date(start0.getTime() + k * intervalMs);
+      if (s.getTime() > rangeEnd.getTime()) break;
+      const e = new Date(s.getTime() + durationMs);
+      if (e.getTime() >= rangeStart.getTime()) out.push({ start: s, end: e });
+    }
+    return out;
+  }
+  if (!schedule.end) return [];
+  const e = new Date(schedule.end);
+  const s = schedule.start ? new Date(schedule.start) : null;
+  if (e.getTime() < rangeStart.getTime()) return [];
+  if (s && s.getTime() > rangeEnd.getTime()) return [];
+  return [{ start: s, end: e }];
+}
+// 表示中の月の各日について、実際に開催中のカテゴリ（season/event/candle/revisit）だけを
+// 'YYYY-M-D'キー→カテゴリ名Setのマップにまとめる
+function pfDashCalendarMarks(data, year, month) {
+  const rangeStart = new Date(year, month, 1, 0, 0, 0);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const rangeEnd = new Date(year, month, daysInMonth, 23, 59, 59);
+  const marks = new Map();
+  function addRange(cat, start, end) {
+    const from = start && start > rangeStart ? start : rangeStart;
+    const to = end < rangeEnd ? end : rangeEnd;
+    if (to < from) return;
+    const d = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+    const last = new Date(to.getFullYear(), to.getMonth(), to.getDate());
+    while (d <= last) {
+      const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      if (!marks.has(key)) marks.set(key, new Set());
+      marks.get(key).add(cat);
+      d.setDate(d.getDate() + 1);
+    }
+  }
+  if (data.season && data.season.name && data.season.endDate) {
+    pfDashOccurrencesInRange({ end: data.season.endDate }, rangeStart, rangeEnd)
+      .forEach(r => addRange('season', r.start, r.end));
+  }
+  (data.eventSchedule || []).forEach(ev => {
+    pfDashOccurrencesInRange(ev, rangeStart, rangeEnd).forEach(r => addRange('event', r.start, r.end));
+  });
+  (data.candleBonusSchedule || []).forEach(ev => {
+    pfDashOccurrencesInRange(ev, rangeStart, rangeEnd).forEach(r => addRange('candle', r.start, r.end));
+  });
+  (data.revisitSchedules || []).forEach(sch => {
+    pfDashOccurrencesInRange(sch, rangeStart, rangeEnd).forEach(r => addRange('revisit', r.start, r.end));
+  });
+  return marks;
+}
+// 今月分のカレンダー本体のHTML。初期状態は折りたたまれた<details>（ネイティブ挙動を
+// 使うためJSでの開閉制御は不要）。開いたときだけ中身が見えれば十分なので、
+// pfDashBuildHtml()の他の行のような1秒ごとの再描画（タイマー）はしない。
+function pfDashCalendarHtml(data) {
+  const now = new Date();
+  const year = now.getFullYear(), month = now.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const startWeekday = new Date(year, month, 1).getDay();
+  const marks = pfDashCalendarMarks(data, year, month);
+  const todayKey = `${year}-${month}-${now.getDate()}`;
+  const CAT_ORDER = ['season', 'event', 'candle', 'revisit'];
+
+  const dow = CURRENT_LANG === 'en' ? ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] : ['日', '月', '火', '水', '木', '金', '土'];
+  let cellsHtml = '';
+  for (let i = 0; i < startWeekday; i++) cellsHtml += '<div class="dash-cal-day is-pad"></div>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = `${year}-${month}-${d}`;
+    const cats = marks.get(key);
+    const isToday = key === todayKey;
+    const dotsHtml = cats
+      ? `<span class="dash-cal-dots">${CAT_ORDER.filter(c => cats.has(c)).map(c => `<i class="dash-cal-dot ${c}"></i>`).join('')}</span>`
+      : '';
+    cellsHtml += `<div class="dash-cal-day${isToday ? ' is-today' : ''}"><span class="dash-cal-daynum">${d}</span>${dotsHtml}</div>`;
+  }
+  const monthLabel = CURRENT_LANG === 'en'
+    ? new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(now)
+    : `${year}年${month + 1}月`;
+
+  return `
+    <details class="dash-calendar">
+      <summary class="dash-calendar-summary">
+        <svg class="inline-icon" width="15" height="15"><use href="#i-calendar"/></svg>
+        <span>${pfT(`カレンダーで見る（${monthLabel}）`, `View as Calendar (${monthLabel})`)}</span>
+        <span class="dash-calendar-chevron">›</span>
+      </summary>
+      <div class="dash-cal-grid">
+        ${dow.map(w => `<div class="dash-cal-dow">${w}</div>`).join('')}
+        ${cellsHtml}
+      </div>
+      <div class="dash-cal-legend">
+        <span><i class="dash-cal-dot season"></i>${pfT('季節', 'Season')}</span>
+        <span><i class="dash-cal-dot event"></i>${pfT('イベント', 'Event')}</span>
+        <span><i class="dash-cal-dot candle"></i>${pfT('キャンドル2倍', '2x Candles')}</span>
+        <span><i class="dash-cal-dot revisit"></i>${pfT('再訪精霊', 'Revisit Spirit')}</span>
+      </div>
+    </details>`;
+}
+
 async function pfDashLoadData() {
   const res = await fetch(`${SITE_ROOT}/tai-item/index.html`);
   const html = await res.text();
@@ -1525,6 +1675,7 @@ function pfDashBuildHtml(data) {
   const monthHtml = monthParts.length ? monthParts.join('') : bucketEmptyMsg;
 
   return `
+    <div class="dash-section">${pfDashCalendarHtml(data)}</div>
     <div class="dash-section">
       <p class="dash-section-label">${pfT('デイリー', 'Daily')}</p>
       ${dailyHtml}
@@ -1553,7 +1704,16 @@ function pfDashStartTimer() {
   pfDashTimer = setInterval(() => {
     if (!pfDashCache) return;
     const body = document.getElementById('dashBody');
-    if (body) body.innerHTML = pfDashBuildHtml(pfDashCache);
+    if (!body) return;
+    // カレンダーの開閉(<details>)はカウントダウンと違って毎秒更新する必要がないが、
+    // innerHTMLごと差し替えるとdetails要素が作り直され、開いていた状態が毎秒
+    // 勝手に閉じてしまう。差し替え前に開閉状態を読み、差し替え後に復元する。
+    const wasOpen = body.querySelector('.dash-calendar')?.open;
+    body.innerHTML = pfDashBuildHtml(pfDashCache);
+    if (wasOpen) {
+      const cal = body.querySelector('.dash-calendar');
+      if (cal) cal.open = true;
+    }
   }, 1000);
 }
 function pfDashStopTimer() {
