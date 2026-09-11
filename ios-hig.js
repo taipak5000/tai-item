@@ -198,7 +198,11 @@
     }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'], subtree: true, attributeOldValue: true });
 
     function isInteractive(el) {
-      return !!(el && el.closest && el.closest('input, select, textarea, button, a, label, [contenteditable], [role="button"], .crop-viewport, input[type="range"]'));
+      // 🩹 summaryも対象に含める：<details>の<summary>はネイティブにクリック/タップで
+      // 開閉するインタラクティブ要素だが、ここに含まれていないとそこを起点にした
+      // わずかな縦ドラッグ（タップの指ブレ程度）までこのシートのdrag-to-dismiss
+      // ジェスチャに奪われ、開閉トグルが発火しない。
+      return !!(el && el.closest && el.closest('input, select, textarea, button, a, label, summary, [contenteditable], [role="button"], .crop-viewport, input[type="range"]'));
     }
     document.addEventListener('pointerdown', function (e) {
       if (REDUCE_MOTION.matches) return;
