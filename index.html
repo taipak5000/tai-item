@@ -1918,9 +1918,15 @@ const NEXT_UPDATE = {
 // 新しい来訪があれば配列に追加してください。
 const REVISIT_SPIRIT_SCHEDULES = [
   {
-    // 2週間おきに4日間だけ来る「飛び跳ねる舞踏家」の再訪周期
+    // 2週間おきに4日間だけ来る旅の精霊の再訪周期。来訪ごとに違う精霊が来るため、
+    // 入れ替わるたびにitemsだけをその精霊の(想いを編む季節オリジナルの)アイテムに
+    // 更新する(anchorStart/anchorEnd/intervalDaysは周期の起点なので変更不要)。
+    // 今回(2026-09-10〜09-14の周期)は「祖たる賢者」。神聖な祖たる賢者(青い鳥の季節の
+    // 別アイテム: cape_107, face_accessory_019)は今回の再訪対象ではないため含めない。
     items: [
-      { catKey: 'mask', id: 'mask_006' },
+      { catKey: 'mask', id: 'mask_018' },
+      { catKey: 'cape', id: 'cape_031' },
+      { catKey: 'small_placeable', id: 'small_placeable_001' },
     ],
     anchorStart: '2026-08-27T16:00:00+09:00',
     anchorEnd: '2026-08-31T15:59:59+09:00',
