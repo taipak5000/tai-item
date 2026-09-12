@@ -1759,7 +1759,14 @@ function pfDashRerenderBody(body, html) {
     // 本体を下にスクロールして今日/今週/今月やリマインダー設定を見ている間に毎秒のティックが
     // 来ると、無条件のfocus()がスクロール位置をカレンダーの位置まで毎回引き戻してしまうため、
     // preventScrollで抑止する。
-    if (summary) summary.focus({ preventScroll: true });
+    // 🩹 ここは毎秒のティックで<summary>を作り直すたびに呼ばれるため、マウスで一度
+    // クリックしただけのユーザーにもスクリプトによるfocus()がChromiumの:focus-visible
+    // ヒューリスティックを通ってしまい、ios-hig.jsのdata-input-modality抑制（CSS側）を
+    // すり抜けてリングが毎秒点滅し続けてしまう。直近の入力方式がマウスの間はフォーカス
+    // 復元自体を行わない（キーボード操作で開いていた場合だけ復元し、リングも維持する）。
+    if (summary && document.documentElement.getAttribute('data-input-modality') !== 'mouse') {
+      summary.focus({ preventScroll: true });
+    }
   }
 }
 // 各行のカウントダウンをリアルタイムで進めるため、モーダルを開いている間は
@@ -1789,6 +1796,11 @@ async function pfDashOpen() {
     // これをしないと、カレンダーを展開した状態でモーダルを閉じて再度開くたびに
     // 折りたたみ状態へ戻ってしまう。
     requestAnimationFrame(() => {
+      // 🩹 rAFが実際に発火するまでの間にダッシュボードが閉じられている可能性がある
+      // （開いて即座に閉じた等）。閉じた後にここへ来ると、見えていない#dashBodyを
+      // 再構築した上でタイマーだけが起動してしまい、再度開かれるまでバックグラウンドで
+      // 毎秒動き続けるリークになるため、閉じていたら何もしない。
+      if (!document.getElementById('dashModalOverlay').classList.contains('open')) return;
       pfDashRerenderBody(body, pfDashBuildHtml(pfDashCache));
       pfDashStartTimer();
     });
@@ -1799,6 +1811,10 @@ async function pfDashOpen() {
     if (!pfDashLoading) pfDashLoading = pfDashLoadData();
     const data = await pfDashLoading;
     pfDashCache = data;
+    // 🩹 上のrAF分岐と同じ理由で、フェッチ待ちの間にダッシュボードが閉じられている
+    // 可能性がある。キャッシュ自体は次回開いた時のために保存しつつ、見えていない
+    // #dashBodyの再構築とタイマー起動はスキップする。
+    if (!document.getElementById('dashModalOverlay').classList.contains('open')) return;
     body.innerHTML = pfDashBuildHtml(data);
     pfDashStartTimer();
   } catch (e) {
