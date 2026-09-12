@@ -643,15 +643,23 @@ function pfInjectStyle() {
     .dash-calendar[open] .dash-calendar-summary { border-radius: var(--r-sm) var(--r-sm) 0 0; }
     .dash-calendar[open] .dash-calendar-chevron { transform: rotate(90deg); }
     /* 🩹 7列グリッドがmax-widthなしで親の.pf-modal-card(デスクトップ幅で720~960px)まで
-       伸びてしまい、セルが120px超の巨大な正方形になる問題への対処。コンパクトな
-       カレンダー幅に上限を設け、モバイル幅(上限未満)では従来どおり100%のまま。 */
-    .dash-calendar { max-width: 380px; margin: 0 auto; }
+       伸びてしまい、セルが120px超の巨大な正方形になる問題への対処。
+       🎨 (Class K) 以前は.dash-calendar自体(summary込みの外枠全体)に上限を付けていたが、
+       それだと同じシート内で他のセクション(デイリー/今日/今週/今月の各行)は全幅のまま
+       なのに、カレンダーのブロックだけ狭く中央寄せされ、独立した浮き島のように見えてしまう
+       問題があった(Class K)。そこで外枠(<details>とsummary)は他セクションと同じ全幅の
+       ままにし、実際にセルが巨大化する原因であるグリッド本体(.dash-cal-day)側だけに
+       上限を設けて中央寄せする。 */
     .dash-cal-grid {
       display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px;
       padding: 10px 11px; background: var(--bg); border-radius: 0 0 var(--r-sm) var(--r-sm);
     }
     .dash-cal-dow { text-align: center; font-size: 10px; font-weight: 700; color: var(--text-2); padding-bottom: 4px; }
-    .dash-cal-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 6px; gap: 2px; }
+    /* 🎨 (Class K) セル自体にmax-widthを持たせ、グリッド列(1fr)いっぱいに伸びようとする
+       のを48pxで頭打ちにし、余った分はmargin:0 autoで列内に中央寄せする。これによりグリッド
+       全体は親要素と同じ全幅のまま(列の数・全体の横幅は変わらない)、個々のセルだけが
+       44〜48px程度に収まる。 */
+    .dash-cal-day { aspect-ratio: 1; width: 100%; max-width: 48px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 6px; gap: 2px; }
     .dash-cal-day.is-pad { visibility: hidden; }
     .dash-cal-daynum { font-size: 11px; font-variant-numeric: tabular-nums; color: var(--text); }
     .dash-cal-day.is-today { background: var(--dash-cal-today-bg); }
@@ -664,10 +672,27 @@ function pfInjectStyle() {
     .dash-cal-dot.event { background: #ec4899; }
     .dash-cal-dot.candle { background: #f97316; }
     .dash-cal-dot.revisit { background: #14b8a6; }
+    /* 🎨 (Class H) 上の4色は暗色テーマの黒背景(#000)に対しては約6:1〜11:1と余裕で
+       WCAG 1.4.11の非文字コントラスト3:1を満たすが、明色テーマの通常セル背景
+       var(--bg)(#F2F2F7、「今日」以外の全セル)に対しては実測でseason約1.72:1、
+       candle約2.51:1、revisit約2.23:1と大きく不足し、eventも約3.16:1とギリギリで
+       余裕がない(自前のWCAG相対輝度計算で検証済み)。明色テーマだけ、同じ色味を保ちつつ
+       彩度・明度を調整した専用の濃色バリアントに差し替える(#F2F2F7に対し実測でいずれも
+       3.3:1以上を確保)。凡例(.dash-cal-legend)も同じ.dash-cal-dotクラスを使うため、
+       この上書きだけで凡例側の視認性も同時に直る。 */
+    [data-theme="light"] .dash-cal-dot.season { background: #a67f06; }
+    [data-theme="light"] .dash-cal-dot.event { background: #eb4094; }
+    [data-theme="light"] .dash-cal-dot.candle { background: #dd5e06; }
+    [data-theme="light"] .dash-cal-dot.revisit { background: #109587; }
     /* 🎨 「今日」セルの青背景の上ではドット本来の色だけでは非文字コントラスト3:1を満たせない
        組み合わせがある(特にevent/candle/revisit)。背景色に依存せず常に視認できるよう、
        このセル内のドットにだけ白いリングを付ける(実測: 白とtoday背景は約5.3:1/4.9:1)。 */
     .dash-cal-day.is-today .dash-cal-dot { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.9); }
+    /* 🩹 (Class I) 上のリングは通常の2pxドット間隔のままだと、隣接ドット同士のリングが
+       接触/重なって1つの白い塊に見えてしまう(4px角のドットが2pxしか離れていないため、
+       片側1pxずつ広がるリング同士の隙間が実質0pxになる)。今日のセルに限りドット間隔を
+       広げ、複数カテゴリーが同時に立っていても個々の色が判別できるようにする。 */
+    .dash-cal-day.is-today .dash-cal-dots { gap: 6px; }
     .dash-cal-legend { display: flex; flex-wrap: wrap; gap: 10px; padding: 8px 2px 2px; font-size: 10.5px; color: var(--text-2); }
     .dash-cal-legend span { display: inline-flex; align-items: center; gap: 4px; }
     .dash-cal-legend .dash-cal-dot { width: 6px; height: 6px; }
@@ -1712,6 +1737,31 @@ function pfDashBuildHtml(data) {
 let pfDashCache = null;
 let pfDashLoading = null;
 let pfDashTimer = null;
+// 🩹 #dashBodyの中身を丸ごと差し替える箇所は複数ある（毎秒のカウントダウン再描画、
+// pfDashOpen()の「キャッシュ済みで再オープン」分岐）。innerHTMLごと差し替えると
+// <details>のカレンダーは毎回作り直され、開いていた開閉状態が勝手に閉じてしまう上、
+// カレンダーの<summary>にフォーカスがあった場合はそれも失われてモーダルのフォーカス
+// トラップが壊れる。差し替え前に開閉状態とフォーカス位置を読み、差し替え後に同じ役割の
+// 新しい要素へ復元する処理を1箇所にまとめ、差し替え箇所すべてから呼ぶ（実装を1つに保つ
+// ことで、どこかの再描画箇所だけ復元処理が漏れる、という事態を防ぐ）。
+function pfDashRerenderBody(body, html) {
+  const wasOpen = body.querySelector('.dash-calendar')?.open;
+  const active = document.activeElement;
+  const hadCalendarFocus = !!(active && body.contains(active) && active.closest('.dash-calendar-summary'));
+  body.innerHTML = html;
+  if (wasOpen) {
+    const cal = body.querySelector('.dash-calendar');
+    if (cal) cal.open = true;
+  }
+  if (hadCalendarFocus) {
+    const summary = body.querySelector('.dash-calendar-summary');
+    // 🩹 focus()はデフォルトで対象を画面内へスクロールしてしまう。ユーザーがダッシュボード
+    // 本体を下にスクロールして今日/今週/今月やリマインダー設定を見ている間に毎秒のティックが
+    // 来ると、無条件のfocus()がスクロール位置をカレンダーの位置まで毎回引き戻してしまうため、
+    // preventScrollで抑止する。
+    if (summary) summary.focus({ preventScroll: true });
+  }
+}
 // 各行のカウントダウンをリアルタイムで進めるため、モーダルを開いている間は
 // 1秒おきに再描画する（フェッチ自体はキャッシュを使うので再取得はしない）
 function pfDashStartTimer() {
@@ -1720,26 +1770,7 @@ function pfDashStartTimer() {
     if (!pfDashCache) return;
     const body = document.getElementById('dashBody');
     if (!body) return;
-    // カレンダーの開閉(<details>)はカウントダウンと違って毎秒更新する必要がないが、
-    // innerHTMLごと差し替えるとdetails要素が作り直され、開いていた状態が毎秒
-    // 勝手に閉じてしまう。差し替え前に開閉状態を読み、差し替え後に復元する。
-    const wasOpen = body.querySelector('.dash-calendar')?.open;
-    // 🩹 同様にフォーカスもinnerHTML差し替えで失われる。キーボード/スクリーンリーダー利用者が
-    // カレンダーの<summary>にフォーカスした状態で毎秒のティックを迎えると、フォーカスが
-    // 無条件に<body>へ落ち、モーダルのフォーカストラップが壊れる。差し替え前にフォーカス位置を
-    // 読み、差し替え後に同じ役割の新しい要素へ復元する（#dashBody内で再構築後もフォーカス
-    // され得る要素は現状.dash-calendar-summaryのみ）。
-    const active = document.activeElement;
-    const hadCalendarFocus = !!(active && body.contains(active) && active.closest('.dash-calendar-summary'));
-    body.innerHTML = pfDashBuildHtml(pfDashCache);
-    if (wasOpen) {
-      const cal = body.querySelector('.dash-calendar');
-      if (cal) cal.open = true;
-    }
-    if (hadCalendarFocus) {
-      const summary = body.querySelector('.dash-calendar-summary');
-      if (summary) summary.focus();
-    }
+    pfDashRerenderBody(body, pfDashBuildHtml(pfDashCache));
   }, 1000);
 }
 function pfDashStopTimer() {
@@ -1753,8 +1784,12 @@ async function pfDashOpen() {
     // 🍎 開き始める分にはbody.innerHTMLの再構築を待たせない（横断検索と同じ体感速度にする）。
     // #dashBodyには前回開いた時の内容がまだ残っているため、シートの高さ計算はそれを
     // 元に行われ、開き始めた直後の1フレームで最新の内容に差し替わる。
+    // 🩹 このキャッシュ済み再オープン分岐は、毎秒のタイマー再描画と同じく#dashBodyを
+    // まるごと差し替えるため、同じ状態保持ヘルパーを通す（詳細はpfDashRerenderBody参照）。
+    // これをしないと、カレンダーを展開した状態でモーダルを閉じて再度開くたびに
+    // 折りたたみ状態へ戻ってしまう。
     requestAnimationFrame(() => {
-      body.innerHTML = pfDashBuildHtml(pfDashCache);
+      pfDashRerenderBody(body, pfDashBuildHtml(pfDashCache));
       pfDashStartTimer();
     });
     return;
