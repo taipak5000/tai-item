@@ -1566,6 +1566,16 @@ function pfDashCalendarHtml(data) {
   const marks = pfDashCalendarMarks(data, year, month);
   const todayKey = `${year}-${month}-${now.getDate()}`;
   const CAT_ORDER = ['season', 'event', 'candle', 'revisit'];
+  // 🩹 (Class N) カテゴリードットは色だけで情報を伝えており、スクリーンリーダー利用者には
+  // 日付番号以外何も伝わらない。凡例（.dash-cal-legend）と同じ文言を再利用してセルの
+  // アクセシブルネーム（title/aria-label）を組み立て、見た目は一切変えずにテキストでの
+  // 代替手段を追加する。
+  const CAT_LABELS = {
+    season: pfT('季節', 'Season'),
+    event: pfT('イベント', 'Event'),
+    candle: pfT('キャンドル2倍', '2x Candles'),
+    revisit: pfT('再訪精霊', 'Revisit Spirit'),
+  };
 
   const dow = CURRENT_LANG === 'en' ? ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] : ['日', '月', '火', '水', '木', '金', '土'];
   let cellsHtml = '';
@@ -1574,10 +1584,18 @@ function pfDashCalendarHtml(data) {
     const key = `${year}-${month}-${d}`;
     const cats = marks.get(key);
     const isToday = key === todayKey;
+    const activeCats = cats ? CAT_ORDER.filter(c => cats.has(c)) : [];
     // 🩹 ドットが0個の日でも.dash-cal-dotsのspan自体は常に出力する（高さはCSS側で4px固定
     // なので中身が空でも同じ高さを確保でき、ドット有無で日付番号の縦位置がズレなくなる）
-    const dotsHtml = `<span class="dash-cal-dots">${cats ? CAT_ORDER.filter(c => cats.has(c)).map(c => `<i class="dash-cal-dot ${c}"></i>`).join('') : ''}</span>`;
-    cellsHtml += `<div class="dash-cal-day${isToday ? ' is-today' : ''}"><span class="dash-cal-daynum">${d}</span>${dotsHtml}</div>`;
+    const dotsHtml = `<span class="dash-cal-dots">${activeCats.map(c => `<i class="dash-cal-dot ${c}"></i>`).join('')}</span>`;
+    // 🩹 (Class N) カテゴリーが1つ以上ある日だけラベルを付与する（0個の日はセル内の
+    // 日付番号自体が既に読み上げ対象のテキストなので、属性なしのままで十分）
+    const dateLabel = new Intl.DateTimeFormat(CURRENT_LANG === 'en' ? 'en-US' : 'ja-JP', { month: 'long', day: 'numeric' }).format(new Date(year, month, d));
+    const a11yLabel = activeCats.length
+      ? escapeHtmlPf(`${dateLabel}: ${activeCats.map(c => CAT_LABELS[c]).join(', ')}`)
+      : '';
+    const labelAttrs = a11yLabel ? ` title="${a11yLabel}" aria-label="${a11yLabel}"` : '';
+    cellsHtml += `<div class="dash-cal-day${isToday ? ' is-today' : ''}"${labelAttrs}><span class="dash-cal-daynum">${d}</span>${dotsHtml}</div>`;
   }
   const monthLabel = CURRENT_LANG === 'en'
     ? new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(now)
