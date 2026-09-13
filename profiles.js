@@ -1552,14 +1552,19 @@ function pfDashCalendarBarItems(data, year, month) {
     return colorMap.get(name);
   }
 
-  function pushItems(schedule, name) {
+  // colorKeyを省略した場合はnameで色を割り当てる（season/event/candleBonusはこれでよい。
+  // 予定名がそれぞれ固有なので、名前=その予定固有の識別子として機能する）。
+  // 再訪精霊だけは表示名が「再訪精霊」で全スケジュール共通のため、nameで色を割り当てると
+  // 同時に表示される複数の再訪スケジュール（別々のスケジュールオブジェクト）が同じ色に
+  // 衝突してしまう。そのため呼び出し側でスケジュールごとに固有のcolorKeyを渡す。
+  function pushItems(schedule, name, colorKey) {
     pfDashOccurrencesInRange(schedule, rangeStart, rangeEnd).forEach(o => {
       const clipStart = o.start && o.start > rangeStart ? o.start : rangeStart;
       const clipEnd = o.end < rangeEnd ? o.end : rangeEnd;
       if (clipEnd < clipStart) return;
       items.push({
         name,
-        color: colorFor(name),
+        color: colorFor(colorKey !== undefined ? colorKey : name),
         startDay: clipStart.getDate(),
         endDay: clipEnd.getDate(),
         // 実際の開始/終了がこの月の表示範囲内にあるかどうか（範囲外なら、その端は
@@ -1580,7 +1585,9 @@ function pfDashCalendarBarItems(data, year, month) {
   }
   (data.eventSchedule || []).forEach(ev => pushItems(ev, trEvent(ev.name)));
   (data.candleBonusSchedule || []).forEach(ev => pushItems(ev, trEvent(ev.name)));
-  (data.revisitSchedules || []).forEach(sch => pushItems(sch, pfT('再訪精霊', 'Revisit Spirit')));
+  // colorKeyは表示名（共通の「再訪精霊」）ではなく配列中のインデックス＝スケジュール
+  // オブジェクトそのものの識別子にする。表示テキストは意図的に匿名化されたまま変えない。
+  (data.revisitSchedules || []).forEach((sch, idx) => pushItems(sch, pfT('再訪精霊', 'Revisit Spirit'), `revisit#${idx}`));
 
   // 開始日が早い順、同じ開始日なら長い予定を優先してレーンに割り当てる
   // （長い予定ほど上のレーンに固定されやすくなり、月をまたいでも位置が安定しやすい）
