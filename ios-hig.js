@@ -281,4 +281,89 @@
       root.setAttribute('data-input-modality', 'mouse');
     }, true);
   })();
+
+  /* ── 5. モーダルのフォーカストラップ（全モーダル共通、wingsのtrapPush/trapPop方式を移植） ──
+     Tabキーがモーダルの外（背後のページ）へ抜けないよう、開いている間はスタック最上段の
+     カード内で折り返す。閉じたときは、開く前にフォーカスしていた要素（トリガー）へ
+     フォーカスを戻す。スタック式なので、Dashboardの上からSettingsを開くような多重
+     ネストにも対応する。
+     個々のopen/close関数を書き換える代わりに、上の「3. 流体ボトムシート」と同じ
+     class="open"変化の監視に相乗りすることで、profiles.js製(.pf-modal-overlay)・
+     index.html製(.modal-overlay)・ツールドロワー(.pf-drawer)を問わず全オーバーレイを
+     一律カバーする（新しいモーダルを追加してもここを触る必要がない）。 */
+  (function () {
+    var trapStack = [];
+    var listening = false;
+
+    function focusableEls(container) {
+      var all = container.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      return Array.prototype.filter.call(all, function (el) { return el.offsetParent !== null; });
+    }
+    // Tabキーがスタック最上段のカードの外へ出ていかないよう、先頭/末尾要素で折り返す
+    function trapKeydown(e) {
+      if (e.key !== 'Tab' || !trapStack.length) return;
+      var card = trapStack[trapStack.length - 1].card;
+      var focusable = focusableEls(card);
+      if (!focusable.length) return;
+      var first = focusable[0], last = focusable[focusable.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first || !card.contains(document.activeElement)) { e.preventDefault(); last.focus(); }
+      } else {
+        if (document.activeElement === last || !card.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+      }
+    }
+    // overlayIdをキーにカードへフォーカスを移し、Tabトラップのスタックに積む。同じ
+    // overlayIdが既にスタックにある（＝多重呼び出し）場合は何もしない。
+    function trapPush(overlayId, card) {
+      if (!card || trapStack.some(function (s) { return s.overlayId === overlayId; })) return;
+      trapStack.push({ overlayId: overlayId, card: card, prevFocusEl: document.activeElement });
+      if (!listening) { document.addEventListener('keydown', trapKeydown, true); listening = true; }
+      var focusable = focusableEls(card);
+      (focusable[0] || card).focus();
+    }
+    // overlayIdをスタックから取り除き、そのモーダルを開く前にフォーカスしていた要素
+    // （トリガー）へフォーカスを戻す。document.contains()は、トリガーが別の描画等で
+    // 既にDOMから失われていた場合に備えた安全策。
+    function trapPop(overlayId) {
+      var idx = -1;
+      for (var i = 0; i < trapStack.length; i++) { if (trapStack[i].overlayId === overlayId) { idx = i; break; } }
+      if (idx === -1) return;
+      var entry = trapStack.splice(idx, 1)[0];
+      if (!trapStack.length && listening) { document.removeEventListener('keydown', trapKeydown, true); listening = false; }
+      if (entry.prevFocusEl && typeof entry.prevFocusEl.focus === 'function' && document.contains(entry.prevFocusEl)) {
+        entry.prevFocusEl.focus();
+      }
+    }
+
+    // このMutationObserverが対象とするのは「開閉状態を持つオーバーレイ本体」で、
+    // フォーカスすべきカード要素を返す。ツールドロワーは背景スクリム(.pf-drawer-overlay)と
+    // パネル本体(.pf-drawer)が別要素で、フォーカスすべきはパネル本体そのもの。
+    function trapTargetOf(el) {
+      if (!el || !el.classList) return null;
+      if (el.classList.contains('pf-modal-overlay') || el.classList.contains('modal-overlay')) {
+        return el.querySelector('.pf-modal-card, .modal-card') || el;
+      }
+      if (el.classList.contains('pf-drawer') && !el.classList.contains('pf-drawer-overlay')) return el;
+      return null;
+    }
+    function idOf(el) {
+      if (!el.id) el.id = 'trap-' + Math.random().toString(36).slice(2);
+      return el.id;
+    }
+
+    new MutationObserver(function (records) {
+      records.forEach(function (r) {
+        var el = r.target;
+        var card = trapTargetOf(el);
+        if (!card) return;
+        var was = (' ' + (r.oldValue || '') + ' ').indexOf(' open ') !== -1;
+        var now = el.classList.contains('open');
+        if (was === now) return;
+        if (now) trapPush(idOf(el), card);
+        else trapPop(idOf(el));
+      });
+    }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'], subtree: true, attributeOldValue: true });
+  })();
 })();

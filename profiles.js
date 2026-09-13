@@ -407,6 +407,7 @@ function pfSyncSettingsUI() {
   }
 }
 function settingsOpen() {
+  pfCloseOtherTopLevelOverlays('settingsModalOverlay');
   pfSyncSettingsUI();
   document.getElementById('settingsModalOverlay').classList.add('open');
 }
@@ -448,6 +449,29 @@ function closeTopmostOpenModal() {
     if (localOverlay.id === 'photoCropModal' && typeof cancelPhotoCrop === 'function') { cancelPhotoCrop(); return; }
     if (typeof closeModal === 'function') closeModal(localOverlay.id);
   }
+}
+
+// 🚪 Settings/Dashboard/プロフィール切替/横断検索/データ管理/アイコンカスタム/ツール
+// ドロワーの7つはナビバーやショートカットからいつでも独立して開けるため、他のどれかを
+// 開いたままもう1つを開くと2つ同時に見えてしまい紛らわしい。開こうとしているもの以外が
+// 開いていれば先に閉じておく（各close関数は未オープン時は何もしない安全な関数なので、
+// 無条件に呼んでよい）。Settings→アイコンカスタムのように呼び出し側で既に片方を閉じてから
+// 次を開む遷移もあるが、ここで二重に閉じても副作用は無い。
+function pfCloseOtherTopLevelOverlays(exceptId) {
+  const closers = {
+    settingsModalOverlay: settingsClose,
+    dashModalOverlay: pfDashClose,
+    pfModalOverlay: pfCloseModal,
+    srchModalOverlay: srchClose,
+    dmModalOverlay: dmCloseModal,
+    iconCustomModalOverlay: pfIconCloseModal,
+    toolsDrawerPanel: pfToolsClose,
+  };
+  Object.keys(closers).forEach(id => {
+    if (id === exceptId) return;
+    const el = document.getElementById(id);
+    if (el && el.classList.contains('open')) closers[id]();
+  });
 }
 
 // ⌨️←→ グリッド／リスト表示のタイル間をキーボードで移動する（music_sheet.htmlおよび12カテゴリ
@@ -1835,6 +1859,7 @@ function pfDashStopTimer() {
   if (pfDashTimer) { clearInterval(pfDashTimer); pfDashTimer = null; }
 }
 async function pfDashOpen() {
+  pfCloseOtherTopLevelOverlays('dashModalOverlay');
   document.getElementById('dashModalOverlay').classList.add('open');
   pfSyncReminderUI(); // ブラウザ側の通知許可状態が変わっている可能性があるため開くたびに再同期
   const body = document.getElementById('dashBody');
@@ -2154,6 +2179,7 @@ function pfSyncCurrencyToggleUI() {
 }
 
 function pfOpenModal() {
+  pfCloseOtherTopLevelOverlays('pfModalOverlay');
   pfEditingId = null;
   pfDeletingId = null;
   pfExpandedTitleProfiles.clear();
@@ -2320,6 +2346,7 @@ let pfIconMode = 'emoji';
 let pfIconUploadedImg = null;
 
 function pfIconOpenModal() {
+  pfCloseOtherTopLevelOverlays('iconCustomModalOverlay');
   document.getElementById('iconCustomModalOverlay').classList.add('open');
 }
 function pfIconCloseModal() {
@@ -2464,6 +2491,7 @@ function pfIconApplyFromStorage() {
 // ☰ 他のツール（関連ツールへのリンク一覧、全14ページ共通）。左からのドロワー形式
 // （他サイトの既存ハンバーガーサイドバーと見た目を揃えるため）。
 function pfToolsOpen() {
+  pfCloseOtherTopLevelOverlays('toolsDrawerPanel');
   document.getElementById('toolsDrawerOverlay').classList.add('open');
   document.getElementById('toolsDrawerPanel').classList.add('open');
 }
@@ -2970,6 +2998,7 @@ function pfInit() {
    companion 等すべてのデータが対象になる。
    ================================================================ */
 function dmOpenModal() {
+  pfCloseOtherTopLevelOverlays('dmModalOverlay');
   document.getElementById('dmStatus').textContent = '';
   document.getElementById('dmImportConfirmArea').innerHTML = '';
   dmWipeConfirming = false;
@@ -3349,6 +3378,7 @@ async function srchRun() {
 }
 
 function srchOpen() {
+  pfCloseOtherTopLevelOverlays('srchModalOverlay');
   document.getElementById('srchModalOverlay').classList.add('open');
   setTimeout(() => {
     const input = document.getElementById('srchInput');
