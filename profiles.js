@@ -499,6 +499,12 @@ function pfIsInteractionBlocked() {
   return !!document.querySelector('.modal-overlay.open, .pf-modal-overlay.open, .pf-drawer-overlay.open');
 }
 
+// 🩹 input要素はtypeを問わず一律「入力中」扱いにしていたため、type=colorのような
+// 実際には'?'や'd'をリテラル文字として受け付けない入力（チェックボックス/ラジオ/
+// レンジ/カラー/ボタン等）にフォーカスがあるだけでショートカットが死んでいた。
+// 実際に文字を打ち込めるtypeだけを「入力中」とみなす（spirit-catalogのFT_NON_TEXT_INPUT_TYPESと同じ考え方）。
+const PF_NON_TEXT_INPUT_TYPES = ['checkbox', 'radio', 'range', 'color', 'button', 'submit', 'reset', 'file', 'image', 'hidden'];
+
 // ⌨️ 全ページ共通のキーボードショートカット（?＝表示設定を開く／d,D＝テーマ切替（ライト→ダーク→システム）／
 // ←→＝アイテム一覧のタイル間移動／Esc＝開いているモーダルを閉じる）。Escはテキスト入力中でも常に
 // 有効（ダイアログを閉じるのはユーザーの期待に沿う、既存のクリックアウトサイドで閉じる挙動と同種の
@@ -508,7 +514,8 @@ function handleGlobalKeydown(e) {
   if (e.repeat) return;
   if (e.ctrlKey || e.metaKey || e.altKey) return;
   const t = e.target;
-  const isTyping = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
+  const isTextInput = t && t.tagName === 'INPUT' && PF_NON_TEXT_INPUT_TYPES.indexOf((t.type || '').toLowerCase()) === -1;
+  const isTyping = t && (isTextInput || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
 
   if (e.key === 'Escape') {
     closeTopmostOpenModal();
@@ -743,8 +750,13 @@ function pfInjectStyle() {
       background: var(--bg); border: 1px solid var(--sep); border-radius: 5px; padding: 2px 6px; color: var(--text); }
 
     /* ── サイトドック（画面下部固定のクイックメニュー、全ページ共通） ── */
+    /* 🩹 以前はz-index:90（.modal-overlay/.pf-modal-overlayの1000や.pf-drawer-overlayの499より
+       低い）だったため、オーバーレイが開いている間はドックがその背後に隠れてクリックを奪われて
+       いた（＝別のドックアイコンをクリックしても、現在のオーバーレイを閉じるだけで終わり、意図した
+       アイコンへは切り替わらない。もう一度クリックし直す必要があった）。ドックは常にクリック可能で、
+       別アイコンへワンクリックで切り替えられるべきなので、全オーバーレイ系（最大1000）より上に置く。 */
     .site-dock {
-      display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 90;
+      display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 1001;
       padding: 6px 10px calc(8px + env(safe-area-inset-bottom));
       background: var(--card);
       backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
@@ -1841,12 +1853,15 @@ function pfDashRerenderBody(body, html) {
     // 本体を下にスクロールして今日/今週/今月やリマインダー設定を見ている間に毎秒のティックが
     // 来ると、無条件のfocus()がスクロール位置をカレンダーの位置まで毎回引き戻してしまうため、
     // preventScrollで抑止する。
-    // 🩹 ここは毎秒のティックで<summary>を作り直すたびに呼ばれるため、マウスで一度
-    // クリックしただけのユーザーにもスクリプトによるfocus()がChromiumの:focus-visible
-    // ヒューリスティックを通ってしまい、ios-hig.jsのdata-input-modality抑制（CSS側）を
-    // すり抜けてリングが毎秒点滅し続けてしまう。直近の入力方式がマウスの間はフォーカス
-    // 復元自体を行わない（キーボード操作で開いていた場合だけ復元し、リングも維持する）。
-    if (summary && document.documentElement.getAttribute('data-input-modality') !== 'mouse') {
+    // 🩹 以前はここに「直近の入力方式がマウスの間は復元しない」というdata-input-modality
+    // ガードがあった（マウスクリックだけのユーザーにスクリプトfocus()の:focus-visibleリングが
+    // 毎秒点滅するのを避ける目的）。しかしダッシュボードを開く操作自体が常にフォーカストラップの
+    // 初期フォーカスを入れるようになった今、このガードは致命的な副作用を持つ：マウスでダッシュ
+    // ボードを開いた直後の最初の1秒ティックで、古い<summary>ごとinnerHTMLが差し替えられ、
+    // かつこのガードのせいで新しい<summary>へフォーカスが戻らず、フォーカスがdocument.bodyへ
+    // 抜け落ちてトラップが壊れる（実機で確認済み）。モーダルが開いている間はフォーカスを内側に
+    // 留め続けることの方がリング点滅回避より優先されるため、入力方式に関わらず常に復元する。
+    if (summary) {
       summary.focus({ preventScroll: true });
     }
   }
