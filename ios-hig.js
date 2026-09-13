@@ -297,9 +297,27 @@
 
     function focusableEls(container) {
       var all = container.querySelectorAll(
-        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])'
       );
       return Array.prototype.filter.call(all, function (el) { return el.offsetParent !== null; });
+    }
+    // 🩹 要素が「今まさにフォーカスを受け取れる、目に見える状態」かどうかを判定する。
+    // document.body.offsetParentは仕様上常にnullなので、この判定はbody（＝実質フォーカス
+    // 未設定の状態）も自動的に弾く。display:none化されて見えなくなった要素も同様に弾かれる。
+    function isFocusable(el) {
+      return !!el && typeof el.focus === 'function' && document.contains(el) && el.offsetParent !== null;
+    }
+    // 🩹 prevFocusEl（開く前にフォーカスしていた要素）が既に無効になっている場合の
+    // 復帰先。まだ開いたままの直近の親モーダルがあれば、その閉じるボタン（.modal-close/
+    // .pf-close-btn）、無ければ先頭のフォーカス可能要素、それも無ければカード自体へ。
+    function fallbackFocusTarget() {
+      if (!trapStack.length) return null;
+      var card = trapStack[trapStack.length - 1].card;
+      var closeBtn = card.querySelector('.modal-close, .pf-close-btn');
+      if (isFocusable(closeBtn)) return closeBtn;
+      var focusable = focusableEls(card);
+      if (focusable.length) return focusable[0];
+      return card;
     }
     // Tabキーがスタック最上段のカードの外へ出ていかないよう、先頭/末尾要素で折り返す
     function trapKeydown(e) {
@@ -318,23 +336,33 @@
     // overlayIdが既にスタックにある（＝多重呼び出し）場合は何もしない。
     function trapPush(overlayId, card) {
       if (!card || trapStack.some(function (s) { return s.overlayId === overlayId; })) return;
-      trapStack.push({ overlayId: overlayId, card: card, prevFocusEl: document.activeElement });
+      // 🩹 prevFocusElをそのままdocument.activeElementで捕まえると、直前に別要素が
+      // display:none化されてブラウザに自動blurされていた場合（例: 親モーダルが
+      // 表示切り替えでビューを差し替えた直後）、activeElementは既にdocument.bodyに
+      // なっている。bodyをそのまま覚えてしまうとtrapPop()でのbody.focus()が実質
+      // no-opになり、閉じたはずの子モーダルにフォーカスが取り残される。ここで
+      // isFocusable()により無効な捕捉を弾き、直近の親モーダルへのフォールバックに
+      // 差し替えておく（trapStackはまだpush前＝現在開いている親の状態のまま）。
+      var candidate = document.activeElement;
+      if (!isFocusable(candidate)) candidate = fallbackFocusTarget() || candidate;
+      trapStack.push({ overlayId: overlayId, card: card, prevFocusEl: candidate });
       if (!listening) { document.addEventListener('keydown', trapKeydown, true); listening = true; }
       var focusable = focusableEls(card);
       (focusable[0] || card).focus();
     }
     // overlayIdをスタックから取り除き、そのモーダルを開く前にフォーカスしていた要素
-    // （トリガー）へフォーカスを戻す。document.contains()は、トリガーが別の描画等で
-    // 既にDOMから失われていた場合に備えた安全策。
+    // （トリガー）へフォーカスを戻す。push時点では有効に見えても、モーダルが開いている
+    // 間に裏側のビューが切り替わる等でその後フォーカス不能になっている可能性があるため、
+    // pop時点でもisFocusable()で再確認し、無効ならその時点の直近の親モーダルへ
+    // フォールバックする（黙って何もしない＝フォーカスが宙に浮いたままになるのを防ぐ）。
     function trapPop(overlayId) {
       var idx = -1;
       for (var i = 0; i < trapStack.length; i++) { if (trapStack[i].overlayId === overlayId) { idx = i; break; } }
       if (idx === -1) return;
       var entry = trapStack.splice(idx, 1)[0];
       if (!trapStack.length && listening) { document.removeEventListener('keydown', trapKeydown, true); listening = false; }
-      if (entry.prevFocusEl && typeof entry.prevFocusEl.focus === 'function' && document.contains(entry.prevFocusEl)) {
-        entry.prevFocusEl.focus();
-      }
+      var target = isFocusable(entry.prevFocusEl) ? entry.prevFocusEl : fallbackFocusTarget();
+      if (target && typeof target.focus === 'function') target.focus();
     }
 
     // このMutationObserverが対象とするのは「開閉状態を持つオーバーレイ本体」で、
@@ -352,6 +380,25 @@
       if (!el.id) el.id = 'trap-' + Math.random().toString(36).slice(2);
       return el.id;
     }
+
+    // 🩹 ダッシュボード等、開いた瞬間は「読み込み中…」のプレースホルダーしか無く、
+    // 非同期フェッチが解決してから実コンテンツに差し替わるモーダル向けの再フォーカス用フック。
+    // trapPush()の初期フォーカスはclass="open"が付いた瞬間のDOMにしか合わせられないため、
+    // フェッチ待ちの間だけ存在した仮の要素（例: プレースホルダー内で最初に見つかった
+    // フォーカス可能要素）にフォーカスが取り残される。実コンテンツのレンダリング完了後に
+    // このフックを呼ぶことで、該当オーバーレイが今なお最前面（スタック最上段）かつ、
+    // フォーカスがまだそのカード内に留まっている場合（＝ユーザーがまだ自発的にTab等で
+    // 移動していない場合）だけ、先頭のフォーカス可能要素へ合わせ直す。
+    function trapRefreshFocus(overlayEl) {
+      var card = trapTargetOf(overlayEl);
+      if (!card) return;
+      var top = trapStack[trapStack.length - 1];
+      if (!top || top.card !== card) return;
+      if (!card.contains(document.activeElement)) return;
+      var focusable = focusableEls(card);
+      (focusable[0] || card).focus();
+    }
+    window.skyTrapRefreshFocus = trapRefreshFocus;
 
     new MutationObserver(function (records) {
       records.forEach(function (r) {

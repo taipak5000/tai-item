@@ -1900,6 +1900,15 @@ async function pfDashOpen() {
     if (!document.getElementById('dashModalOverlay').classList.contains('open')) return;
     body.innerHTML = pfDashBuildHtml(data);
     pfDashStartTimer();
+    // 🩹 初回オープン(キャッシュ無し)は、このフェッチが解決するまで#dashBodyが
+    // 「読み込み中…」のプレースホルダーのままだった。フォーカストラップの初期フォーカスは
+    // class="open"が付いた瞬間(＝プレースホルダーしか無い状態)に既に確定してしまっている
+    // ため、実コンテンツ(カレンダーの<summary>等、プレースホルダーには存在しなかった
+    // 先頭要素)を反映し直す。ユーザーがまだそのカード内からTab等で動いていない場合のみ
+    // 効果を持つ安全なフックなので、無条件に呼んでよい。
+    if (typeof window.skyTrapRefreshFocus === 'function') {
+      window.skyTrapRefreshFocus(document.getElementById('dashModalOverlay'));
+    }
   } catch (e) {
     console.error('pfDashOpen', e);
     body.innerHTML = `<div class="dash-empty">${pfT('読み込みに失敗しました', 'Failed to load')}</div>`;
