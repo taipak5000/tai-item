@@ -310,14 +310,37 @@
     // 🩹 prevFocusEl（開く前にフォーカスしていた要素）が既に無効になっている場合の
     // 復帰先。まだ開いたままの直近の親モーダルがあれば、その閉じるボタン（.modal-close/
     // .pf-close-btn）、無ければ先頭のフォーカス可能要素、それも無ければカード自体へ。
+    // 🩹 サブケース: 「Profileモーダルの中にあるバックアップボタン」のように、トリガー
+    // 自身が別のオーバーレイの中に住んでいる場合、そのトリガーを開くと親（Profile）ごと
+    // 閉じてしまうため、記憶したprevFocusElは後で（子を閉じる時点で）二重に無効化されて
+    // いる——しかも親も既に閉じ終えてtrapStackから抜けているため、上のカード基準の
+    // フォールバックも使えない（trapStackが空）。この場合に黙って諦めてフォーカスを
+    // 宙に浮かせる（＝直前に隠れたカード内のボタンに取り残す）のを防ぐため、どのオーバー
+    // レイより手前に常時存在するページ全体の着地点へ最終フォールバックする。
+    // 🩹 候補の優先順位: まず#siteDock（画面下部固定のクイックメニュー。プロフィール/
+    // ダッシュボード/他のツール/表示設定の4つ、profiles.jsが全ページ共通で必ず生成し、
+    // どのオーバーレイのz-indexよりも手前に常時表示されている）の先頭ボタンへ。
+    // 万一サイトドックが見つからない場合に備え、次点でnav-bar自体の常設ボタン
+    // （言語切替・更新等、"nav .nav-action"）、さらに次点で#pfBar（ダッシュボード/検索/
+    // 設定）の先頭ボタンへフォールバックする。
     function fallbackFocusTarget() {
-      if (!trapStack.length) return null;
-      var card = trapStack[trapStack.length - 1].card;
-      var closeBtn = card.querySelector('.modal-close, .pf-close-btn');
-      if (isFocusable(closeBtn)) return closeBtn;
-      var focusable = focusableEls(card);
-      if (focusable.length) return focusable[0];
-      return card;
+      if (trapStack.length) {
+        var card = trapStack[trapStack.length - 1].card;
+        var closeBtn = card.querySelector('.modal-close, .pf-close-btn');
+        if (isFocusable(closeBtn)) return closeBtn;
+        var focusable = focusableEls(card);
+        if (focusable.length) return focusable[0];
+        return card;
+      }
+      // 🩹 querySelectorはカンマ区切りの候補リストを「優先順位」ではなく「DOM順」で
+      // 返してしまう（#siteDockはbody末尾寄りに追加されるため、単純にカンマで並べると
+      // 先にDOM上位にあるnav側の要素に負けてしまう）。優先順位どおりに1つずつ試す。
+      var DOCK_CANDIDATES = ['#siteDock button, #siteDock a', 'nav .nav-action, nav a[href]', '#pfBar button, #pfBar a, #pfBar [tabindex]'];
+      for (var di = 0; di < DOCK_CANDIDATES.length; di++) {
+        var dock = document.querySelector(DOCK_CANDIDATES[di]);
+        if (isFocusable(dock)) return dock;
+      }
+      return null;
     }
     // Tabキーがスタック最上段のカードの外へ出ていかないよう、先頭/末尾要素で折り返す
     function trapKeydown(e) {
