@@ -334,7 +334,10 @@
     }
     // overlayIdをキーにカードへフォーカスを移し、Tabトラップのスタックに積む。同じ
     // overlayIdが既にスタックにある（＝多重呼び出し）場合は何もしない。
-    function trapPush(overlayId, card) {
+    // preClosureActiveEl: 呼び出し元(下のMutationObserver)が、このバッチの記録を処理し
+    // 始める「前」に一度だけ取っておいたdocument.activeElementのスナップショット。省略時は
+    // その場でdocument.activeElementを読む（直接呼び出し用のフォールバック）。
+    function trapPush(overlayId, card, preClosureActiveEl) {
       if (!card || trapStack.some(function (s) { return s.overlayId === overlayId; })) return;
       // 🩹 prevFocusElをそのままdocument.activeElementで捕まえると、直前に別要素が
       // display:none化されてブラウザに自動blurされていた場合（例: 親モーダルが
@@ -343,7 +346,15 @@
       // no-opになり、閉じたはずの子モーダルにフォーカスが取り残される。ここで
       // isFocusable()により無効な捕捉を弾き、直近の親モーダルへのフォールバックに
       // 差し替えておく（trapStackはまだpush前＝現在開いている親の状態のまま）。
-      var candidate = document.activeElement;
+      // 🩹 連鎖オーバーレイの罠: 「Aを開いたままBを開く（Bが排他制御でAを先に閉じる）」が
+      // 同期処理内で起きると、Aの閉じclassとBの開class両方の変更が同じMutationObserver
+      // バッチに乗る。その記録はA→Bの順で処理されるため、Bをpushする直前にAのtrapPopが
+      // 走り、Aのトリガーへdocument.activeElementを（副作用として）動かしてしまう。ここで
+      // 素直にdocument.activeElementを読むと、Bが実際に開かれた瞬間の本来の値ではなく、
+      // 直前のAのtrapPopが上書きした「Aの取り残されたトリガー」を拾ってしまい、Bを閉じた
+      // 時にAのトリガーへフォーカスが戻るバグになる。preClosureActiveElがあればそちらを
+      // 優先し、この同一バッチ内の再入を無効化する。
+      var candidate = preClosureActiveEl !== undefined ? preClosureActiveEl : document.activeElement;
       if (!isFocusable(candidate)) candidate = fallbackFocusTarget() || candidate;
       trapStack.push({ overlayId: overlayId, card: card, prevFocusEl: candidate });
       if (!listening) { document.addEventListener('keydown', trapKeydown, true); listening = true; }
@@ -401,6 +412,13 @@
     window.skyTrapRefreshFocus = trapRefreshFocus;
 
     new MutationObserver(function (records) {
+      // 🩹 このバッチ内で複数のopen/close切り替えが混在する場合（Bを開く前にAを閉じる、
+      // という排他制御が同期的に走った結果、A/B両方のclass変更が1バッチにまとまる）向け。
+      // 記録を処理し始める前に一度だけdocument.activeElementを取っておく。records.forEach内で
+      // 先にtrapPop(A)がAのトリガーへフォーカスを戻す副作用を起こしても、後続のtrapPush(B)は
+      // その動かされた後の値ではなく、このバッチが始まった時点（＝実際にBが開かれた瞬間）の
+      // 値を見るようにする。詳細はtrapPush内のコメント参照。
+      var preClosureActiveEl = document.activeElement;
       records.forEach(function (r) {
         var el = r.target;
         var card = trapTargetOf(el);
@@ -408,7 +426,7 @@
         var was = (' ' + (r.oldValue || '') + ' ').indexOf(' open ') !== -1;
         var now = el.classList.contains('open');
         if (was === now) return;
-        if (now) trapPush(idOf(el), card);
+        if (now) trapPush(idOf(el), card, preClosureActiveEl);
         else trapPop(idOf(el));
       });
     }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'], subtree: true, attributeOldValue: true });
