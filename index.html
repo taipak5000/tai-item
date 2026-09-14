@@ -2870,7 +2870,16 @@ function getOwnedItemsForCat(catKey) {
 }
 
 // モーダル開閉
-function openModal(id) { document.getElementById(id).classList.add('open'); }
+// 🩹 Settings/Dashboard/検索等（profiles.js管理の7つの最上位オーバーレイ）が開いたまま
+// これらのローカルモーダルを開くと、両方同時に見えてしまっていた（別サブシステムのため
+// 互いを知らなかった）。開く前にprofiles.js側の7つだけを閉じておく（ローカルモーダル同士の
+// 意図的な重なり合い＝写真クロップがコーデ写真/ランダムコーデの上に重なる等はここでは
+// 一切触らないので壊れない）。pfCloseProfilesOverlaysは他ページ非公開のため、profiles.jsを
+// 読み込んでいる前提だがtypeofで念のため防御しておく。
+function openModal(id) {
+  if (typeof pfCloseProfilesOverlays === 'function') pfCloseProfilesOverlays(id);
+  document.getElementById(id).classList.add('open');
+}
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
 // ── ランダムコーデ ────────────────────────────

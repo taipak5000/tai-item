@@ -458,6 +458,21 @@ function closeTopmostOpenModal() {
 // 無条件に呼んでよい）。Settings→アイコンカスタムのように呼び出し側で既に片方を閉じてから
 // 次を開む遷移もあるが、ここで二重に閉じても副作用は無い。
 function pfCloseOtherTopLevelOverlays(exceptId) {
+  pfCloseProfilesOverlays(exceptId);
+  // 🩹 index.html独自のランダムコーデ/マイコーデ/クローゼット/アイテム検索/欲しい物リスト/
+  // 入手ログ/画像プレビュー/カスタマイズ/お気に入り共有/コーデ写真/写真クロップ等13個の
+  // ローカルモーダル（openModal/closeModalのclassList方式、index.html内で定義）は別サブシステム
+  // のため、上のclosersには元々含まれておらず、Settings等を開いてもこれらが開いたまま
+  // 裏に残ってしまっていた。ここでも一緒に閉じる（exceptIdは常にこの7つ側のidなので、
+  // ローカルモーダル側は無条件で全部閉じてよい）。
+  pfCloseIndexLocalModals();
+}
+
+// 🚪 上のpfCloseOtherTopLevelOverlaysから切り出した「profiles.js管理の7つ」だけを閉じる部分。
+// index.html側のopenModal(id)からも、profiles.js側の7つだけを閉じたい場面（ローカルモーダル
+// 同士の意図的な重なり合い＝写真クロップがコーデ写真/ランダムコーデの上に重なる等は壊したくない）
+// で単独利用する。
+function pfCloseProfilesOverlays(exceptId) {
   const closers = {
     settingsModalOverlay: settingsClose,
     dashModalOverlay: pfDashClose,
@@ -471,6 +486,25 @@ function pfCloseOtherTopLevelOverlays(exceptId) {
     if (id === exceptId) return;
     const el = document.getElementById(id);
     if (el && el.classList.contains('open')) closers[id]();
+  });
+}
+
+const PF_INDEX_LOCAL_MODAL_IDS = [
+  'randomModal', 'myCoordModal', 'closetModal', 'closetCellModal', 'sharedCoordModal',
+  'itemSearchModal', 'wishModal', 'acquireLogModal', 'imagePreviewModal', 'customizeModal',
+  'favShareModal', 'coordPhotoModal', 'photoCropModal',
+];
+// sharedCoordModal・photoCropModalはclassList操作だけでは足りない専用の後始末（URLハッシュ
+// 削除・クロップ用ObjectURLの解放）があるため、closeTopmostOpenModalと同じくそれぞれの
+// 専用クローズ関数を使う。それ以外は index.html の window.closeModal に委譲する。
+function pfCloseIndexLocalModals(exceptId) {
+  PF_INDEX_LOCAL_MODAL_IDS.forEach(id => {
+    if (id === exceptId) return;
+    const el = document.getElementById(id);
+    if (!el || !el.classList.contains('open')) return;
+    if (id === 'sharedCoordModal' && typeof closeSharedCoordModal === 'function') { closeSharedCoordModal(); return; }
+    if (id === 'photoCropModal' && typeof cancelPhotoCrop === 'function') { cancelPhotoCrop(); return; }
+    if (typeof window.closeModal === 'function') window.closeModal(id);
   });
 }
 
