@@ -736,7 +736,7 @@ function pfInjectStyle() {
     .dash-cal-bars { display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: 18px; row-gap: 2px; column-gap: 0; padding-top: 2px; }
     .dash-cal-bar {
       display: flex; align-items: center; min-width: 0; height: 18px; margin: 0;
-      padding: 0 6px; font-size: 10px; font-weight: 600; color: #fff;
+      padding: 0 6px; font-size: 10px; font-weight: 600;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .dash-cal-bar.round-l { border-top-left-radius: 9px; border-bottom-left-radius: 9px; margin-left: 2px; }
@@ -1572,12 +1572,29 @@ function pfDashOccurrencesInRange(schedule, rangeStart, rangeEnd) {
   if (s && s.getTime() > rangeEnd.getTime()) return [];
   return [{ start: s, end: e }];
 }
-// 白文字を乗せる前提で、全色ともWCAG 4.5:1以上のコントラストになるよう選定・検証済み
-// （実測値: 5.0〜7.9:1、独自のWCAG相対輝度計算で確認）。ライト/ダーク共通の固定10色。
+// かわいらしい色合いにしたいというユーザー要望の参考画像の色をそのまま採用（値は変更
+// しない）。ただし多くが白文字だとWCAG 4.5:1を満たさないパステル寄りの色のため、背景色
+// ごとに実際の相対輝度を計算し、白文字/黒文字のうちコントラスト比が高い方を自動選択する
+// （pfDashTextColorFor）ことで、色の値を一切妥協せずに全色とも4.5:1以上を確保する
+// （実測値: 白文字採用時5.03:1、黒文字採用時5.72〜11.26:1）。ライト/ダーク共通の固定9色。
 const DASH_CAL_BAR_PALETTE = [
-  '#b91c1c', '#7c3aed', '#57534e', '#1d4ed8', '#92400e',
-  '#15803d', '#0f766e', '#be185d', '#9a3412', '#4338ca',
+  '#e775a0', '#3c768e', '#f2b32b', '#b27764', '#f48a77',
+  '#06d1b6', '#4e91e1', '#b7a517', '#f16262',
 ];
+// WCAG相対輝度を計算し、背景色に対して白文字/黒文字のうちコントラスト比が高い方を返す
+// （sRGBのガンマ補正込みの標準式。10px太字はWCAG上「大きな文字」の閾値未満のため、
+// 通常テキストの基準4.5:1をどちらの文字色でも満たせるかで単純に大小比較すればよい）。
+function pfDashTextColorFor(hex) {
+  const c = hex.replace('#', '');
+  const lin = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+  const r = lin(parseInt(c.slice(0, 2), 16));
+  const g = lin(parseInt(c.slice(2, 4), 16));
+  const b = lin(parseInt(c.slice(4, 6), 16));
+  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  const contrastWithWhite = (1.0 + 0.05) / (luminance + 0.05);
+  const contrastWithBlack = (luminance + 0.05) / (0 + 0.05);
+  return contrastWithWhite >= contrastWithBlack ? '#fff' : '#000';
+}
 // 表示中の月に登場する予定（季節・イベント・キャンドル2倍・再訪精霊）を、月全体で
 // 重ならないよう「レーン」（縦位置）に割り当てる。同じ予定は月内を通して同じレーンに
 // 留まるようにするため、週ごとではなく月全体で1回だけレーンを計算する（週ごとに
@@ -1610,9 +1627,11 @@ function pfDashCalendarBarItems(data, year, month) {
       const clipStart = o.start && o.start > rangeStart ? o.start : rangeStart;
       const clipEnd = o.end < rangeEnd ? o.end : rangeEnd;
       if (clipEnd < clipStart) return;
+      const barColor = colorFor(colorKey !== undefined ? colorKey : name);
       items.push({
         name,
-        color: colorFor(colorKey !== undefined ? colorKey : name),
+        color: barColor,
+        textColor: pfDashTextColorFor(barColor),
         startDay: clipStart.getDate(),
         endDay: clipEnd.getDate(),
         // 実際の開始/終了がこの月の表示範囲内にあるかどうか（範囲外なら、その端は
@@ -1713,6 +1732,7 @@ function pfDashCalendarHtml(data) {
       const roundLeft = it.trueStart && it.startDay >= weekFirstDay;
       const roundRight = it.trueEnd && it.endDay <= weekLastDay;
       const color = it.color;
+      const textColor = it.textColor;
       const nameEsc = escapeHtmlPf(it.name);
       // 🕓 この週に本当の開始日/最終日が含まれ、かつその開始/終了時刻が日付境界
       // （0:00/23:59台）でない場合（ほぼ全ての予定が16:00開始・15:59終了）、
@@ -1724,14 +1744,14 @@ function pfDashCalendarHtml(data) {
       const halfEnd = roundRight && it.endsMidDay;
       if (!halfStart && !halfEnd) {
         barsHtml += `<div class="dash-cal-bar${roundLeft ? ' round-l' : ''}${roundRight ? ' round-r' : ''}"`
-          + ` style="grid-column:${colStart} / span ${colSpan}; grid-row:${localRow + 1}; background:${color};"`
+          + ` style="grid-column:${colStart} / span ${colSpan}; grid-row:${localRow + 1}; background:${color}; color:${textColor};"`
           + ` title="${nameEsc}">${nameEsc}</div>`;
       } else if (colSpan === 1) {
         // この週にはその予定の1日分（開始日と最終日が同じ週内の1日に重なる稀なケース含む）しか含まれない
         const cls = 'dash-cal-bar' + (halfStart ? ' half-start' : '') + (halfEnd ? ' half-end' : '')
           + (roundLeft ? ' round-l' : '') + (roundRight ? ' round-r' : '');
         barsHtml += `<div class="${cls}"`
-          + ` style="grid-column:${colStart} / span 1; grid-row:${localRow + 1}; background:${color};"`
+          + ` style="grid-column:${colStart} / span 1; grid-row:${localRow + 1}; background:${color}; color:${textColor};"`
           + ` title="${nameEsc}">${nameEsc}</div>`;
       } else {
         const endCol = colStart + colSpan - 1;
@@ -1739,17 +1759,17 @@ function pfDashCalendarHtml(data) {
         const midSpan = (halfEnd ? endCol : endCol + 1) - midStart;
         if (halfStart) {
           barsHtml += `<div class="dash-cal-bar half-start round-l"`
-            + ` style="grid-column:${colStart} / span 1; grid-row:${localRow + 1}; background:${color};"`
+            + ` style="grid-column:${colStart} / span 1; grid-row:${localRow + 1}; background:${color}; color:${textColor};"`
             + ` title="${nameEsc}"></div>`;
         }
         if (midSpan > 0) {
           barsHtml += `<div class="dash-cal-bar${(!halfStart && roundLeft) ? ' round-l' : ''}${(!halfEnd && roundRight) ? ' round-r' : ''}"`
-            + ` style="grid-column:${midStart} / span ${midSpan}; grid-row:${localRow + 1}; background:${color};"`
+            + ` style="grid-column:${midStart} / span ${midSpan}; grid-row:${localRow + 1}; background:${color}; color:${textColor};"`
             + ` title="${nameEsc}">${nameEsc}</div>`;
         }
         if (halfEnd) {
           barsHtml += `<div class="dash-cal-bar half-end round-r"`
-            + ` style="grid-column:${endCol} / span 1; grid-row:${localRow + 1}; background:${color};"`
+            + ` style="grid-column:${endCol} / span 1; grid-row:${localRow + 1}; background:${color}; color:${textColor};"`
             + ` title="${nameEsc}"></div>`;
         }
       }
