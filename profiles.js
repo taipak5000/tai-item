@@ -3098,6 +3098,7 @@ function pfInit() {
     { icon: svgIcon('i-star-candle'), ja: '星のキャンドル計算機', en: 'Star Candle Calculator', href: 'https://taipak5000.github.io/star-candle/' },
     { icon: svgIcon('i-sparkle'), ja: '精霊同行ツール', en: 'Spirit Companion Tool', href: 'https://taipak5000.github.io/companion/' },
     { icon: svgIcon('i-wing'), ja: '羽トラッカー', en: 'Wing Tracker', href: 'https://taipak5000.github.io/wings/' },
+    { icon: svgIcon('i-wing'), ja: '再訪精霊データベース', en: 'Revisit Spirit Database', href: 'https://taipak5000.github.io/tai-revisit/' },
     { icon: svgIcon('i-music-note'), ja: '楽譜づくり', en: 'Sheet Music Maker', href: 'https://taipak5000.github.io/tai-score/', badgeTest: true },
     { icon: svgIcon('i-sync'), ja: 'データ引継ぎ', en: 'Data Transfer', href: 'https://taipak5000.github.io/tai-transfer/' },
     { icon: svgIcon('i-settings'), ja: '設定・更新情報', en: 'Settings & Updates', href: 'https://taipak5000.github.io/tai-info/' },
