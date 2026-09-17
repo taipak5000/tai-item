@@ -243,7 +243,11 @@ html:not([data-input-modality="mouse"]) *:focus-visible { outline: 2px solid var
 .pf-modal-card, .modal-card {
   width: 100%; max-width: 720px; max-height: 88vh; max-height: 88dvh;
   border-radius: 20px 20px 0 0;
-  padding: 30px 20px calc(24px + env(safe-area-inset-bottom));
+  /* 🩹 .site-dock（画面下部固定、z-index:1001でこのシートより常に手前）に
+     最後の項目が隠れてしまわないよう、下端の余白にドックの実測高さ分(約71px)を
+     上乗せして確保する。ドックはz-indexの都合上モーダルより後ろに回せないため
+     （site-dockのz-index指定のコメント参照）、モーダル側で避ける必要がある。 */
+  padding: 30px 20px calc(24px + 64px + env(safe-area-inset-bottom));
   box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.25), inset 0 1px 0 var(--glass-edge);
   position: relative; overscroll-behavior: contain;
   touch-action: pan-y; will-change: transform;
