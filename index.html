@@ -1410,6 +1410,12 @@
       <span class="gs-result-count" id="gsResultCount"></span>
     </div>
     <div id="gsResults"><!-- JS --></div>
+
+    <!-- 🩹 リストが長いと、一番下までスクロールしたのか判断しづらいため、
+         「これ以上は無い」と分かるよう最後に閉じるボタンを置く -->
+    <div class="action-row" style="margin-top:16px;">
+      <button class="action-btn primary full" onclick="closeModal('itemSearchModal')" data-i18n-en="Done">閉じる</button>
+    </div>
   </div>
 </div>
 
