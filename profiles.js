@@ -3114,7 +3114,7 @@ function pfInit() {
     </div>
     <div class="pf-drawer-nav">
       ${SITE_LINKS.map(s => `
-        <a class="pf-drawer-link${s.current ? ' current' : ''}" href="${s.href}">${s.badgeTest ? `<span class="pf-drawer-badge-test">${pfT('test', 'test')}</span>` : ''}${s.icon} ${pfT(s.ja, s.en)}</a>`).join('')}
+        <a class="pf-drawer-link${s.current ? ' current' : ''}" href="${s.href}">${s.icon}${s.badgeTest ? `<span class="pf-drawer-badge-test">${pfT('test', 'test')}</span>` : ''} ${pfT(s.ja, s.en)}</a>`).join('')}
     </div>`;
   document.body.appendChild(toolsDrawer);
 
