@@ -172,14 +172,29 @@
        以前はWiki掲載の入手元(季節・日々イベント等)アイコンをタイルの主役に
        していたが、同じ入手元の楽譜同士で画像を共有するため個々の楽譜を
        区別できなかった(区別用に番号バッジを別途追加していた)。季節・入手元
-       アイコンはタイトル先頭の小さいバッジ(.sheet-title-season-icon)へ移動。 */
+       アイコンはタイトル先頭の小さいバッジ(.sheet-title-season-icon)へ移動。
+       🩹 ページ+横線だけの#i-sheet-music単体は「ただの記号」に見えて楽譜だと
+       分かりにくかったため、右下にオレンジの音符バッジ(#i-music-note、塗り
+       つぶし)を重ねて「楽譜(ページ)+音符」の組み合わせだと一目で分かる
+       ようにした。既存の2アイコンを重ねるだけで新規パスは追加していない。 */
     .sheet-img-wrap {
       position: absolute; inset: 0; z-index: 1;
       display: flex; align-items: center; justify-content: center;
       background: var(--bg); filter: grayscale(1) opacity(0.5); transition: filter 0.15s;
     }
     .sheet-frame.is-owned .sheet-img-wrap { filter: none; }
-    .sheet-note-icon { color: var(--text-2); }
+    .sheet-note-icon { position: relative; display: inline-flex; color: var(--text-2); }
+    .sheet-icon-note-badge {
+      position: absolute; right: -4px; bottom: -4px; z-index: 1;
+      width: 15px; height: 15px; border-radius: 50%;
+      background: var(--orange); box-shadow: 0 0 0 2px var(--card);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .sheet-icon-note-badge svg { width: 9px; height: 9px; fill: #fff; stroke: none; }
+    .sheet-thumb .sheet-icon-note-badge {
+      width: 12px; height: 12px; right: -3px; bottom: -3px; box-shadow: 0 0 0 1.5px var(--card);
+    }
+    .sheet-thumb .sheet-icon-note-badge svg { width: 7px; height: 7px; }
     /* 季節・入手元アイコン：楽譜タイトルの先頭に小さく添えるバッジ(読込失敗時は非表示) */
     .sheet-title-season-icon {
       width: 11px; height: 11px; object-fit: contain; vertical-align: -1px;
@@ -738,7 +753,10 @@ function filterAndRender() {
           <button class="tile-fav-btn ${isFav ? 'is-fav' : ''}" onclick="event.stopPropagation(); toggleFav('${s.id}', this)" aria-label="${en ? 'Favorite' : 'お気に入り'}"><svg class="inline-icon" width="16" height="16" style="stroke:currentColor;color:inherit;fill:${isFav ? 'currentColor' : 'none'}"><use href="#i-star"/></svg></button>
           <button class="tile-wish-btn ${isWish ? 'is-wish' : ''}" onclick="event.stopPropagation(); toggleWishBtn('${s.id}', this)" aria-label="${en ? 'Wishlist' : 'ウィッシュリスト'}" title="${en ? 'Add to wishlist' : 'ウィッシュリストに追加'}"><svg class="inline-icon" width="16" height="16" style="stroke:currentColor;color:inherit"><use href="#i-cart"/></svg></button>
           <div class="sheet-img-wrap">
-            <span class="sheet-note-icon"><svg class="inline-icon" width="26" height="26"><use href="#i-sheet-music"/></svg></span>
+            <span class="sheet-note-icon">
+              <svg class="inline-icon" width="26" height="26"><use href="#i-sheet-music"/></svg>
+              <span class="sheet-icon-note-badge"><svg viewBox="0 0 24 24"><use href="#i-music-note"/></svg></span>
+            </span>
           </div>
           <span class="sheet-method-dot m-${s.method}" aria-hidden="true"></span>
           <span class="sheet-num-badge">${s.num}</span>
@@ -762,7 +780,10 @@ function filterAndRender() {
       <div class="item-card ${isOwned ? 'is-owned' : ''}" id="card_${s.id}">
         <div class="item-left" onclick="toggleOwned('${s.id}')" tabindex="0" role="button" aria-pressed="${isOwned}" onkeydown="if(event.target===event.currentTarget&&(event.key==='Enter'||event.key===' ')){event.preventDefault();toggleOwned('${s.id}');}">
           <div class="sheet-thumb">
-            <span class="sheet-note-icon"><svg class="inline-icon" width="20" height="20"><use href="#i-sheet-music"/></svg></span>
+            <span class="sheet-note-icon">
+              <svg class="inline-icon" width="20" height="20"><use href="#i-sheet-music"/></svg>
+              <span class="sheet-icon-note-badge"><svg viewBox="0 0 24 24"><use href="#i-music-note"/></svg></span>
+            </span>
             <span class="sheet-thumb-num-badge">${s.num}</span>
             <span class="sheet-thumb-check"><svg class="inline-icon" width="11" height="11" style="stroke:currentColor;color:inherit"><use href="#i-check"/></svg></span>
           </div>
