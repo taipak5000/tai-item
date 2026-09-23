@@ -168,22 +168,25 @@
     .sheet-frame:active { transform: scale(0.95); }
     .sheet-frame.is-owned { border-color: var(--green); }
 
-    /* 🩹 楽譜アイコン：どの楽譜も同じ「楽譜」アイコン(#i-sheet-music)を表示する。
-       以前はWiki掲載の入手元(季節・日々イベント等)アイコンをタイルの主役に
-       していたが、同じ入手元の楽譜同士で画像を共有するため個々の楽譜を
-       区別できなかった(区別用に番号バッジを別途追加していた)。季節・入手元
-       アイコンはタイトル先頭の小さいバッジ(.sheet-title-season-icon)へ移動。
-       🩹 ページ+横線だけの#i-sheet-music単体は「ただの記号」に見えて楽譜だと
-       分かりにくかったため、右下にオレンジの音符バッジ(#i-music-note、塗り
-       つぶし)を重ねて「楽譜(ページ)+音符」の組み合わせだと一目で分かる
-       ようにした。既存の2アイコンを重ねるだけで新規パスは追加していない。 */
+    /* 🩹 楽譜アイコン：Wiki「楽譜」ページ
+       (https://sky-children-of-the-light.fandom.com/ja/wiki/楽譜)の
+       番号一覧に掲載されている、各楽譜番号に対応する実際のアイコン画像
+       (=各アイテムのimgフィールド、Wiki側で確認済み)をタイルの主役として
+       表示する。同じ入手元(季節・日々イベント等)の楽譜はWiki上でも画像を
+       共有する仕様のため、区別用の番号バッジ(.sheet-num-badge)を引き続き
+       併用する。画像の読み込みに失敗した場合のみ、「楽譜(ページ)+音符」の
+       代替アイコン(既存の#i-sheet-music・#i-music-noteを重ねたもの)に
+       フォールバックする。 */
     .sheet-img-wrap {
       position: absolute; inset: 0; z-index: 1;
       display: flex; align-items: center; justify-content: center;
       background: var(--bg); filter: grayscale(1) opacity(0.5); transition: filter 0.15s;
     }
     .sheet-frame.is-owned .sheet-img-wrap { filter: none; }
-    .sheet-note-icon { position: relative; display: inline-flex; color: var(--text-2); }
+    .sheet-img-wrap img { width: 100%; height: 100%; object-fit: contain; padding: 18%; display: block; }
+    .sheet-img-wrap.img-fallback img { display: none; }
+    .sheet-note-icon { display: none; position: relative; color: var(--text-2); }
+    .sheet-img-wrap.img-fallback .sheet-note-icon { display: inline-flex; }
     .sheet-icon-note-badge {
       position: absolute; right: -4px; bottom: -4px; z-index: 1;
       width: 15px; height: 15px; border-radius: 50%;
@@ -195,12 +198,6 @@
       width: 12px; height: 12px; right: -3px; bottom: -3px; box-shadow: 0 0 0 1.5px var(--card);
     }
     .sheet-thumb .sheet-icon-note-badge svg { width: 7px; height: 7px; }
-    /* 季節・入手元アイコン：楽譜タイトルの先頭に小さく添えるバッジ(読込失敗時は非表示) */
-    .sheet-title-season-icon {
-      width: 11px; height: 11px; object-fit: contain; vertical-align: -1px;
-      margin-right: 3px; border-radius: 2px; flex-shrink: 0; opacity: 0.9;
-    }
-    .item-name-link .sheet-title-season-icon { width: 14px; height: 14px; vertical-align: -2px; margin-right: 4px; border-radius: 3px; }
 
     /* 番号バッジ：同じ入手元アイコンを複数の楽譜が共有するため、番号表示で個別に識別する */
     .sheet-num-badge {
@@ -271,6 +268,10 @@
       filter: grayscale(1) opacity(0.5); transition: filter 0.15s, border-color 0.15s;
     }
     .item-card.is-owned .sheet-thumb { border-color: var(--green); filter: none; }
+    .sheet-thumb img { width: 100%; height: 100%; object-fit: contain; padding: 18%; display: block; }
+    .sheet-thumb.img-fallback img { display: none; }
+    .sheet-thumb .sheet-note-icon { display: none; }
+    .sheet-thumb.img-fallback .sheet-note-icon { display: inline-flex; }
     .sheet-thumb-num-badge {
       position: absolute; bottom: 2px; left: 2px; z-index: 2;
       font-size: 9px; font-weight: 800; color: #fff; line-height: 1.4;
@@ -725,8 +726,13 @@ function filterAndRender() {
   }
 
   const priceLabel = (s) => s.price === null ? `<span class="badge price-unknown">${en ? 'Price: -' : '価格: -'}</span>` : `<span class="badge"><svg class="inline-icon" width="12" height="12"><use href="#i-candle"/></svg> ${s.price}</span>`;
-  // 季節・入手元アイコン：楽譜タイトルの先頭に小さく添えるバッジ（読込失敗時は自然に非表示）
-  const seasonIconHtml = (s) => `<img class="sheet-title-season-icon" src="${s.img}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'">`;
+  // Wiki「楽譜」ページの番号ごとの一覧に掲載されている実アイコン画像＋読込失敗時のフォールバック
+  const sheetIconHtml = (s, size) => `
+    <img src="${s.img}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('img-fallback')">
+    <span class="sheet-note-icon">
+      <svg class="inline-icon" width="${size}" height="${size}"><use href="#i-sheet-music"/></svg>
+      <span class="sheet-icon-note-badge"><svg viewBox="0 0 24 24"><use href="#i-music-note"/></svg></span>
+    </span>`;
 
   const renderGrid = (s) => {
     const isOwned = !!userStates.owned[s.id];
@@ -752,17 +758,12 @@ function filterAndRender() {
           <!-- お気に入り／ウィッシュリストボタン（タイル選択とバブリングしないようストップ） -->
           <button class="tile-fav-btn ${isFav ? 'is-fav' : ''}" onclick="event.stopPropagation(); toggleFav('${s.id}', this)" aria-label="${en ? 'Favorite' : 'お気に入り'}"><svg class="inline-icon" width="16" height="16" style="stroke:currentColor;color:inherit;fill:${isFav ? 'currentColor' : 'none'}"><use href="#i-star"/></svg></button>
           <button class="tile-wish-btn ${isWish ? 'is-wish' : ''}" onclick="event.stopPropagation(); toggleWishBtn('${s.id}', this)" aria-label="${en ? 'Wishlist' : 'ウィッシュリスト'}" title="${en ? 'Add to wishlist' : 'ウィッシュリストに追加'}"><svg class="inline-icon" width="16" height="16" style="stroke:currentColor;color:inherit"><use href="#i-cart"/></svg></button>
-          <div class="sheet-img-wrap">
-            <span class="sheet-note-icon">
-              <svg class="inline-icon" width="26" height="26"><use href="#i-sheet-music"/></svg>
-              <span class="sheet-icon-note-badge"><svg viewBox="0 0 24 24"><use href="#i-music-note"/></svg></span>
-            </span>
-          </div>
+          <div class="sheet-img-wrap">${sheetIconHtml(s, 26)}</div>
           <span class="sheet-method-dot m-${s.method}" aria-hidden="true"></span>
           <span class="sheet-num-badge">${s.num}</span>
           <span class="tile-owned-check"><svg class="inline-icon" width="12" height="12" style="stroke:currentColor;color:inherit"><use href="#i-check"/></svg></span>
         </div>
-        <a href="${wikiUrl}" target="_blank" rel="noopener noreferrer" class="item-tile-name">${seasonIconHtml(s)}${dispName}</a>
+        <a href="${wikiUrl}" target="_blank" rel="noopener noreferrer" class="item-tile-name">${dispName}</a>
       </div>
     `;
   };
@@ -780,16 +781,13 @@ function filterAndRender() {
       <div class="item-card ${isOwned ? 'is-owned' : ''}" id="card_${s.id}">
         <div class="item-left" onclick="toggleOwned('${s.id}')" tabindex="0" role="button" aria-pressed="${isOwned}" onkeydown="if(event.target===event.currentTarget&&(event.key==='Enter'||event.key===' ')){event.preventDefault();toggleOwned('${s.id}');}">
           <div class="sheet-thumb">
-            <span class="sheet-note-icon">
-              <svg class="inline-icon" width="20" height="20"><use href="#i-sheet-music"/></svg>
-              <span class="sheet-icon-note-badge"><svg viewBox="0 0 24 24"><use href="#i-music-note"/></svg></span>
-            </span>
+            ${sheetIconHtml(s, 20)}
             <span class="sheet-thumb-num-badge">${s.num}</span>
             <span class="sheet-thumb-check"><svg class="inline-icon" width="11" height="11" style="stroke:currentColor;color:inherit"><use href="#i-check"/></svg></span>
           </div>
           <div class="item-details">
             <a href="${wikiUrl}" target="_blank" rel="noopener noreferrer" class="item-name-link" onclick="event.stopPropagation();">
-              ${seasonIconHtml(s)}${dispName} <svg class="inline-icon" width="12" height="12"><use href="#i-link"/></svg>
+              ${dispName} <svg class="inline-icon" width="12" height="12"><use href="#i-link"/></svg>
             </a>
             <div class="item-meta-row">
               <span class="badge method-${s.method}">${en ? METHOD_LABEL_EN[s.method] : METHOD_LABEL_JA[s.method]}</span>
