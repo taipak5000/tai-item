@@ -168,17 +168,24 @@
     .sheet-frame:active { transform: scale(0.95); }
     .sheet-frame.is-owned { border-color: var(--green); }
 
-    /* アイコン画像（Wiki掲載の入手元アイコン）。未配置・読込失敗時は🎵にフォールバック */
+    /* 🩹 楽譜アイコン：どの楽譜も同じ「楽譜」アイコン(#i-sheet-music)を表示する。
+       以前はWiki掲載の入手元(季節・日々イベント等)アイコンをタイルの主役に
+       していたが、同じ入手元の楽譜同士で画像を共有するため個々の楽譜を
+       区別できなかった(区別用に番号バッジを別途追加していた)。季節・入手元
+       アイコンはタイトル先頭の小さいバッジ(.sheet-title-season-icon)へ移動。 */
     .sheet-img-wrap {
       position: absolute; inset: 0; z-index: 1;
       display: flex; align-items: center; justify-content: center;
       background: var(--bg); filter: grayscale(1) opacity(0.5); transition: filter 0.15s;
     }
     .sheet-frame.is-owned .sheet-img-wrap { filter: none; }
-    .sheet-img-wrap img { width: 100%; height: 100%; object-fit: contain; padding: 18%; display: block; }
-    .sheet-img-wrap.img-fallback img { display: none; }
-    .sheet-note-icon { display: none; font-size: 20px; opacity: 0.65; }
-    .sheet-img-wrap.img-fallback .sheet-note-icon { display: block; }
+    .sheet-note-icon { color: var(--text-2); }
+    /* 季節・入手元アイコン：楽譜タイトルの先頭に小さく添えるバッジ(読込失敗時は非表示) */
+    .sheet-title-season-icon {
+      width: 11px; height: 11px; object-fit: contain; vertical-align: -1px;
+      margin-right: 3px; border-radius: 2px; flex-shrink: 0; opacity: 0.9;
+    }
+    .item-name-link .sheet-title-season-icon { width: 14px; height: 14px; vertical-align: -2px; margin-right: 4px; border-radius: 3px; }
 
     /* 番号バッジ：同じ入手元アイコンを複数の楽譜が共有するため、番号表示で個別に識別する */
     .sheet-num-badge {
@@ -249,10 +256,6 @@
       filter: grayscale(1) opacity(0.5); transition: filter 0.15s, border-color 0.15s;
     }
     .item-card.is-owned .sheet-thumb { border-color: var(--green); filter: none; }
-    .sheet-thumb img { width: 100%; height: 100%; object-fit: contain; padding: 18%; display: block; }
-    .sheet-thumb.img-fallback img { display: none; }
-    .sheet-thumb .sheet-note-icon { display: none; font-size: 15px; }
-    .sheet-thumb.img-fallback .sheet-note-icon { display: block; }
     .sheet-thumb-num-badge {
       position: absolute; bottom: 2px; left: 2px; z-index: 2;
       font-size: 9px; font-weight: 800; color: #fff; line-height: 1.4;
@@ -707,6 +710,8 @@ function filterAndRender() {
   }
 
   const priceLabel = (s) => s.price === null ? `<span class="badge price-unknown">${en ? 'Price: -' : '価格: -'}</span>` : `<span class="badge"><svg class="inline-icon" width="12" height="12"><use href="#i-candle"/></svg> ${s.price}</span>`;
+  // 季節・入手元アイコン：楽譜タイトルの先頭に小さく添えるバッジ（読込失敗時は自然に非表示）
+  const seasonIconHtml = (s) => `<img class="sheet-title-season-icon" src="${s.img}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'">`;
 
   const renderGrid = (s) => {
     const isOwned = !!userStates.owned[s.id];
@@ -733,14 +738,13 @@ function filterAndRender() {
           <button class="tile-fav-btn ${isFav ? 'is-fav' : ''}" onclick="event.stopPropagation(); toggleFav('${s.id}', this)" aria-label="${en ? 'Favorite' : 'お気に入り'}"><svg class="inline-icon" width="16" height="16" style="stroke:currentColor;color:inherit;fill:${isFav ? 'currentColor' : 'none'}"><use href="#i-star"/></svg></button>
           <button class="tile-wish-btn ${isWish ? 'is-wish' : ''}" onclick="event.stopPropagation(); toggleWishBtn('${s.id}', this)" aria-label="${en ? 'Wishlist' : 'ウィッシュリスト'}" title="${en ? 'Add to wishlist' : 'ウィッシュリストに追加'}"><svg class="inline-icon" width="16" height="16" style="stroke:currentColor;color:inherit"><use href="#i-cart"/></svg></button>
           <div class="sheet-img-wrap">
-            <img src="${s.img}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('img-fallback')">
-            <span class="sheet-note-icon"><svg class="inline-icon" width="18" height="18"><use href="#i-music-note"/></svg></span>
+            <span class="sheet-note-icon"><svg class="inline-icon" width="26" height="26"><use href="#i-sheet-music"/></svg></span>
           </div>
           <span class="sheet-method-dot m-${s.method}" aria-hidden="true"></span>
           <span class="sheet-num-badge">${s.num}</span>
           <span class="tile-owned-check"><svg class="inline-icon" width="12" height="12" style="stroke:currentColor;color:inherit"><use href="#i-check"/></svg></span>
         </div>
-        <a href="${wikiUrl}" target="_blank" rel="noopener noreferrer" class="item-tile-name">${dispName}</a>
+        <a href="${wikiUrl}" target="_blank" rel="noopener noreferrer" class="item-tile-name">${seasonIconHtml(s)}${dispName}</a>
       </div>
     `;
   };
@@ -758,14 +762,13 @@ function filterAndRender() {
       <div class="item-card ${isOwned ? 'is-owned' : ''}" id="card_${s.id}">
         <div class="item-left" onclick="toggleOwned('${s.id}')" tabindex="0" role="button" aria-pressed="${isOwned}" onkeydown="if(event.target===event.currentTarget&&(event.key==='Enter'||event.key===' ')){event.preventDefault();toggleOwned('${s.id}');}">
           <div class="sheet-thumb">
-            <img src="${s.img}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('img-fallback')">
-            <span class="sheet-note-icon"><svg class="inline-icon" width="15" height="15"><use href="#i-music-note"/></svg></span>
+            <span class="sheet-note-icon"><svg class="inline-icon" width="20" height="20"><use href="#i-sheet-music"/></svg></span>
             <span class="sheet-thumb-num-badge">${s.num}</span>
             <span class="sheet-thumb-check"><svg class="inline-icon" width="11" height="11" style="stroke:currentColor;color:inherit"><use href="#i-check"/></svg></span>
           </div>
           <div class="item-details">
             <a href="${wikiUrl}" target="_blank" rel="noopener noreferrer" class="item-name-link" onclick="event.stopPropagation();">
-              ${dispName} <svg class="inline-icon" width="12" height="12"><use href="#i-link"/></svg>
+              ${seasonIconHtml(s)}${dispName} <svg class="inline-icon" width="12" height="12"><use href="#i-link"/></svg>
             </a>
             <div class="item-meta-row">
               <span class="badge method-${s.method}">${en ? METHOD_LABEL_EN[s.method] : METHOD_LABEL_JA[s.method]}</span>
