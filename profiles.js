@@ -379,6 +379,21 @@ function settingsSaveShortcutsPref(checked) {
   try { localStorage.setItem(SKY_SHORTCUTS_KEY, checked ? '1' : '0'); } catch (e) { /* private browsing等 */ }
 }
 
+// 🏆 称号（実績）の表示/非表示。sky_app_theme/sky_app_langと同じ端末単位の設定として
+// sky_app_接頭辞に揃える（プロフィールごとではなく、この端末のブラウザ全体で共通）。
+// 未設定（null）の場合は表示（true）扱い＝既存ユーザーは明示的にオフにするまで今まで通り見える。
+const SKY_TITLES_VISIBLE_KEY = 'sky_app_titles_visible';
+function skyTitlesVisible() {
+  try {
+    const v = localStorage.getItem(SKY_TITLES_VISIBLE_KEY);
+    return v === null ? true : v === '1';
+  } catch (e) { return true; }
+}
+function settingsSaveTitlesVisiblePref(checked) {
+  try { localStorage.setItem(SKY_TITLES_VISIBLE_KEY, checked ? '1' : '0'); } catch (e) { /* private browsing等 */ }
+  if (typeof renderTitlesPanel === 'function') renderTitlesPanel(); // index.htmlの#titlesPanelへ即反映
+}
+
 // 設定モーダル内のテーマ切替ボタン・ショートカットのチェックボックスの表示を、
 // 現在の状態（他タブでの変更を含む）に同期させる。
 function pfSyncSettingsUI() {
@@ -398,6 +413,8 @@ function pfSyncSettingsUI() {
   }
   const cb = document.getElementById('settingsShortcutsCheckbox');
   if (cb) cb.checked = skyShortcutsEnabled();
+  const titlesCb = document.getElementById('settingsTitlesCheckbox');
+  if (titlesCb) titlesCb.checked = skyTitlesVisible();
   const langJaBtn = document.getElementById('settingsLangJaBtn');
   const langEnBtn = document.getElementById('settingsLangEnBtn');
   if (langJaBtn && langEnBtn) {
@@ -665,10 +682,16 @@ function pfInjectStyle() {
     .pf-currency-title { font-size: 12px; font-weight: 700; color: var(--text-2); margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.4px;
       display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; }
     .pf-currency-toggle-label { font-size: 11px; font-weight: 700; text-transform: none; letter-spacing: 0; }
-    .pf-currency-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 2px; }
-    .pf-currency-label { font-size: 13px; color: var(--text); }
-    .pf-currency-input { width: 90px; background: var(--bg); border: 1px solid var(--sep); border-radius: 6px;
-      padding: 6px 8px; font-size: 14px; color: var(--text); font-family: inherit; outline: none; box-sizing: border-box; text-align: right; }
+    /* 🩹 元は境界線もグループ化も無いただのflex行の羅列で、5種の通貨が同じ見た目の
+       重みでずらっと並ぶだけだった。他のシート内リスト（.dash-row等）と同じ
+       「淡い背景の角丸セル」に揃え、1行＝1通貨がひと目で区切って見えるようにする */
+    .pf-currency-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+      background: var(--bg); border-radius: var(--r-sm); margin-bottom: 6px; }
+    .pf-currency-row:last-child { margin-bottom: 0; }
+    .pf-currency-label { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); }
+    .pf-currency-input { width: 88px; flex-shrink: 0; background: var(--card); border: 1px solid var(--sep); border-radius: 6px;
+      padding: 7px 8px; font-size: 14.5px; font-weight: 600; color: var(--text); font-family: inherit; outline: none;
+      box-sizing: border-box; text-align: right; font-variant-numeric: tabular-nums; }
     .pf-currency-input:focus { border-color: var(--blue); }
 
     .dash-section { margin-top: 16px; }
@@ -1270,6 +1293,24 @@ function checkAndUnlockTitles() {
 function renderTitlesPanel() {
   const panels = document.querySelectorAll('#titlesPanel');
   if (!panels.length) return;
+
+  // ⚙️ 表示設定で「称号を表示する」がオフの場合は、パネルとその直前の見出し
+  // （<p class="sec-label">称号</p>）をまるごと隠す。トグルはlocation.reloadを
+  // 伴わないため、オフ→オンへ戻した時のために毎回display状態を明示的に書き戻す。
+  if (!skyTitlesVisible()) {
+    panels.forEach(p => {
+      p.style.display = 'none';
+      const label = p.previousElementSibling;
+      if (label && label.classList.contains('sec-label')) label.style.display = 'none';
+    });
+    return;
+  }
+  panels.forEach(p => {
+    p.style.display = '';
+    const label = p.previousElementSibling;
+    if (label && label.classList.contains('sec-label')) label.style.display = '';
+  });
+
   const store = loadTitleStore();
   const earnedCount = TITLES.filter(t => store.earned[t.id]).length;
 
@@ -1310,8 +1351,8 @@ function renderTitlesPanel() {
 // profiles.js自身の初期化時（全ページ共通）に加え、各カテゴリページのsaveUserData()末尾、
 // 総合メニューの横断検索から所持状態を変更した箇所でも呼び出し、その場で解禁を反映する。
 function refreshTitlesUI() {
-  const newlyEarned = checkAndUnlockTitles();
-  if (newlyEarned.length && typeof showToast === 'function') {
+  const newlyEarned = checkAndUnlockTitles(); // 解禁判定・hwm更新は表示設定に関わらず常に行う（後でオンに戻した時に取りこぼさないため）
+  if (newlyEarned.length && skyTitlesVisible() && typeof showToast === 'function') {
     const msg = newlyEarned.length === 1
       ? pfT(`称号解禁「${newlyEarned[0].name}」`, `Title unlocked: ${newlyEarned[0].nameEn}`)
       : pfT(`称号を${newlyEarned.length}個解禁！`, `${newlyEarned.length} titles unlocked!`);
@@ -2209,13 +2250,15 @@ function pfToggleProfileTitles(id) {
    シーズンハート・イベント通貨はどのサイトにも記録先が無いため、
    新規キー（skyCurrencyExtra_v1）で管理する。
    ================================================================ */
-const PF_CURRENCY_ICON = (name) => `<svg class="inline-icon" width="14" height="14"><use href="#${name}"/></svg>`;
+// 🩹 星のキャンドル(ascendedCandle)は以前、通常のキャンドルと見分けのつかない汎用の
+// i-star（★のみ）アイコンを使っていた。星紡ぎカードのリンク（3099行目付近）等
+// 既存の他箇所と同じ、専用のi-star-candle（キャンドル+★バッジ）に揃える
 const PF_CURRENCY_FIELDS = [
-  { key: 'candle',         icon: PF_CURRENCY_ICON('i-candle') },
-  { key: 'heart',          icon: PF_CURRENCY_ICON('i-heart') },
-  { key: 'ascendedCandle', icon: PF_CURRENCY_ICON('i-star') },
-  { key: 'seasonCandle',   icon: PF_CURRENCY_ICON('i-candle') },
-  { key: 'giftPass',       icon: PF_CURRENCY_ICON('i-ticket') },
+  { key: 'candle',         iconId: 'i-candle' },
+  { key: 'heart',          iconId: 'i-heart' },
+  { key: 'ascendedCandle', iconId: 'i-star-candle' },
+  { key: 'seasonCandle',   iconId: 'i-candle' },
+  { key: 'giftPass',       iconId: 'i-ticket' },
 ];
 function pfCurrencyLabel(key) {
   const labels = {
@@ -2290,11 +2333,19 @@ function pfRenderCurrency() {
   const body = document.getElementById('pfCurrencyBody');
   if (!body) return;
   const c = pfLoadCurrency();
+  // 🩹 1行=1通貨をicon-chip（設定モーダル等、他のシート内リストと共通の円形アイコン）付きの
+  // 淡い背景セルにし、フォーカス時に全選択（select()）して桁数の多い所持数でも
+  // 打ち直しやすくする。valueは表示速度優先で即描画するが、aria-labelで
+  // 通貨名を読み上げられるようにしてlabel-input間の対応をa11y面でも明確にする
+  const label = f => escapeHtmlPf(pfCurrencyLabel(f.key));
   body.innerHTML = PF_CURRENCY_FIELDS.map(f => `
     <div class="pf-currency-row">
-      <span class="pf-currency-label">${f.icon} ${pfCurrencyLabel(f.key)}</span>
-      <input type="number" min="0" class="pf-currency-input" value="${pfNumInputVal(c[f.key])}"
-        onchange="pfSaveCurrencyField('${f.key}', this.value)">
+      <span class="pf-currency-label">
+        <span class="icon-chip" style="width:24px; height:24px;"><svg width="14" height="14"><use href="#${f.iconId}"/></svg></span>
+        ${label(f)}
+      </span>
+      <input type="number" min="0" inputmode="numeric" class="pf-currency-input" value="${pfNumInputVal(c[f.key])}"
+        aria-label="${label(f)}" onfocus="this.select()" onchange="pfSaveCurrencyField('${f.key}', this.value)">
     </div>`).join('');
   pfSyncCurrencyToggleUI();
 }
@@ -2362,10 +2413,12 @@ function pfRenderModal() {
 
     const colorVal = pfIsSafeColor(p.color) ? p.color : '#FF9500';
 
-    // 🏆 このプロフィールで獲得済みの称号（獲得条件つき）。触れているこの行テンプレート
-    // の中で、user-editable自由入力であるpfDisplayName(p)は下記でも必ずescapeHtmlPfを
-    // 通す（既存の他フィールドと同じ扱いに統一する）。
-    const earnedTitles = getEarnedTitlesForProfile(p.id);
+    // 🏆 このプロフィールで獲得済みの称号（獲得条件つき）。表示設定で「称号を表示する」が
+    // オフの場合は、この行ブロックごと出さない（集計自体は無駄なので行わない）。
+    // 触れているこの行テンプレートの中で、user-editable自由入力であるpfDisplayName(p)は
+    // 下記でも必ずescapeHtmlPfを通す（既存の他フィールドと同じ扱いに統一する）。
+    const titlesVisible = skyTitlesVisible();
+    const earnedTitles = titlesVisible ? getEarnedTitlesForProfile(p.id) : [];
     const titlesExpanded = pfExpandedTitleProfiles.has(p.id);
     const titlesBlock = earnedTitles.length === 0
       ? `<p class="pf-row-titles-empty">${escapeHtmlPf(pfT('まだ称号を獲得していません', 'No titles earned yet'))}</p>`
@@ -2390,7 +2443,7 @@ function pfRenderModal() {
         ${p.color ? `<button type="button" class="pf-icon-btn pf-color-clear-btn" title="${pfT('カラーを初期値に戻す','Reset color to default')}" onclick="pfClearProfileColor('${p.id}')"><svg class="inline-icon" width="14" height="14"><use href="#i-sync"/></svg></button>` : ''}
         <button type="button" class="pf-icon-btn" title="${pfT('名前を変更','Rename')}" onclick="pfStartRename('${p.id}')"><svg class="inline-icon" width="14" height="14"><use href="#i-edit"/></svg></button>
         ${list.length > 1 ? `<button type="button" class="pf-icon-btn" title="${pfT('削除','Delete')}" onclick="pfStartDelete('${p.id}')"><svg class="inline-icon" width="14" height="14"><use href="#i-trash"/></svg></button>` : ''}
-        <div class="pf-row-titles">${titlesBlock}</div>
+        ${titlesVisible ? `<div class="pf-row-titles">${titlesBlock}</div>` : ''}
       </div>`;
   }).join('');
 
@@ -2986,6 +3039,12 @@ function pfInit() {
           <span class="dash-row-icon icon-chip" style="width:22px; height:22px;"><svg width="17" height="17"><use href="#i-palette"/></svg></span>
           <span class="dash-row-text">${pfT('ホーム画面アイコン', 'Home Screen Icon')}</span>
           <button type="button" class="pf-icon-btn" onclick="settingsClose(); pfIconOpenModal();">${pfT('開く', 'Open')}</button>
+        </div>
+        <div class="dash-row" style="align-items:center;">
+          <span class="dash-row-icon icon-chip" style="width:22px; height:22px;"><svg width="17" height="17"><use href="#i-trophy"/></svg></span>
+          <span class="dash-row-text">${pfT('称号を表示する', 'Show titles')}</span>
+          <input type="checkbox" id="settingsTitlesCheckbox" style="width:19px; height:19px; flex-shrink:0; cursor:pointer;"
+            onchange="settingsSaveTitlesVisiblePref(this.checked)">
         </div>
       </div>
 
