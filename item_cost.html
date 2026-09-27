@@ -553,6 +553,25 @@
 
     <div class="jump-bar">
       <div class="jump-bar-row">
+        <svg class="inline-icon" width="14" height="14"><use href="#i-grid"/></svg> <label for="categoryFilterSelect" class="jump-label" data-i18n-en="Category">カテゴリ</label>
+        <select id="categoryFilterSelect" class="jump-select" onchange="renderItems()">
+          <option value="all" data-i18n-en="Show all">すべて表示</option>
+          <option value="outfit" data-i18n-en="Outfit">アウトフィット</option>
+          <option value="shoes" data-i18n-en="Shoes">シューズ</option>
+          <option value="mask" data-i18n-en="Mask">マスク</option>
+          <option value="face_accessory" data-i18n-en="Face Accessory">フェイスアクセサリー</option>
+          <option value="necklace" data-i18n-en="Necklace">ネックレス</option>
+          <option value="hairstyle" data-i18n-en="Hairstyle">ヘアスタイル</option>
+          <option value="hair_accessory" data-i18n-en="Hair Accessory">ヘアアクセサリー</option>
+          <option value="head_accessory" data-i18n-en="Head Accessory">ヘッドアクセサリー</option>
+          <option value="cape" data-i18n-en="Cape">ケープ</option>
+          <option value="portable_item" data-i18n-en="Props">持ち運べるアイテム</option>
+          <option value="large_placeable" data-i18n-en="Large Placeable Items">大きい設置アイテム</option>
+          <option value="small_placeable" data-i18n-en="Small Placeable Items">小さい設置アイテム</option>
+          <option value="music_sheet" data-i18n-en="Music Sheets">楽譜</option>
+        </select>
+      </div>
+      <div class="jump-bar-row">
         <svg class="inline-icon" width="14" height="14"><use href="#i-folder"/></svg> <label for="ownFilterSelect" class="jump-label" data-i18n-en="Ownership">所持状況</label>
         <select id="ownFilterSelect" class="jump-select" onchange="renderItems()">
           <option value="all" data-i18n-en="Show all">すべて表示</option>
@@ -1938,10 +1957,13 @@ function renderItems() {
   const ownFilter = ownFilterEl ? ownFilterEl.value : 'all';
   const costTypeFilterEl = document.getElementById('costTypeFilterSelect');
   const costTypeFilter = costTypeFilterEl ? costTypeFilterEl.value : 'all';
+  const categoryFilterEl = document.getElementById('categoryFilterSelect');
+  const categoryFilter = categoryFilterEl ? categoryFilterEl.value : 'all';
   const items = allItems.filter(item => {
     if (ownFilter === 'owned' && !item.owned) return false;
     if (ownFilter === 'notOwned' && item.owned) return false;
     if (costTypeFilter !== 'all' && (!item.cost || item.cost.type !== costTypeFilter)) return false;
+    if (categoryFilter !== 'all' && item.catKey !== categoryFilter) return false;
     return true;
   });
 
