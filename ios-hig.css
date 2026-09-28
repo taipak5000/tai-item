@@ -156,11 +156,15 @@ html:not([data-input-modality="mouse"]) *:focus-visible { outline: 2px solid var
 .pf-row-name { font-size: 1rem; }
 
 /* ── 入力欄 ── */
+/* 🩹 font-sizeは1rem(16px)未満にしないこと。iOS Safariは16px未満のinputに
+   フォーカスすると自動でページを拡大し、フォーカスが外れる前にDOMが
+   書き換わる（プロフィール切替モーダルの再描画等）と拡大が解除されずに
+   固定されてしまう（縮小不可・スクロール範囲が狭くなる不具合の原因）。 */
 .select-box, .form-input, .cat-sel, .srch-input, .pf-input, .pf-row-input, .pf-currency-input,
 .gift-form select, .gift-form input, .gift-item-filter, .gift-record-edit-input, .candle-money-input,
 .customize-comment-input, .coord-share-id-row input, .wish-own-inputs input, .jump-select {
   background: var(--fill-tertiary); border: 1px solid transparent; border-radius: 10px;
-  padding: 9px 12px; font-size: 0.9375rem; color: var(--text);
+  padding: 9px 12px; font-size: 1rem; color: var(--text);
   transition: box-shadow 0.2s var(--ios-ease), border-color 0.2s var(--ios-ease);
 }
 .select-box:focus, .form-input:focus, .cat-sel:focus, .srch-input:focus, .pf-input:focus, .pf-row-input:focus,

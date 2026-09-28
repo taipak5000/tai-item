@@ -656,15 +656,19 @@ function pfInjectStyle() {
     .pf-icon-btn.pf-row-btn-ok:hover { background: var(--blue); color: #fff; }
     .pf-icon-btn.pf-row-btn-danger:hover { background: #ff3b30; color: #fff; }
     .pf-add-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    /* 🩹 font-sizeは16px未満にしないこと。iOS Safariは16px未満のinputに
+       フォーカスすると自動でページ全体を拡大し、フォーカスが外れる前に
+       DOMが書き換わる（pfRenderModal()の再描画等）と拡大が解除されずに
+       固定されてしまう（縮小不可・スクロール範囲が狭くなる不具合の原因）。 */
     .pf-input { flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--sep); border-radius: 6px;
-      padding: 8px 10px; font-size: 14px; color: var(--text); font-family: inherit; outline: none; box-sizing: border-box; }
+      padding: 8px 10px; font-size: 16px; color: var(--text); font-family: inherit; outline: none; box-sizing: border-box; }
     .pf-add-btn { background: var(--blue); color: #fff; border: none; border-radius: 6px; padding: 8px 14px;
       font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; white-space: nowrap; }
     .pf-hint { font-size: 11.5px; color: var(--text-2); line-height: 1.5; margin: 12px 0 0; }
     .pf-close-btn { display: block; width: 100%; margin-top: 16px; background: var(--bg); border: 1px solid var(--sep);
       color: var(--text); border-radius: var(--r-sm); padding: 10px; font-size: 14px; cursor: pointer; }
     .pf-row-input { flex: 1; background: var(--bg); border: 1px solid var(--blue); border-radius: 6px;
-      padding: 6px 8px; font-size: 14px; color: var(--text); font-family: inherit; outline: none; box-sizing: border-box; min-width: 0; }
+      padding: 6px 8px; font-size: 16px; color: var(--text); font-family: inherit; outline: none; box-sizing: border-box; min-width: 0; }
     .pf-row-confirm-text { flex: 1; font-size: 13px; color: var(--text); line-height: 1.5; }
     .pf-row-btn-ok { background: var(--blue); color: #fff; border: none; }
     .pf-row-btn-danger { background: #ff3b30; color: #fff; border: none; }
@@ -690,7 +694,7 @@ function pfInjectStyle() {
     .pf-currency-row:last-child { margin-bottom: 0; }
     .pf-currency-label { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); }
     .pf-currency-input { width: 88px; flex-shrink: 0; background: var(--card); border: 1px solid var(--sep); border-radius: 6px;
-      padding: 7px 8px; font-size: 14.5px; font-weight: 600; color: var(--text); font-family: inherit; outline: none;
+      padding: 7px 8px; font-size: 16px; font-weight: 600; color: var(--text); font-family: inherit; outline: none;
       box-sizing: border-box; text-align: right; font-variant-numeric: tabular-nums; }
     .pf-currency-input:focus { border-color: var(--blue); }
 
