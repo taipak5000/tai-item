@@ -773,7 +773,7 @@ function pfInjectStyle() {
 
     .srch-modal-card { max-width: 420px; }
     .srch-input { width: 100%; box-sizing: border-box; background: var(--bg); border: 1px solid var(--sep);
-      border-radius: var(--r-sm); padding: 10px 12px; font-size: 15px; font-family: inherit; color: var(--text); outline: none; }
+      border-radius: var(--r-sm); padding: 10px 12px; font-size: 16px; font-family: inherit; color: var(--text); outline: none; }
     .srch-input:focus { border-color: var(--blue); }
     .srch-status { font-size: 12px; color: var(--text-2); padding: 8px 2px 0; }
     .srch-group-label { font-size: 12px; font-weight: 700; color: var(--text-2);
