@@ -265,6 +265,10 @@ html:not([data-input-modality="mouse"]) *:focus-visible { outline: 2px solid var
    同じ幅に揃える。ビューポートより.wrapが狭い通常のモバイル幅ではmax-widthが効かず、
    これまで通り画面いっぱいのボトムシートのまま（幅による出し分けという意味では変わらない） */
 @media (min-width: 850px) { .pf-modal-card, .modal-card { max-width: 960px; } }
+/* ⚙️ 表示設定モーダルだけは他サイト（companion/share/wings/emote/spirit-catalog/
+   star-candle等）と同様、意図的に狭いまま据え置く（トグル数個の短いリストは
+   720-960px幅より狭い方が読みやすいため）。姉妹サイト間の幅の表記ゆれ是正の一環。 */
+@media (min-width: 560px) { #settingsModalOverlay .pf-modal-card { max-width: 360px; } }
 .pf-modal-card.is-dragging, .modal-card.is-dragging,
 .pf-modal-card.js-anim, .modal-card.js-anim { transition: none; animation: none; }
 #randomModal .modal-card, #myCoordModal .modal-card { min-height: 70vh; }
