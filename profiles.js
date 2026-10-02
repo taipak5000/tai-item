@@ -3167,7 +3167,7 @@ function pfInit() {
     { icon: svgIcon('i-music-note'), ja: '楽譜づくり', en: 'Sheet Music Maker', href: 'https://taipak5000.github.io/tai-score/', badgeTest: true },
     { icon: svgIcon('i-card'), ja: '星紡ぎカード', en: 'Self-Intro Card Maker', href: 'https://taipak5000.github.io/tai-card/' },
     { icon: svgIcon('i-sync'), ja: 'データ引継ぎ', en: 'Data Transfer', href: 'https://taipak5000.github.io/tai-transfer/' },
-    { icon: svgIcon('i-settings'), ja: '設定・更新情報', en: 'Settings & Updates', href: 'https://taipak5000.github.io/tai-info/' },
+    { icon: svgIcon('i-settings'), ja: '設定・クレジット', en: 'Settings & Credits', href: 'https://taipak5000.github.io/tai-info/' },
     { icon: svgIcon('i-person'), ja: '作者プロフィール', en: 'Creator Profile', href: 'https://taipak5000.github.io/skyzztai-profile/' },
   ];
   toolsDrawer.innerHTML = `
