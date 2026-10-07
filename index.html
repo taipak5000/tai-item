@@ -1873,6 +1873,8 @@ const CURRENT_SEASON = {
 // 日時は日本時間（+09:00）で、ゲーム内デイリーリセット基準（例：8/14 16:00〜8/28 15:59）で指定してください。
 const EVENT_SCHEDULE = [
   { name: '月灯りの日々', start: '2026-09-19T16:00:00+09:00', end: '2026-10-10T15:59:59+09:00' },
+  { name: '遥かなる真珠の季節', start: '2026-10-16T16:00:00+09:00', end: '2027-01-01T16:59:59+09:00' },
+  { name: 'いたずらな日々', start: '2026-10-23T16:00:00+09:00', end: '2026-11-12T17:00:00+09:00' },
 ];
 // ▲▲▲ ダッシュボード用の日程付きイベント一覧（手動更新） ▲▲▲
 
@@ -1925,10 +1927,11 @@ const REVISIT_SPIRIT_SCHEDULES = [
     // 2週間おきに4日間だけ来る旅の精霊の再訪周期。来訪ごとに違う精霊が来るため、
     // 入れ替わるたびにitemsとanchorStart/anchorEndを直近の実際の来訪に合わせて更新する
     // （intervalDaysは周期そのものなので変更不要）。
-    // 直近の来訪(2026-09-24〜09-28)は「うなずく壁画師」(mask_026, hairstyle_052)。
+    // 直近の来訪(2026-10-08〜10-12)は「腕利きの工匠」(necklace_032, outfit_080, hairstyle_083)。
     items: [
-      { catKey: 'mask', id: 'mask_026' },
-      { catKey: 'hairstyle', id: 'hairstyle_052' },
+      { catKey: 'necklace', id: 'necklace_032' },
+      { catKey: 'outfit', id: 'outfit_080' },
+      { catKey: 'hairstyle', id: 'hairstyle_083' },
     ],
     anchorStart: '2026-09-24T16:00:00+09:00',
     anchorEnd: '2026-09-28T15:59:59+09:00',
