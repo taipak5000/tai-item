@@ -1702,7 +1702,7 @@ function pfDashCalendarBarItems(data, year, month) {
     });
   }
 
-  if (data.season && data.season.name && data.season.endDate) {
+  if (data.season && data.season.name && data.season.endDate && new Date() < new Date(data.season.endDate)) {
     pushItems({ end: data.season.endDate }, trEvent(data.season.name));
   }
   (data.eventSchedule || []).forEach(ev => pushItems(ev, trEvent(ev.name)));
@@ -1940,7 +1940,10 @@ function pfDashBuildHtml(data) {
   }
   if (data.season && data.season.endDate) {
     const end = new Date(data.season.endDate);
-    bucketRows[pfDashBucketFor(end)].push(pfDashRow(seasonPendantIconHtml(data.season.name, 16, 'i-palette'), `${pfT('「', '"')}<b>${escapeHtmlPf(trEvent(data.season.name))}</b>${pfT('」', '"')}${pfT('終了まで', ' ends in')}<span class="dash-countdown">${pfDashCountdown(end)}</span>`));
+    // 終了済みの季節はダッシュボードに出さない（終了まで00:00:00のまま残ってしまうため）
+    if (new Date() < end) {
+      bucketRows[pfDashBucketFor(end)].push(pfDashRow(seasonPendantIconHtml(data.season.name, 16, 'i-palette'), `${pfT('「', '"')}<b>${escapeHtmlPf(trEvent(data.season.name))}</b>${pfT('」', '"')}${pfT('終了まで', ' ends in')}<span class="dash-countdown">${pfDashCountdown(end)}</span>`));
+    }
   } else {
     seasonErrored = true;
   }
