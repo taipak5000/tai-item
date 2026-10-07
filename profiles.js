@@ -589,7 +589,7 @@ function handleGlobalKeydown(e) {
 function pfInjectStyle() {
   const style = document.createElement('style');
   style.textContent = `
-    /* 🎨 .pf-drawer-link.current専用のコントラスト調整トークン。各ページ固有の
+    /* 🎨 称号バッジ名(.title-badge-name)用のコントラスト調整トークン。各ページ固有の
        --orange/--orange-d/--orange-bg（:root）はそのまま流用しつつ、この1色だけ
        全14ページ共通で追加できるようここ（profiles.js）にまとめて定義する。
        ライトモードは--orange-dだと薄いタイント背景上でAA未達（約2.76:1）になるため
@@ -852,10 +852,6 @@ function pfInjectStyle() {
       color: var(--text); font-size: 13.5px; font-weight: 500; transition: background 0.15s; margin-bottom: 2px;
       background: transparent; text-decoration: none; width: 100%; box-sizing: border-box; white-space: nowrap; }
     .pf-drawer-link:hover { background: var(--bg); }
-    /* 通常の--orange-dはvar(--orange-bg)の淡いタイント上だと約2.76:1しかなく
-       WCAG AA(4.5:1)未達のため、このリンクの文字色だけ明度を落とした専用トークンを
-       使う（ダークモードは既に十分なコントラストがあるため--orange-dのまま） */
-    .pf-drawer-link.current { background: var(--orange-bg); color: var(--orange-current); font-weight: 700; }
     /* 精度に不安がある新機能であることを示す小さな注記（例: 楽譜づくり） */
     .pf-drawer-badge-test { font-size: 9px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.3px; }
 
@@ -879,6 +875,54 @@ function pfInjectStyle() {
   const iosLayer = document.querySelector('link[href$="ios-hig.css"]');
   if (iosLayer) document.head.insertBefore(style, iosLayer);
   else document.head.appendChild(style);
+}
+
+/* ================================================================
+   🧭 共通「関連ツール」一覧（「他のツール」ドロワー）
+   一覧の元データは1か所だけ: https://taipak5000.github.io/tai-item/site-links.json
+   （このitemリポジトリの site-links.json）。そこを編集すると全サイトのサイドバーに
+   反映される。取得結果は端末にキャッシュし、オフラインでも前回の一覧で表示する。
+   ※反映はService Workerのキャッシュ経由のため、編集後1回リロードが遅れることがある
+   ================================================================ */
+const SITE_LINKS_URL = 'https://taipak5000.github.io/tai-item/site-links.json';
+const SITE_LINKS_CACHE_KEY = 'sky_site_links_v1'; // 端末単位・全サイト共通（プロフィールには依存しない）
+let siteLinksData = null;
+
+function siteLinksParse(d) {
+  if (!d || !Array.isArray(d.tools)) return null;
+  const ok = d.tools.filter(t => t && /^[A-Za-z0-9._-]+$/.test(t.path) && /^i-[a-z0-9-]+$/.test(t.icon));
+  return ok.length ? ok : null;
+}
+function siteLinksLoadCached() {
+  try { return siteLinksParse(JSON.parse(localStorage.getItem(SITE_LINKS_CACHE_KEY))); } catch (e) { return null; }
+}
+async function siteLinksRefresh() { // 一覧が変わったらtrue
+  const res = await fetch(SITE_LINKS_URL, { cache: 'no-cache' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const raw = await res.json();
+  const tools = siteLinksParse(raw);
+  if (!tools) throw new Error('invalid site-links.json');
+  const changed = JSON.stringify(tools) !== JSON.stringify(siteLinksData);
+  siteLinksData = tools;
+  try { localStorage.setItem(SITE_LINKS_CACHE_KEY, JSON.stringify(raw)); } catch (e) {}
+  return changed;
+}
+function siteLinkName(tool, lang) { return tool[lang] || tool.en || tool.ja; }
+
+function pfRenderToolsNav() {
+  const nav = document.getElementById('toolsDrawerNav');
+  if (!nav) return;
+  if (!siteLinksData) {
+    nav.innerHTML = `<p class="pf-hint">${pfT('ツール一覧を読み込めませんでした', 'Could not load the tool list')}</p>`;
+    return;
+  }
+  nav.innerHTML = siteLinksData.map(t => `
+        <a class="pf-drawer-link" href="https://taipak5000.github.io/${t.path}/"><svg class="inline-icon" width="19" height="19"><use href="#${t.icon}"/></svg>${t.badgeTest ? `<span class="pf-drawer-badge-test">${pfT('test', 'test')}</span>` : ''} ${escapeHtmlPf(siteLinkName(t, CURRENT_LANG))}</a>`).join('');
+}
+function pfSiteLinksInit() {
+  siteLinksData = siteLinksLoadCached();
+  pfRenderToolsNav();
+  siteLinksRefresh().then(changed => { if (changed) pfRenderToolsNav(); }).catch(() => pfRenderToolsNav());
 }
 
 function pfT(ja, en) {
@@ -3156,33 +3200,14 @@ function pfInit() {
   const toolsDrawer = document.createElement('aside');
   toolsDrawer.className = 'pf-drawer';
   toolsDrawer.id = 'toolsDrawerPanel';
-  const svgIcon = (name) => `<svg class="inline-icon" width="19" height="19"><use href="#${name}"/></svg>`;
-  const SITE_LINKS = [
-    { icon: svgIcon('i-folder'), ja: 'アイテム所持管理', en: 'Item Collection Tracker', href: 'https://taipak5000.github.io/tai-item/', current: true },
-    { icon: svgIcon('i-masks'), ja: 'エモート所持率管理', en: 'Emote Collection Tracker', href: 'https://taipak5000.github.io/tai-emote/' },
-    { icon: svgIcon('i-pin'), ja: '創作物管理ツール', en: 'Creation Manager', href: 'https://taipak5000.github.io/share/' },
-    { icon: svgIcon('i-candle'), ja: 'ノマキャン計算機', en: 'Candle Calculator', href: 'https://taipak5000.github.io/tai-nomacan/' },
-    { icon: svgIcon('i-star-candle'), ja: '星のキャンドル計算機', en: 'Star Candle Calculator', href: 'https://taipak5000.github.io/star-candle/' },
-    { icon: svgIcon('i-sparkle'), ja: '精霊同行ツール', en: 'Spirit Companion Tool', href: 'https://taipak5000.github.io/companion/' },
-    { icon: svgIcon('i-wing'), ja: '羽トラッカー', en: 'Wing Tracker', href: 'https://taipak5000.github.io/wings/' },
-    { icon: svgIcon('i-tree'), ja: '精霊ツリー管理', en: 'Spirit Tree Catalog', href: 'https://taipak5000.github.io/tai-catalog/', badgeTest: true },
-    { icon: svgIcon('i-wing'), ja: '再訪精霊データベース', en: 'Revisit Spirit Database', href: 'https://taipak5000.github.io/tai-revisit/' },
-    { icon: svgIcon('i-music-note'), ja: '楽譜づくり', en: 'Sheet Music Maker', href: 'https://taipak5000.github.io/tai-score/', badgeTest: true },
-    { icon: svgIcon('i-card'), ja: '星紡ぎカード', en: 'Self-Intro Card Maker', href: 'https://taipak5000.github.io/tai-card/' },
-    { icon: svgIcon('i-sync'), ja: 'データ引継ぎ', en: 'Data Transfer', href: 'https://taipak5000.github.io/tai-transfer/' },
-    { icon: svgIcon('i-settings'), ja: '設定・クレジット', en: 'Settings & Credits', href: 'https://taipak5000.github.io/tai-info/' },
-    { icon: svgIcon('i-person'), ja: '作者プロフィール', en: 'Creator Profile', href: 'https://taipak5000.github.io/skyzztai-profile/' },
-  ];
   toolsDrawer.innerHTML = `
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
       <div class="pf-drawer-label"><svg class="inline-icon" width="20" height="20"><use href="#i-menu"/></svg> ${pfT('関連ツール', 'Related Tools')}</div>
       <button class="pf-drawer-close-btn" onclick="pfToolsClose()"><span class="icon-chip" style="width:22px; height:22px;"><svg width="16" height="16"><use href="#i-close"/></svg></span></button>
     </div>
-    <div class="pf-drawer-nav">
-      ${SITE_LINKS.map(s => `
-        <a class="pf-drawer-link${s.current ? ' current' : ''}" href="${s.href}">${s.icon}${s.badgeTest ? `<span class="pf-drawer-badge-test">${pfT('test', 'test')}</span>` : ''} ${pfT(s.ja, s.en)}</a>`).join('')}
-    </div>`;
+    <div class="pf-drawer-nav" id="toolsDrawerNav"></div>`;
   document.body.appendChild(toolsDrawer);
+  pfSiteLinksInit();
 
   pfIconApplyFromStorage();
   // ドック生成がpfRenderBar()より後に走るため、ここで改めて呼び直してドックの
