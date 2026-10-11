@@ -972,6 +972,91 @@
     #favItemSelectList .customize-cat-opt span:last-child {
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
+
+    /* ── 全アイテム一覧（総合メニュー。全カテゴリの画像タイルを1画面にまとめて表示） ───────── */
+    .wrap.av-active > *:not(#allItemsView) { display: none !important; }
+    .av-back-btn {
+      display: inline-flex; align-items: center; gap: 4px; margin: 14px 0 2px; padding: 8px 14px 8px 10px;
+      border-radius: 999px; background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      font-size: 13px; font-weight: 700; color: var(--blue);
+    }
+    .av-header-card {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      background: var(--card); border-radius: var(--r); padding: 16px 18px; margin: 10px 0 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0.5px 1px rgba(0,0,0,0.04);
+    }
+    .av-header-info { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .av-header-name { font-size: 17px; font-weight: 700; }
+    .av-header-count { font-size: 12px; color: var(--text-2); margin-top: 2px; font-variant-numeric: tabular-nums; }
+    .av-header-pct { font-size: 28px; font-weight: 800; color: var(--green); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+    .av-bulk-btn { margin-top: 10px; }
+    .av-list-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 18px 4px 8px; flex-wrap: wrap; }
+    .av-count-label { font-size: 12px; font-weight: 600; color: var(--text-2); font-variant-numeric: tabular-nums; }
+    .av-list-tools { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+    .av-cols-select {
+      background: var(--bg); border: none; padding: 6px 10px; border-radius: 999px;
+      font-size: 12px; color: var(--text-2); font-weight: 600; outline: none; flex-shrink: 0;
+    }
+    .av-view-toggle { display: flex; background: var(--bg); border-radius: 999px; padding: 3px; gap: 2px; flex-shrink: 0; }
+    .av-view-btn {
+      display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--text-2);
+      padding: 7px 12px; border-radius: 999px; transition: background 0.15s, color 0.15s;
+    }
+    .av-view-btn.active { background: var(--card); color: var(--text); font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+    .av-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(82px, 1fr)); gap: 10px; align-items: start; }
+    .av-group-head {
+      grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 14px 4px 2px; font-size: 13px; font-weight: 700; color: var(--text);
+    }
+    .av-list > .av-group-head { padding: 14px 4px 6px; }
+    .av-group-head .av-group-name { display: flex; align-items: center; gap: 6px; min-width: 0; }
+    .av-group-count { font-size: 12px; font-weight: 600; color: var(--text-2); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+    .av-tile { display: flex; flex-direction: column; gap: 5px; }
+    .av-tile-frame {
+      position: relative; aspect-ratio: 1 / 1; overflow: hidden; background: var(--card); border-radius: var(--r-sm);
+      border: 2px solid transparent; box-shadow: 0 1px 4px rgba(0,0,0,0.07); cursor: pointer;
+      transition: border-color 0.15s, transform 0.1s;
+    }
+    .av-tile-frame:active { transform: scale(0.95); }
+    .av-tile-frame.is-owned { border-color: var(--green); }
+    .av-tile-img {
+      position: absolute; inset: 0; z-index: 1; display: flex; align-items: center; justify-content: center;
+      background: var(--bg); filter: grayscale(1) opacity(0.4); transition: filter 0.15s; font-size: 28px;
+    }
+    .av-tile-frame.is-owned .av-tile-img { filter: none; }
+    .av-tile-img img, .av-tile-img svg { width: 100%; height: 100%; object-fit: contain; padding: 14%; display: block; box-sizing: border-box; }
+    .av-cost-dot {
+      position: absolute; top: 5px; left: 5px; z-index: 2; width: 9px; height: 9px; border-radius: 50%;
+      background: var(--orange); box-shadow: 0 0 0 2px rgba(255,255,255,0.85);
+    }
+    .av-nr-badge {
+      position: absolute; bottom: 5px; left: 5px; z-index: 2; font-size: 9px; font-weight: 700; color: #fff;
+      letter-spacing: 0.2px; background: rgba(215,0,21,0.9); padding: 1px 4px; border-radius: 4px;
+    }
+    .av-fav-btn, .av-wish-btn {
+      position: absolute; right: 3px; z-index: 2; width: 22px; height: 22px; border-radius: 50%;
+      background: rgba(255,255,255,0.9); box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+      display: flex; align-items: center; justify-content: center; color: var(--text-3); transition: transform 0.1s;
+    }
+    .av-fav-btn { top: 3px; }
+    .av-wish-btn { top: 29px; }
+    .av-fav-btn:active, .av-wish-btn:active { transform: scale(1.15); }
+    .av-fav-btn.is-fav { color: #FF9500; }
+    .av-wish-btn.is-wish { color: var(--blue); background: rgba(0,122,255,0.15); }
+    .av-owned-check {
+      position: absolute; bottom: 4px; right: 4px; z-index: 2; width: 19px; height: 19px; border-radius: 50%;
+      background: var(--green); color: #fff; display: flex; align-items: center; justify-content: center;
+      opacity: 0; transform: scale(0.4); transition: all 0.15s;
+    }
+    .av-tile-frame.is-owned .av-owned-check { opacity: 1; transform: scale(1); }
+    .av-tile-name {
+      font-size: 11px; line-height: 1.35; color: var(--text); text-align: center; word-break: break-word;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-decoration: none;
+    }
+    .av-more-btn {
+      display: block; width: 100%; margin: 16px 0 4px; padding: 12px; border-radius: var(--r);
+      background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,0.08); font-size: 13px; font-weight: 700; color: var(--blue);
+    }
   </style>
   <link rel="stylesheet" href="ios-hig.css">
   <script src="ios-hig.js" defer></script>
@@ -1040,6 +1125,14 @@
   <p class="sec-label" data-i18n-en="Titles">称号</p>
   <div class="titles-panel" id="titlesPanel"></div>
 
+  <!-- ▸ 全アイテム一覧（全カテゴリを一気に見て、タップで所持を選択） -->
+  <p class="sec-label" data-i18n-en="All Items">全アイテム</p>
+  <button class="feature-btn" onclick="openAllItemsView()">
+    <span class="feature-icon icon-chip" style="width:32px; height:32px;"><svg width="25" height="25"><use href="#i-grid"/></svg></span>
+    <span class="feature-label" data-i18n-en="Browse &amp; Select All Items at Once">全アイテムを一覧で見る・選択</span>
+    <span class="feature-desc" data-i18n-en="View items from every category together as image tiles, and tap to mark what you own">全カテゴリのアイテムを画像タイルでまとめて表示し、タップで所持を一気に選択できます</span>
+  </button>
+
   <!-- ▸ Category cards -->
   <p class="sec-label" id="catLabel">カテゴリ一覧</p>
 
@@ -1048,6 +1141,111 @@
   <div class="hint">
     <span class="icon-chip" style="width:18px; height:18px;"><svg width="14" height="14"><use href="#i-lightbulb"/></svg></span>
     <span data-i18n-en="Register items on each category page and your completion rate will automatically appear here">各カテゴリページでアイテムを登録すると、ここに所持率が自動で反映されます</span>
+  </div>
+
+  <!-- ▸ 全アイテム一覧（総合メニューの「全アイテムを一覧で見る・選択」）。.wrap.av-active のときだけ表示され、他の項目は隠れる -->
+  <div id="allItemsView" style="display:none;">
+    <button type="button" class="av-back-btn" onclick="closeAllItemsView()">
+      <svg width="16" height="16" style="stroke:currentColor; fill:none; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round;"><use href="#i-chevron-left"/></svg>
+      <span data-i18n-en="Main Menu">総合メニュー</span>
+    </button>
+
+    <div class="av-header-card">
+      <div class="av-header-info">
+        <span class="icon-chip" style="width:40px; height:40px;"><svg width="28" height="28"><use href="#i-grid"/></svg></span>
+        <div>
+          <div class="av-header-name" data-i18n-en="All Items">全アイテム</div>
+          <div class="av-header-count" id="avHdrCount">-- / --</div>
+        </div>
+      </div>
+      <div class="av-header-pct" id="avHdrPct">--%</div>
+    </div>
+
+    <div class="gs-control-panel" id="avControlPanel">
+      <div class="gs-control-row">
+        <input type="text" class="form-input" id="avName" data-i18n-en-placeholder="Search by item name, season, or day..." placeholder="アイテム名・季節/日々で検索..." oninput="renderAllItems()">
+      </div>
+      <div class="gs-control-row">
+        <select class="cat-sel gs-event-sel" id="avEvent" onchange="renderAllItems()">
+          <option value="all" data-i18n-en="All Seasons/Events">すべての季節・イベント</option>
+        </select>
+      </div>
+      <div class="gs-control-row">
+        <select class="cat-sel" id="avCat" onchange="renderAllItems()">
+          <option value="all" data-i18n-en="All Categories">すべてのカテゴリ</option>
+        </select>
+        <select class="cat-sel" id="avOwned" onchange="renderAllItems()">
+          <option value="all" data-i18n-en="All Ownership States">すべての所持状態</option>
+          <option value="owned" data-i18n-en="Owned Only">所持中のみ</option>
+          <option value="notOwned" data-i18n-en="Not Owned Only">未所持のみ</option>
+        </select>
+        <select class="cat-sel" id="avFav" onchange="renderAllItems()">
+          <option value="all" data-i18n-en="All Favorites">すべてのお気に入り</option>
+          <option value="fav" data-i18n-en="Favorites Only">お気に入り指定のみ</option>
+        </select>
+      </div>
+      <div class="gs-control-row">
+        <button type="button" class="gs-advanced-toggle-btn" id="avAdvancedToggleBtn" onclick="avToggleAdvanced()" aria-expanded="false">
+          <span data-i18n-en="More Filters &amp; Sort">詳細な絞り込み・並び替え</span>
+          <span class="gs-advanced-icon"><svg id="avAdvancedIcon" width="12" height="12" style="stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; transition:transform .15s ease; display:inline-block;"><use href="#i-chevron-right"/></svg></span>
+        </button>
+      </div>
+      <div class="gs-control-row" id="avAdvancedRow" style="display:none;">
+        <select class="cat-sel" id="avCostType" onchange="renderAllItems()">
+          <option value="all" data-i18n-en="All (Free/Paid)">すべて（無課金・課金）</option>
+          <option value="free" data-i18n-en="Free Only">無課金のみ</option>
+          <option value="premium" data-i18n-en="Paid Only">課金のみ</option>
+        </select>
+        <select class="cat-sel" id="avReprint" onchange="renderAllItems()">
+          <option value="all" data-i18n-en="All (Reprint)">すべて（復刻）</option>
+          <option value="reprint" data-i18n-en="Reprintable Only">復刻ありのみ</option>
+          <option value="noReprint" data-i18n-en="No-Reprint Only">復刻なしのみ</option>
+        </select>
+        <select class="cat-sel" id="avDye" onchange="renderAllItems()">
+          <option value="all" data-i18n-en="All (Dye)">すべて（染色）</option>
+          <option value="dye" data-i18n-en="Dyeable Only">染色可のみ</option>
+          <option value="noDye" data-i18n-en="Not Dyeable Only">染色不可のみ</option>
+        </select>
+        <select class="cat-sel" id="avSort" onchange="renderAllItems()">
+          <option value="default" data-i18n-en="Sort: Default (by Category)">並び替え：標準（カテゴリ別）</option>
+          <option value="name" data-i18n-en="Sort: Name (A-Z)">並び替え：名前順</option>
+          <option value="eventOrder" data-i18n-en="Sort: Season/Day Order">並び替え：季節・日々順</option>
+          <option value="notOwnedFirst" data-i18n-en="Sort: Not Owned First">並び替え：未所持を先に</option>
+          <option value="ownedFirst" data-i18n-en="Sort: Owned First">並び替え：所持済みを先に</option>
+        </select>
+      </div>
+      <div class="gs-control-row">
+        <button type="button" class="gs-advanced-toggle-btn" onclick="resetFilterPanel('#avControlPanel', renderAllItems)">
+          <span data-i18n-en="Clear All Filters">フィルターを全てクリア</span>
+        </button>
+      </div>
+    </div>
+
+    <button class="feature-btn av-bulk-btn" id="avBulkBtn" style="display:none;" onclick="bulkOwnAllItemsFiltered()">
+      <span class="feature-icon icon-chip" style="width:32px; height:32px;"><svg width="25" height="25"><use href="#i-check"/></svg></span>
+      <span class="feature-label" id="avBulkLabel"></span>
+    </button>
+
+    <div class="av-list-header">
+      <span class="av-count-label" id="avCountLabel"></span>
+      <div class="av-list-tools">
+        <select class="av-cols-select" id="avColsSelect" onchange="avSetGridCols(this.value)" data-i18n-en-title="Grid columns" data-i18n-en-aria-label="Grid columns" title="グリッドの列数" aria-label="グリッドの列数">
+          <option value="auto" data-i18n-en="Columns: Auto">列数: 自動</option>
+          <option value="2" data-i18n-en="2 columns">2列</option>
+          <option value="3" data-i18n-en="3 columns">3列</option>
+          <option value="4" data-i18n-en="4 columns">4列</option>
+          <option value="5" data-i18n-en="5 columns">5列</option>
+          <option value="6" data-i18n-en="6 columns">6列</option>
+        </select>
+        <div class="av-view-toggle">
+          <button type="button" class="av-view-btn" id="avViewGrid" onclick="avSetViewMode('grid')" aria-pressed="true" data-i18n-en="Grid">グリッド</button>
+          <button type="button" class="av-view-btn" id="avViewList" onclick="avSetViewMode('list')" aria-pressed="false" data-i18n-en="List">リスト</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="avList" class="av-grid"><!-- JS --></div>
+    <button type="button" class="av-more-btn" id="avMoreBtn" style="display:none;" onclick="avRenderChunk()"></button>
   </div>
 
   <!-- ▸ アイテム検索（季節・イベント横断） -->
@@ -1388,7 +1586,7 @@
         </select>
       </div>
       <div class="gs-control-row">
-        <button type="button" class="gs-advanced-toggle-btn" onclick="resetFilterPanel('.gs-control-panel', renderGlobalSearch)">
+        <button type="button" class="gs-advanced-toggle-btn" onclick="resetFilterPanel('#itemSearchModal .gs-control-panel', renderGlobalSearch)">
           <span data-i18n-en="Clear All Filters">フィルターを全てクリア</span>
         </button>
       </div>
@@ -2311,8 +2509,11 @@ function renderGlobalSearch() {
 
 // 現在の絞り込み結果（季節・イベント・エリア・大精霊・カテゴリ・お気に入り等、すべての条件を反映）のうち
 // 未所持のアイテムをまとめて所持済みにする。恒常精霊フルコンプもこの仕組みに統合されている。
-function markFilteredItemsOwned() {
-  const filtered = getFilteredSearchItems();
+function markFilteredItemsOwned() { markItemsOwned(getFilteredSearchItems(), renderGlobalSearch); }
+
+// 指定アイテムのうち未所持のものをまとめて所持済みにする（アイテム検索・全アイテム一覧で共通）。
+// rerender() は保存後に結果一覧を描き直す関数。
+function markItemsOwned(filtered, rerender) {
   const stateCache = {};
   const getState = catKey => stateCache[catKey] || (stateCache[catKey] = readCatState(catKey));
   const targets = filtered.filter(item => !getState(item.catKey).owned[item.id]);
@@ -2349,13 +2550,15 @@ function markFilteredItemsOwned() {
   });
   if (typeof refreshTitlesUI === 'function') refreshTitlesUI(); // 🏆 一括所持済み化も即座に称号判定へ反映
 
-  renderGlobalSearch();
+  rerender();
   loadAndRender();
   showToast(CURRENT_LANG === 'en' ? `${targets.length} item(s) marked as owned` : `${targets.length}件を所持済みにしました`);
 }
 
 // 検索結果からその場で所持状態をトグルする（各カテゴリページのデータ形式と完全互換）
-function toggleOwnedFromSearch(catKey, itemId) {
+// 所持状態をトグルして各カテゴリページと同じ形式で保存する（アイテム検索・全アイテム一覧で共通）。
+// 新しい所持状態(true/false)を返す。
+function toggleOwnedStorage(catKey, itemId) {
   const key = nsKey('gameItems_' + catKey);
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem(key)) || {}; } catch { saved = {}; }
@@ -2377,6 +2580,11 @@ function toggleOwnedFromSearch(catKey, itemId) {
   };
   localStorage.setItem(key, JSON.stringify(dataToSave));
   if (typeof refreshTitlesUI === 'function') refreshTitlesUI(); // 🏆 検索結果からの所持トグルも即座に称号判定へ反映
+  return nowOwned;
+}
+
+function toggleOwnedFromSearch(catKey, itemId) {
+  const nowOwned = toggleOwnedStorage(catKey, itemId);
 
   // 所持中のみ／未所持のみで絞り込み中は対象から外れる可能性があるため全体を再描画、
   // それ以外はスムーズに該当行だけ切り替える
@@ -2409,7 +2617,9 @@ function toggleOwnedFromSearch(catKey, itemId) {
 }
 
 // 検索結果からその場でお気に入り状態をトグルする（各カテゴリページの★ボタンと完全互換）
-function toggleFavFromSearch(catKey, itemId, btnEl) {
+// お気に入り状態をトグルして各カテゴリページと同じ形式で保存する（アイテム検索・全アイテム一覧で共通）。
+// 新しいお気に入り状態(true/false)を返す。
+function toggleFavStorage(catKey, itemId) {
   const key = nsKey('gameItems_' + catKey);
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem(key)) || {}; } catch { saved = {}; }
@@ -2430,6 +2640,11 @@ function toggleFavFromSearch(catKey, itemId, btnEl) {
     ownedItems: catItems.filter(it => ownedMap[it.id]).map(it => ({ id: it.id, name: it.name, nameEn: it.nameEn }))
   };
   localStorage.setItem(key, JSON.stringify(dataToSave));
+  return nowFav;
+}
+
+function toggleFavFromSearch(catKey, itemId, btnEl) {
+  const nowFav = toggleFavStorage(catKey, itemId);
 
   // お気に入りのみで絞り込み中は対象から外れる可能性があるため全体を再描画、
   // それ以外はボタンの見た目だけスムーズに切り替える
@@ -2440,6 +2655,361 @@ function toggleFavFromSearch(catKey, itemId, btnEl) {
     btnEl.innerHTML = '<svg width="18" height="18" style="stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round;"><use href="#i-star"/></svg>';
   }
 }
+
+/* ================================================================
+   🗂️ 全アイテム一覧（総合メニュー）
+   全カテゴリのアイテムを1画面にまとめて並べ、エモート所持率管理のように画像タイルを
+   タップして所持を一気に選択できる。データ・保存形式は各カテゴリページ／アイテム検索と
+   共通（gameItems_<カテゴリ>・wish_<カテゴリ>）なので、ここでの変更はそのまま各ページに反映される。
+   表示件数が多いため、先頭から AV_CHUNK 件ずつ描画し、下へスクロールすると続きを追加する。
+   ================================================================ */
+const AV_CHUNK = 240;
+const AV_HASH = '#all-items';
+let avViewMode = localStorage.getItem('gameItems_viewMode') === 'list' ? 'list' : 'grid'; // 各カテゴリページと共通
+let avGridCols = localStorage.getItem('gameItems_gridCols') || 'auto';                    // 同上
+let avOpen = false;
+let avBuilt = false;
+let avItems = [];        // 現在の絞り込み結果（並び替え済み）
+let avRendered = 0;      // avItems のうち描画済みの件数
+let avLastGroup = null;  // 直前に描画したグループ（カテゴリ／季節・日々）
+let avGroupKind = null;  // 'cat' | 'event' | null（見出し無し）
+let avStates = {};       // catKey -> { owned, fav }（描画のたびに読み直す）
+
+function avState(catKey) { return avStates[catKey] || (avStates[catKey] = readCatState(catKey)); }
+function avCat(catKey) { return CATS.find(c => c.key === catKey); }
+
+// 並び替えに応じて見出し(グループ)を付ける。標準=カテゴリ別、季節・日々順=季節/日々別。それ以外は見出し無し
+function avGroupKindNow() {
+  const sort = document.getElementById('avSort').value;
+  if (sort === 'default' && document.getElementById('avCat').value === 'all') return 'cat';
+  if (sort === 'eventOrder') return 'event';
+  return null;
+}
+function avGroupKey(item) { return avGroupKind === 'cat' ? item.catKey : item.event; }
+function avGroupLabel(item) {
+  if (avGroupKind === 'cat') { const c = avCat(item.catKey); return c ? `${c.icon} ${escapeHtml(trCat(c.name))}` : escapeHtml(item.catKey); }
+  return escapeHtml(trEvent(item.event));
+}
+
+function avToggleAdvanced(forceOpen) {
+  const row = document.getElementById('avAdvancedRow');
+  const open = typeof forceOpen === 'boolean' ? forceOpen : row.style.display === 'none';
+  row.style.display = open ? '' : 'none';
+  document.getElementById('avAdvancedToggleBtn').setAttribute('aria-expanded', open);
+  document.getElementById('avAdvancedIcon').style.transform = open ? 'rotate(90deg)' : '';
+}
+
+function avGetFiltered() {
+  const v = id => document.getElementById(id).value;
+  const fName = normalizeSearchText(v('avName').trim());
+  const fEvent = v('avEvent'), fCat = v('avCat'), fOwned = v('avOwned'), fFav = v('avFav');
+  const fCost = v('avCostType'), fReprint = v('avReprint'), fDye = v('avDye'), fSort = v('avSort');
+  const filtered = allItemsCache.filter(item => {
+    if (fName
+      && !normalizeSearchText(item.name).includes(fName)
+      && !(item.nameEn && normalizeSearchText(item.nameEn).includes(fName))
+      && !normalizeSearchText(item.event).includes(fName)
+      && !normalizeSearchText(trEvent(item.event)).includes(fName)
+      && !(ITEM_YOMI[item.id] && normalizeSearchText(ITEM_YOMI[item.id]).includes(fName))) return false;
+    if (fEvent !== 'all' && item.event !== fEvent) return false;
+    if (fCat !== 'all' && item.catKey !== fCat) return false;
+    if (fOwned !== 'all') {
+      const isOwned = !!avState(item.catKey).owned[item.id];
+      if (fOwned === 'owned' && !isOwned) return false;
+      if (fOwned === 'notOwned' && isOwned) return false;
+    }
+    if (fFav === 'fav' && !avState(item.catKey).fav[item.id]) return false;
+    if (fCost !== 'all' && item.cost !== fCost) return false;
+    if (fReprint === 'reprint' && item.noReprint) return false;
+    if (fReprint === 'noReprint' && !item.noReprint) return false;
+    if (fDye === 'dye' && !item.dye) return false;
+    if (fDye === 'noDye' && item.dye) return false;
+    return true;
+  });
+  const sorted = sortFilteredItems(filtered, fSort, avState);
+  if (fSort !== 'eventOrder') return sorted;
+  // EVENT_ORDER に載っていない季節・日々は並び順が同値になり散らばるため、同じ名前を1か所に寄せて見出しの重複を防ぐ
+  const byEvent = new Map();
+  sorted.forEach(it => { if (!byEvent.has(it.event)) byEvent.set(it.event, []); byEvent.get(it.event).push(it); });
+  return [...byEvent.values()].flat();
+}
+
+function avTileHtml(item) {
+  const st = avState(item.catKey);
+  const isOwned = !!st.owned[item.id], isFav = !!st.fav[item.id], isWish = isWishItem(item.catKey, item.id);
+  const en = CURRENT_LANG === 'en';
+  const name = trItem(item);
+  const src = item.img || `images/${item.catKey}/${item.id}.png`;
+  const tip = [name, trEvent(item.event), item.cost === 'premium' ? (en ? 'Paid' : '課金') : (en ? 'Free' : '無課金'),
+    item.noReprint ? (en ? 'No Re-release' : '復刻なし') : ''].filter(Boolean).join(' ／ ');
+  const wikiUrl = `https://www.google.com/search?q=${encodeURIComponent(name + ' Sky')}`;
+  return `
+    <div class="av-tile">
+      <div class="av-tile-frame ${isOwned ? 'is-owned' : ''}" id="avt_${item.catKey}_${item.id}" title="${escapeHtml(tip)}"
+           onclick="avToggleOwned('${item.catKey}','${item.id}')" tabindex="0" role="button" aria-pressed="${isOwned}"
+           onkeydown="if(event.target===event.currentTarget&&(event.key==='Enter'||event.key===' ')){event.preventDefault();avToggleOwned('${item.catKey}','${item.id}')}">
+        ${item.cost === 'premium' ? '<span class="av-cost-dot" aria-hidden="true"></span>' : ''}
+        ${item.noReprint ? '<span class="av-nr-badge">NR</span>' : ''}
+        <button type="button" class="av-fav-btn ${isFav ? 'is-fav' : ''}" onclick="event.stopPropagation(); avToggleFav('${item.catKey}','${item.id}', this)" aria-label="${en ? 'Favorite' : 'お気に入り'}">
+          <svg width="13" height="13" style="stroke:currentColor; fill:${isFav ? 'currentColor' : 'none'}; stroke-width:2;"><use href="#i-star"/></svg>
+        </button>
+        <button type="button" class="av-wish-btn ${isWish ? 'is-wish' : ''}" onclick="event.stopPropagation(); avToggleWish('${item.catKey}','${item.id}', this)" aria-label="${en ? 'Wishlist' : 'ウィッシュリスト'}">
+          <svg width="12" height="12" style="stroke:currentColor; fill:none; stroke-width:2;"><use href="#i-cart"/></svg>
+        </button>
+        <div class="av-tile-img"><img src="${src}" alt="${escapeHtml(item.name)}" loading="lazy" referrerpolicy="no-referrer" onerror="handleItemIconError(this, '${item.catKey}')"></div>
+        <span class="av-owned-check"><svg width="11" height="11" style="stroke:currentColor; fill:none; stroke-width:2.6;"><use href="#i-check"/></svg></span>
+      </div>
+      <a href="${wikiUrl}" target="_blank" rel="noopener noreferrer" class="av-tile-name">${escapeHtml(name)}</a>
+    </div>`;
+}
+
+// リスト表示はアイテム検索の結果行と同じ見た目（.rand-row）を使う
+function avRowHtml(item) {
+  const cat = avCat(item.catKey);
+  if (!cat) return '';
+  const st = avState(item.catKey);
+  const isOwned = !!st.owned[item.id], isFav = !!st.fav[item.id], isWish = isWishItem(item.catKey, item.id);
+  const en = CURRENT_LANG === 'en';
+  const wikiUrl = `https://www.google.com/search?q=${encodeURIComponent(trItem(item) + ' Sky')}`;
+  return `
+    <div class="rand-row" id="avr_${item.catKey}_${item.id}">
+      <div class="gs-row-main" onclick="avToggleOwned('${item.catKey}','${item.id}')">
+        <div class="rand-icon">${itemIconHtml(cat, item)}</div>
+        <div class="rand-info">
+          <div class="rand-cat">${escapeHtml(trCat(cat.name))} ・ ${escapeHtml(trEvent(item.event))}${item.cost === 'premium' ? (en ? ' ・ Paid' : ' ・ 課金') : ''}${item.noReprint ? (en ? ' ・ No Re-release' : ' ・ 復刻なし') : ''}</div>
+          <a href="${wikiUrl}" target="_blank" rel="noopener noreferrer" class="gs-item-name" onclick="event.stopPropagation()">${escapeHtml(trItem(item))}</a>
+        </div>
+      </div>
+      <button class="gs-wish-btn ${isWish ? 'is-wish' : ''}" onclick="avToggleWish('${item.catKey}','${item.id}', this)" aria-label="${en ? 'Wishlist' : 'ウィッシュリスト'}"><span class="icon-chip" style="width:22px; height:22px;"><svg width="18" height="18"><use href="#i-cart"/></svg></span></button>
+      <button class="gs-fav-btn ${isFav ? 'is-fav' : ''}" onclick="avToggleFav('${item.catKey}','${item.id}', this)" aria-label="${en ? 'Favorite' : 'お気に入り'}"><svg width="18" height="18" style="stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round;"><use href="#i-star"/></svg></button>
+      <div class="gs-owned-dot ${isOwned ? 'owned' : ''}" onclick="avToggleOwned('${item.catKey}','${item.id}')" role="button" aria-label="${en ? 'Toggle ownership status' : '所持状態を切り替える'}">${isOwned ? '<svg width="14" height="14" style="stroke:#fff; fill:none; stroke-width:2.8; stroke-linecap:round; stroke-linejoin:round;"><use href="#i-check"/></svg>' : ''}</div>
+    </div>`;
+}
+
+function avGroupHeadHtml(item) {
+  return `<div class="av-group-head" data-g="${escapeHtml(avGroupKey(item))}"><span class="av-group-name">${avGroupLabel(item)}</span><span class="av-group-count"></span></div>`;
+}
+
+// 見出し・件数・全体の達成率を最新の所持状態に合わせて更新する（絞り込み結果全体を数え直す）
+function avRefreshCounts() {
+  const groups = {};
+  let filteredOwned = 0;
+  avItems.forEach(it => {
+    const owned = !!avState(it.catKey).owned[it.id];
+    if (owned) filteredOwned++;
+    if (avGroupKind) { const g = avGroupKey(it); const s = groups[g] || (groups[g] = { total: 0, owned: 0 }); s.total++; if (owned) s.owned++; }
+  });
+  document.querySelectorAll('#avList .av-group-head').forEach(h => {
+    const s = groups[h.dataset.g];
+    const el = h.querySelector('.av-group-count');
+    if (s && el) el.textContent = `${s.owned} / ${s.total}`;
+  });
+  const en = CURRENT_LANG === 'en';
+  document.getElementById('avCountLabel').textContent = avItems.length > 0
+    ? (en ? `${avItems.length} items (${filteredOwned} owned)` : `${avItems.length}件（所持 ${filteredOwned}件）`) : '';
+
+  // 全体の達成率（総合メニューのバナーと同じく That Sky Shop は集計から除く）
+  const countable = allItemsCache.filter(it => it.event !== 'That Sky Shop');
+  const ownedAll = countable.filter(it => !!avState(it.catKey).owned[it.id]).length;
+  document.getElementById('avHdrCount').textContent = en ? `${ownedAll} / ${countable.length} owned` : `${ownedAll} / ${countable.length} 所持`;
+  document.getElementById('avHdrPct').textContent = countable.length ? `${Math.round(ownedAll / countable.length * 100)}%` : '--%';
+
+  // 一括ボタンは「何かで絞り込んでいる時だけ」出す（絞り込み無しで全件を誤って所持済みにしないため）
+  const notOwned = avItems.length - filteredOwned;
+  const narrowed = avItems.length < allItemsCache.length;
+  const bulkBtn = document.getElementById('avBulkBtn');
+  if (narrowed && notOwned > 0) {
+    bulkBtn.style.display = '';
+    document.getElementById('avBulkLabel').textContent = en
+      ? `Mark ${notOwned} filtered item(s) as owned` : `絞り込み結果の未所持${notOwned}件を所持済みにする`;
+  } else {
+    bulkBtn.style.display = 'none';
+  }
+}
+
+function avRenderChunk() {
+  const list = document.getElementById('avList');
+  const end = Math.min(avItems.length, avRendered + AV_CHUNK);
+  let html = '';
+  for (let i = avRendered; i < end; i++) {
+    const item = avItems[i];
+    if (avGroupKind) {
+      const g = avGroupKey(item);
+      if (g !== avLastGroup) { avLastGroup = g; html += avGroupHeadHtml(item); }
+    }
+    html += avViewMode === 'list' ? avRowHtml(item) : avTileHtml(item);
+  }
+  list.insertAdjacentHTML('beforeend', html);
+  avRendered = end;
+  avRefreshCounts();
+  const more = document.getElementById('avMoreBtn');
+  const remaining = avItems.length - avRendered;
+  if (remaining > 0) {
+    more.style.display = '';
+    more.textContent = CURRENT_LANG === 'en' ? `Show more (${remaining} remaining)` : `さらに表示（残り${remaining}件）`;
+  } else {
+    more.style.display = 'none';
+  }
+}
+
+// 絞り込み・並び替え・表示切替のたびに、一覧を先頭から描き直す
+function renderAllItems() {
+  if (!allItemsCache) return;
+  avStates = {};
+  avGroupKind = avGroupKindNow();
+  avItems = avGetFiltered();
+  avRendered = 0;
+  avLastGroup = null;
+  const list = document.getElementById('avList');
+  avApplyViewUi();
+  if (avItems.length === 0) {
+    list.innerHTML = CURRENT_LANG === 'en'
+      ? `<div class="empty-msg" style="grid-column:1/-1;">No items match the selected filters.</div>`
+      : `<div class="empty-msg" style="grid-column:1/-1;">条件に一致するアイテムが見つかりません。</div>`;
+    document.getElementById('avMoreBtn').style.display = 'none';
+    avRefreshCounts();
+    return;
+  }
+  list.innerHTML = '';
+  avRenderChunk();
+}
+
+function avApplyViewUi() {
+  const list = document.getElementById('avList');
+  list.classList.toggle('av-grid', avViewMode === 'grid');
+  list.classList.toggle('av-list', avViewMode === 'list');
+  list.style.gridTemplateColumns = (avViewMode === 'grid' && avGridCols !== 'auto') ? `repeat(${avGridCols}, 1fr)` : '';
+  document.getElementById('avViewGrid').classList.toggle('active', avViewMode === 'grid');
+  document.getElementById('avViewGrid').setAttribute('aria-pressed', avViewMode === 'grid');
+  document.getElementById('avViewList').classList.toggle('active', avViewMode === 'list');
+  document.getElementById('avViewList').setAttribute('aria-pressed', avViewMode === 'list');
+  document.getElementById('avColsSelect').style.display = avViewMode === 'grid' ? '' : 'none';
+  document.getElementById('avColsSelect').value = avGridCols;
+}
+function avSetViewMode(mode) {
+  if (mode !== 'grid' && mode !== 'list') return;
+  avViewMode = mode;
+  localStorage.setItem('gameItems_viewMode', mode);
+  renderAllItems();
+}
+function avSetGridCols(val) {
+  avGridCols = val;
+  localStorage.setItem('gameItems_gridCols', val);
+  avApplyViewUi();
+}
+
+// タップした1件の所持を切り替える。「所持中のみ／未所持のみ」で絞り込み中は対象から外れるため描き直し、
+// それ以外はその1件だけを更新する（スクロール位置を保つ）。
+function avToggleOwned(catKey, itemId) {
+  const nowOwned = toggleOwnedStorage(catKey, itemId);
+  delete avStates[catKey];
+  if (document.getElementById('avOwned').value !== 'all') {
+    const y = window.scrollY;
+    const renderedCount = avRendered;
+    renderAllItems();
+    while (avRendered < renderedCount && avRendered < avItems.length) avRenderChunk(); // 描画済みの範囲を復元
+    window.scrollTo(0, y);
+  } else {
+    const tile = document.getElementById(`avt_${catKey}_${itemId}`);
+    if (tile) { tile.classList.toggle('is-owned', nowOwned); tile.setAttribute('aria-pressed', nowOwned); }
+    const row = document.getElementById(`avr_${catKey}_${itemId}`);
+    const dot = row && row.querySelector('.gs-owned-dot');
+    if (dot) {
+      dot.classList.toggle('owned', nowOwned);
+      dot.innerHTML = nowOwned ? '<svg width="14" height="14" style="stroke:#fff; fill:none; stroke-width:2.8; stroke-linecap:round; stroke-linejoin:round;"><use href="#i-check"/></svg>' : '';
+    }
+    // 所持済みになると自動でウィッシュリストから外れるため、ボタンの見た目も合わせる
+    if (nowOwned) (tile ? tile.parentElement : row)?.querySelectorAll('.av-wish-btn, .gs-wish-btn').forEach(b => b.classList.remove('is-wish'));
+    avRefreshCounts();
+  }
+  loadAndRender(); // 総合メニューのカテゴリカード側もリアルタイム更新
+}
+
+function avToggleFav(catKey, itemId, btn) {
+  const nowFav = toggleFavStorage(catKey, itemId);
+  delete avStates[catKey];
+  if (document.getElementById('avFav').value !== 'all') {
+    const y = window.scrollY;
+    const renderedCount = avRendered;
+    renderAllItems();
+    while (avRendered < renderedCount && avRendered < avItems.length) avRenderChunk();
+    window.scrollTo(0, y);
+    return;
+  }
+  btn.classList.toggle('is-fav', nowFav);
+  const svg = btn.querySelector('svg');
+  if (svg) svg.style.fill = nowFav ? 'currentColor' : 'none';
+}
+
+function avToggleWish(catKey, itemId, btn) {
+  const added = toggleWishItem(catKey, itemId);
+  if (added === null) {
+    showToast(CURRENT_LANG === 'en' ? 'Owned items cannot be added to the wishlist' : '所持済みのアイテムはウィッシュリストに追加できません');
+    return;
+  }
+  btn.classList.toggle('is-wish', added);
+  showToast(added
+    ? (CURRENT_LANG === 'en' ? 'Added to wishlist' : 'ウィッシュリストに追加しました')
+    : (CURRENT_LANG === 'en' ? 'Removed from wishlist' : 'ウィッシュリストから外しました'));
+}
+
+// 現在の絞り込み結果のうち未所持のものをまとめて所持済みにする（確認ダイアログあり）
+function bulkOwnAllItemsFiltered() {
+  markItemsOwned(avItems, () => { avStates = {}; renderAllItems(); });
+}
+
+// ── 開閉（戻るボタン／端末の戻る操作／直接リンク #all-items に対応） ──
+async function openAllItemsView() {
+  if (avOpen) return;
+  avOpen = true;
+  document.querySelector('.wrap').classList.add('av-active');
+  document.getElementById('allItemsView').style.display = '';
+  window.scrollTo(0, 0);
+  if (location.hash !== AV_HASH) history.pushState({ allItems: true }, '', AV_HASH);
+  const list = document.getElementById('avList');
+  if (!allItemsCache) {
+    list.innerHTML = CURRENT_LANG === 'en'
+      ? `<div class="empty-msg" style="grid-column:1/-1;">Loading…<br>Fetching item data from each category</div>`
+      : `<div class="empty-msg" style="grid-column:1/-1;">読み込み中…<br>各カテゴリのアイテムデータを取得しています</div>`;
+    try { await loadAllItemsOnce(); } catch (e) {
+      console.error(e);
+      list.innerHTML = CURRENT_LANG === 'en'
+        ? `<div class="empty-msg" style="grid-column:1/-1;">Failed to load.<br>Please make sure you're viewing this on the published GitHub Pages URL,<br>then try again.</div>`
+        : `<div class="empty-msg" style="grid-column:1/-1;">読み込みに失敗しました。<br>GitHub Pages公開後のURLで開いているかご確認のうえ、<br>もう一度お試しください。</div>`;
+      return;
+    }
+  }
+  if (!avBuilt) {
+    buildCategoryFilterOptions('avCat');
+    buildEventFilterOptions('avEvent');
+    avBuilt = true;
+  }
+  renderAllItems();
+}
+function closeAllItemsView(fromHistory) {
+  if (!avOpen) return;
+  avOpen = false;
+  document.querySelector('.wrap').classList.remove('av-active');
+  document.getElementById('allItemsView').style.display = 'none';
+  if (!fromHistory) {
+    if (history.state && history.state.allItems) history.back();
+    else history.replaceState(null, '', location.pathname + location.search);
+  }
+  window.scrollTo(0, 0);
+  loadAndRender();
+}
+window.addEventListener('popstate', () => {
+  if (location.hash === AV_HASH) openAllItemsView(); else closeAllItemsView(true);
+});
+// 下へスクロールして「さらに表示」ボタンが近づいたら、続きを自動で描画する
+(function setupAvAutoLoad() {
+  const btn = document.getElementById('avMoreBtn');
+  if (!btn || typeof IntersectionObserver === 'undefined') return;
+  new IntersectionObserver(entries => {
+    if (entries.some(e => e.isIntersecting) && avRendered < avItems.length) avRenderChunk();
+  }, { rootMargin: '600px 0px' }).observe(btn);
+})();
+if (location.hash === AV_HASH) openAllItemsView();
 
 /* ================================================================
    🛒 ウィッシュリスト・必要コスト計算
