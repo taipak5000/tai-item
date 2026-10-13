@@ -1747,7 +1747,7 @@ function pfDashCalendarBarItems(data, year, month) {
   }
 
   if (data.season && data.season.name && data.season.endDate && new Date() < new Date(data.season.endDate)) {
-    pushItems({ end: data.season.endDate }, trEvent(data.season.name));
+    pushItems({ start: data.season.startDate, end: data.season.endDate }, trEvent(data.season.name));
   }
   (data.eventSchedule || []).forEach(ev => pushItems(ev, trEvent(ev.name)));
   (data.candleBonusSchedule || []).forEach(ev => pushItems(ev, trEvent(ev.name)));
@@ -1888,13 +1888,28 @@ function pfDashCalendarHtml(data) {
     </details>`;
 }
 
+// 🌸 季節が「開始前」の間の扱い（item側のCURRENT_SEASONにstartDateが付いている場合だけ働く）。
+// 開始前の季節を「進行中の季節」としてそのまま渡すと、まだ始まっていないのに「開催中」「終了まで」と
+// 出てしまう。そこで開始前の間は、季節を「進行中の季節なし」（終了済み扱い）にし、代わりに
+// EVENT_SCHEDULEの1件（開始・終了つき）として渡す。すると「開始まで」の行が出て、開始後に
+// 読み込み直せば通常の季節の行（開催中＋終了まで）に切り替わる。startDateが無ければ何もしない。
+function pfDashSeasonInProgress(season) {
+  if (!season || !season.startDate || Date.now() >= new Date(season.startDate).getTime()) return season;
+  return { name: season.name, endDate: '1970-01-01T00:00:00Z' };
+}
+function pfDashScheduleWithUpcomingSeason(schedule, season) {
+  var list = schedule || [];
+  if (!season || !season.startDate || Date.now() >= new Date(season.startDate).getTime()) return list;
+  return list.filter(function (ev) { return ev.name !== season.name; })
+    .concat([{ name: season.name, start: season.startDate, end: season.endDate }]);
+}
 async function pfDashLoadData() {
   const res = await fetch(`${SITE_ROOT}/tai-item/index.html`);
   const html = await res.text();
   return {
     revisitSchedules: srchExtractArray(html, 'REVISIT_SPIRIT_SCHEDULES') || [],
-    season: srchExtractArray(html, 'CURRENT_SEASON') || null,
-    eventSchedule: srchExtractArray(html, 'EVENT_SCHEDULE') || [],
+    season: pfDashSeasonInProgress(srchExtractArray(html, 'CURRENT_SEASON') || null),
+    eventSchedule: pfDashScheduleWithUpcomingSeason(srchExtractArray(html, 'EVENT_SCHEDULE') || [], srchExtractArray(html, 'CURRENT_SEASON') || null),
     candleBonusSchedule: srchExtractArray(html, 'CANDLE_BONUS_SCHEDULE') || [],
     nextUpdate: srchExtractArray(html, 'NEXT_UPDATE') || null,
   };

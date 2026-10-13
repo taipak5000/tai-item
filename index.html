@@ -2053,12 +2053,17 @@ function buildCategoryFilterOptions(selectId = 'gsCat', catKeys = null) {
 // ▼▼▼ 現在のシーズンの終了日時（手動更新） ▼▼▼
 // ダッシュボード（今日・今週・今月）の「シーズン終了まであとN日」表示、および
 // アイテム検索の「🌟 現在開催中の季節・イベントのみ」チェックの両方に使用。
-// 新しいシーズンが始まったら、name（各カテゴリのITEMS_DATAに書かれているitem.eventの値と
-// 完全一致させること）とendDate（公式発表の終了日時。Sky game公式は太平洋時間なので
-// -07:00/-08:00で指定）を更新してください。
+// 新しいシーズンが発表されたら、name（各カテゴリのITEMS_DATAに書かれているitem.eventの値と
+// 完全一致させること）・startDate（開始日時）・endDate（公式発表の終了日時。Sky game公式は
+// 太平洋時間なので-07:00/-08:00で指定）を更新してください。
+// startDateは省略可能で、開始前の間だけ働きます: まだ始まっていない季節は「開催中」とは扱わず、
+// 各ダッシュボードには「開始まで」の予定として出し、アイテム検索の「現在開催中」にも含めません。
+// 開始日時を過ぎると自動で「開催中・終了まで」の表示へ切り替わります（手動の切り替え作業は不要）。
+// 次の季節が発表済みなら、開始前でもここへ入れておいてよい（EVENT_SCHEDULEへ重複して入れないこと）。
 const CURRENT_SEASON = {
-  name: '親愛なるファン・ゴッホへ',
-  endDate: '2026-10-01T23:59:00-07:00',
+  name: '遥かなる真珠の季節',
+  startDate: '2026-10-16T00:00:00-07:00', // 日本時間 2026/10/16 16:00（デイリーリセット）
+  endDate: '2026-12-31T23:59:59-08:00',   // 日本時間 2027/1/1 16:59:59
 };
 // ▲▲▲ 現在のシーズンの終了日時（手動更新） ▲▲▲
 
@@ -2071,7 +2076,6 @@ const CURRENT_SEASON = {
 // 日時は日本時間（+09:00）で、ゲーム内デイリーリセット基準（例：8/14 16:00〜8/28 15:59）で指定してください。
 const EVENT_SCHEDULE = [
   { name: '月灯りの日々', start: '2026-09-19T16:00:00+09:00', end: '2026-10-10T15:59:59+09:00' },
-  { name: '遥かなる真珠の季節', start: '2026-10-16T16:00:00+09:00', end: '2027-01-01T16:59:59+09:00' },
   { name: 'いたずらな日々', start: '2026-10-23T16:00:00+09:00', end: '2026-11-12T17:00:00+09:00' },
 ];
 // ▲▲▲ ダッシュボード用の日程付きイベント一覧（手動更新） ▲▲▲
@@ -2085,13 +2089,14 @@ const CANDLE_BONUS_SCHEDULE = [
 // ▲▲▲ ダッシュボード用のキャンドル系ボーナス期間一覧（手動更新） ▲▲▲
 
 // アイテム検索の「🌟 現在開催中の季節・イベントのみ」チェックで実際に使う、
-// 「今まさに開催中」のイベント名一覧。CURRENT_SEASON（終了日時）とEVENT_SCHEDULE
+// 「今まさに開催中」のイベント名一覧。CURRENT_SEASON（開始・終了日時）とEVENT_SCHEDULE
 // （開始・終了日時）の実際の日時から毎回その場で算出するため、終了したイベントを
 // 手動で消し忘れる、という不具合がそもそも起きなくなる。
 function getCurrentEventNames() {
   const now = new Date();
   const names = [];
-  if (CURRENT_SEASON.endDate && now < new Date(CURRENT_SEASON.endDate)) {
+  if (CURRENT_SEASON.endDate && now < new Date(CURRENT_SEASON.endDate) &&
+      (!CURRENT_SEASON.startDate || now >= new Date(CURRENT_SEASON.startDate))) {
     names.push(CURRENT_SEASON.name);
   }
   EVENT_SCHEDULE.forEach(ev => {
@@ -2235,9 +2240,12 @@ const REGULAR_AREA_EN = { isle: 'Isle of Dawn', prairie: 'Daylight Prairie', for
 // イベント名から「季節」系か「日々」系かを判定する（イベント選択欄のグループ分け、
 // アイテム検索の「現在開催中のみ」内での季節/日々/再訪の絞り込みで共通利用する）
 // Skyアニバーサリーは名前に「日々」を含まないが、年1回の日々系イベントとして扱う
-// 親愛なるファン・ゴッホへは名前に「季節」を含まないが、実質的には季節イベントとして扱う
+// 親愛なるファン・ゴッホへは名前に「季節」を含まないが、実質的には季節イベントとして扱う。
+// CURRENT_SEASONが次の季節に切り替わっても季節扱いが外れないよう、名前で固定している
+// （名前に「季節」を含まない季節が新しく登場したら、ここへ追加する）
+const SEASON_LIKE_EVENTS_WITHOUT_KISETSU = ['親愛なるファン・ゴッホへ'];
 function isSeasonLikeEvent(e) {
-  return e.includes('季節') || e === CURRENT_SEASON.name;
+  return e.includes('季節') || e === CURRENT_SEASON.name || SEASON_LIKE_EVENTS_WITHOUT_KISETSU.includes(e);
 }
 function isDayLikeEvent(e) {
   return !isSeasonLikeEvent(e) && (e.includes('日々') || e === 'Skyアニバーサリー');
