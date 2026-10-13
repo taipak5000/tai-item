@@ -2074,6 +2074,9 @@ const CURRENT_SEASON = {
 // 終了すると自動で外れます（終了のたびに別リストを手動で更新する必要はありません）。
 // startを省略すると「常に開催中→endDateで終了」として扱われます。
 // 日時は日本時間（+09:00）で、ゲーム内デイリーリセット基準（例：8/14 16:00〜8/28 15:59）で指定してください。
+// ⚠️ ゲームの時刻は太平洋時間(PT)基準のため、夏時間が終わる2026/11/1 18:00(JST)から翌年3月までは、
+// デイリーリセットが日本時間17:00になります（例：11/12 17:00〜11/26 16:59）。11/1以降の日時は17:00始まり／
+// 16:59終わりで指定してください（太平洋時間のオフセット-08:00で書くと迷いません。例：'2026-11-12T00:00:00-08:00'）。
 const EVENT_SCHEDULE = [
   { name: '月灯りの日々', start: '2026-09-19T16:00:00+09:00', end: '2026-10-10T15:59:59+09:00' },
   { name: 'いたずらな日々', start: '2026-10-23T16:00:00+09:00', end: '2026-11-12T17:00:00+09:00' },
@@ -2121,7 +2124,9 @@ const NEXT_UPDATE = {
 // 複数の来訪（例: 2週間おきに4日間だけ来る単独の旅の精霊と、期間限定の来訪団）が同時に
 // 進行することがあるため、配列で複数スケジュールを管理する。各スケジュールは以下のどちらか:
 //   ・intervalDaysあり：anchorStart/anchorEndを起点に周期的に繰り返す（profile側のrecurringVisitと同じ考え方。
-//     直近1回分の開始・終了さえ合わせておけば、以降は自動計算されるので毎回の手動切り替えは不要）
+//     直近1回分の開始・終了さえ合わせておけば、以降は自動計算されるので毎回の手動切り替えは不要）。
+//     周期は「太平洋時間の壁時計」で数えるため、夏時間の切替（11/1・3月）をまたいでも日本時間の時刻
+//     （16:00→17:00）が自動で追従する（pfDashCycleBounds・profiles.js）
 //   ・intervalDaysなし：start/endの一回限りの来訪期間
 // 来訪が入れ替わったら、該当スケジュールのitems・日時を更新するか、終了したスケジュールを削除し、
 // 新しい来訪があれば配列に追加してください。
@@ -2158,12 +2163,9 @@ const REVISIT_SPIRIT_SCHEDULES = [
 function isRevisitScheduleActive(schedule) {
   const now = new Date();
   if (schedule.intervalDays) {
-    const start0 = new Date(schedule.anchorStart);
-    const end0 = new Date(schedule.anchorEnd);
-    const intervalMs = schedule.intervalDays * 86400000;
-    const k = Math.floor((now - start0) / intervalMs);
-    const start = new Date(start0.getTime() + k * intervalMs);
-    const end = new Date(start.getTime() + (end0 - start0));
+    // 周期のk番目の開始・終了は、太平洋時間の壁時計で計算する（profiles.js）
+    const k = pfDashCycleIndexAt(schedule, now);
+    const { start, end } = pfDashCycleBounds(schedule, k);
     return start <= now && now <= end;
   }
   return new Date(schedule.start) <= now && now <= new Date(schedule.end);
