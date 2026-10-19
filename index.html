@@ -310,6 +310,15 @@
     .cat-chevron { color: var(--text-3); font-size: 15px; font-weight: 300; }
 
     /* ── 条件別の達成率（無課金・限定など） ─────────── */
+    .cond-toggle {
+      display: flex; align-items: center; justify-content: space-between; width: 100%;
+      background: none; border: 0; cursor: pointer; font-family: inherit; text-align: left;
+      font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px;
+      color: var(--text-2); padding: 22px 4px 8px;
+    }
+    .cond-chev { transition: transform 0.2s; transform: rotate(90deg); }
+    .cond-toggle[aria-expanded="false"] .cond-chev { transform: rotate(0deg); }
+    #condSection.collapsed .cond-card { display: none; }
     .cond-card {
       background: var(--card); border-radius: var(--r);
       padding: 10px 16px 6px;
@@ -1142,7 +1151,10 @@
 
   <!-- ▸ 条件別の達成率（無課金・限定など。allItemsCacheが揃ってから描画） -->
   <div id="condSection">
-    <p class="sec-label" data-i18n-en="Completion Rate by Condition">条件別の達成率</p>
+    <button type="button" class="cond-toggle" id="condToggle" aria-expanded="true" aria-controls="condRates" onclick="toggleCondRates()">
+      <span data-i18n-en="Completion Rate by Condition">条件別の達成率</span>
+      <svg class="inline-icon cond-chev" width="14" height="14" style="stroke:currentColor;"><use href="#i-chevron-right"/></svg>
+    </button>
     <div class="cond-card" id="condRates"></div>
   </div>
 
@@ -1967,6 +1979,23 @@ const COND_RATE_ROWS = [
   { ja: '恒常精霊のアイテム', en: 'Regular spirit items', test: it => it.event === '恒常精霊' },
   { ja: '染料に対応', en: 'Dyeable', test: it => !!it.dye },
 ];
+
+// 開閉状態は端末ごとの表示設定（折りたたみ=1）。保存できない環境でも開いた状態で動く
+const COND_COLLAPSED_KEY = 'itemCondRatesCollapsed_v1';
+function applyCondCollapsed(collapsed) {
+  document.getElementById('condSection').classList.toggle('collapsed', collapsed);
+  document.getElementById('condToggle').setAttribute('aria-expanded', String(!collapsed));
+}
+function toggleCondRates() {
+  const collapsed = !document.getElementById('condSection').classList.contains('collapsed');
+  applyCondCollapsed(collapsed);
+  try { localStorage.setItem(COND_COLLAPSED_KEY, collapsed ? '1' : '0'); } catch (e) { /* noop */ }
+}
+document.addEventListener('DOMContentLoaded', () => {
+  let collapsed = false;
+  try { collapsed = localStorage.getItem(COND_COLLAPSED_KEY) === '1'; } catch (e) { /* noop */ }
+  applyCondCollapsed(collapsed);
+});
 
 // failed=true（全カテゴリの取得に失敗＝file://で開いた等）の時はセクションごと隠す
 function renderConditionRates(failed) {
