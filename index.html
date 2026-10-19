@@ -309,6 +309,25 @@
     .cat-count { font-size: 11px; color: var(--text-2); }
     .cat-chevron { color: var(--text-3); font-size: 15px; font-weight: 300; }
 
+    /* ── 条件別の達成率（無課金・限定など） ─────────── */
+    .cond-card {
+      background: var(--card); border-radius: var(--r);
+      padding: 10px 16px 6px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0.5px 1px rgba(0,0,0,0.04);
+      display: grid; grid-template-columns: 1fr; column-gap: 28px;
+    }
+    @media (min-width: 640px) { .cond-card { grid-template-columns: 1fr 1fr; } }
+    .cond-row { padding: 9px 0 7px; min-width: 0; }
+    .cond-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 7px; }
+    .cond-name { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.35; }
+    .cond-pct { font-size: 14px; font-weight: 700; color: var(--orange); white-space: nowrap; }
+    .cond-pct.high  { color: var(--green); }
+    .cond-pct.empty { color: var(--text-3); }
+    .cond-sub { font-size: 11px; color: var(--text-2); }
+    .cond-desc { font-size: 11px; color: var(--text-2); line-height: 1.5; margin-top: 2px; }
+    .cond-note { grid-column: 1 / -1; font-size: 11px; color: var(--text-2); padding: 6px 0 8px; border-top: 1px solid var(--sep); margin-top: 4px; }
+    .cond-loading { grid-column: 1 / -1; font-size: 12px; color: var(--text-2); padding: 14px 0; text-align: center; }
+
     /* ── Hint box ──────────────────────────────── */
     .hint {
       margin-top: 10px;
@@ -1121,6 +1140,12 @@
     </div>
   </div>
 
+  <!-- ▸ 条件別の達成率（無課金・限定など。allItemsCacheが揃ってから描画） -->
+  <div id="condSection">
+    <p class="sec-label" data-i18n-en="Completion Rate by Condition">条件別の達成率</p>
+    <div class="cond-card" id="condRates"></div>
+  </div>
+
   <!-- ▸ 称号（🏆 実績） -->
   <p class="sec-label" data-i18n-en="Titles">称号</p>
   <div class="titles-panel" id="titlesPanel"></div>
@@ -1920,6 +1945,70 @@ function cardHTML(cat, data, fallbackTotal) {
     </a>`;
 }
 
+/* ── 条件別の達成率 ─────────────────────
+   全体の達成率を「無課金」「限定（復刻なし）」などの条件で切り分けて表示する。
+   元になるのはアイテム横断検索と同じ allItemsCache（各カテゴリのITEMS_DATA）と、
+   各カテゴリの所持状態（readCatState）。That Sky Shop はバナーと同じく集計対象外。
+   ※ cost==='free' はキャンドル/ハート交換・アドベンチャーパス入手など「課金なしで入手できる」もの。 */
+const COND_RATE_ROWS = [
+  { ja: '無課金で入手できる', en: 'Free (no purchase needed)',
+    descJa: 'キャンドル・ハート交換やアドベンチャーパス入手など、課金なしで手に入るアイテム',
+    descEn: 'Items you can get without paying (Candle/Heart trades, Adventure Pass rewards, etc.)',
+    test: it => it.cost === 'free' },
+  { ja: '課金アイテム', en: 'Paid items', test: it => it.cost === 'premium' },
+  { ja: '限定（復刻なし）', en: 'Limited (no re-release)', test: it => !!it.noReprint },
+  { ja: '無課金の限定アイテム', en: 'Free & limited',
+    descJa: '無課金で入手できたが、復刻されないアイテム',
+    descEn: 'Free items that will not be re-released',
+    test: it => it.cost === 'free' && !!it.noReprint },
+  { ja: '復刻の可能性あり', en: 'May be re-released', test: it => !it.noReprint },
+  { ja: '季節のアイテム', en: 'Season items', test: it => isSeasonLikeEvent(it.event) },
+  { ja: '日々イベントのアイテム', en: 'Days event items', test: it => isDayLikeEvent(it.event) },
+  { ja: '恒常精霊のアイテム', en: 'Regular spirit items', test: it => it.event === '恒常精霊' },
+  { ja: '染料に対応', en: 'Dyeable', test: it => !!it.dye },
+];
+
+// failed=true（全カテゴリの取得に失敗＝file://で開いた等）の時はセクションごと隠す
+function renderConditionRates(failed) {
+  const section = document.getElementById('condSection');
+  const body = document.getElementById('condRates');
+  if (!section || !body) return;
+  const en = CURRENT_LANG === 'en';
+  if (failed) { section.style.display = 'none'; return; }
+  if (!allItemsCache) {
+    body.innerHTML = `<div class="cond-loading">${en ? 'Loading…' : '読み込み中…'}</div>`;
+    return;
+  }
+
+  const countable = allItemsCache.filter(it => it.event !== 'That Sky Shop');
+  const ownedByCat = {};
+  CATS.forEach(c => { ownedByCat[c.key] = readCatState(c.key).owned; });
+  const isOwned = it => !!(ownedByCat[it.catKey] && ownedByCat[it.catKey][it.id]);
+
+  const rowsHtml = COND_RATE_ROWS.map(row => {
+    const hit = countable.filter(row.test);
+    if (hit.length === 0) return '';
+    const owned = hit.filter(isOwned).length;
+    const p = Math.round(owned / hit.length * 100);
+    const high = p >= 80;
+    const desc = en ? row.descEn : row.descJa;
+    return `
+      <div class="cond-row">
+        <div class="cond-top">
+          <span class="cond-name">${escapeHtml(en ? row.en : row.ja)}</span>
+          <span class="cond-pct ${p === 0 ? 'empty' : high ? 'high' : ''}">${p}<span class="num-unit">%</span></span>
+        </div>
+        <div class="cat-bar"><div class="cat-fill ${high ? 'high' : ''}" style="width:0%" data-target="${p}"></div></div>
+        <div class="cond-sub">${owned} / ${hit.length}${en ? ' owned' : ' 所持'}</div>
+        ${desc ? `<div class="cond-desc">${escapeHtml(desc)}</div>` : ''}
+      </div>`;
+  }).join('');
+
+  body.innerHTML = rowsHtml + `<div class="cond-note">${en
+    ? 'Items from That Sky Shop are excluded, as in the overall rate.'
+    : '※ That Sky Shop のアイテムは、全体の達成率と同じく集計対象外です。'}</div>`;
+}
+
 /* ── Main render ───────────────────────── */
 function loadAndRender() {
   let own = 0, tot = 0, active = 0;
@@ -1943,6 +2032,8 @@ function loadAndRender() {
   document.getElementById('catLabel').textContent =
     (CURRENT_LANG === 'en' ? 'Categories' : 'カテゴリ一覧') +
     (active > 0 ? (CURRENT_LANG === 'en' ? ` (${active}/${CATS.length} registered)` : `（${active}/${CATS.length} 登録済み）`) : '');
+
+  renderConditionRates(); // バーのアニメーション(.cat-fill)より前に描画しておく
 
   /* Gauge animation */
   const fill = document.getElementById('gFill');
@@ -1980,7 +2071,7 @@ document.addEventListener('DOMContentLoaded', checkForSharedCoordInUrl);
 // 未登録カテゴリでも総アイテム数を表示できるよう、全カテゴリのデータをバックグラウンドで取得しておく
 // （取得できたら件数表示を更新。file:// で開いている等、失敗しても「未登録」表示に留まるだけなので無視してよい）
 document.addEventListener('DOMContentLoaded', () => {
-  loadAllItemsOnce().then(loadAndRender).catch(() => {});
+  loadAllItemsOnce().then(loadAndRender).catch(() => renderConditionRates(true));
 });
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) loadAndRender();
