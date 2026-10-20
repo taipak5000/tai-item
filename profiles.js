@@ -2220,6 +2220,51 @@ function pfDashClose() {
   pfDashStopTimer();
 }
 
+
+// 🪟 ワイド画面（幅1280px以上）の右サイドパネル: ダッシュボードを常設する（tai-hubの右パネルと同じ仕様）。
+// レイアウトのCSS・描画前のクラス付与は <head> 内の #side-panels-css / #side-panels-early。
+// モーダル側の描画（#dashBody・タイマー）とは独立しているので、同時に出ても干渉しない。
+(function sideDashPanel() {
+  var MQ = window.matchMedia('(min-width: 1280px)');
+  var host = null, bodyEl = null, timer = null, token = 0;
+  function enabled() { try { return localStorage.getItem('sky_hub_side_panels') !== '0'; } catch (e) { return true; } }
+  function isEn() { try { return localStorage.getItem('sky_app_lang') === 'en'; } catch (e) { return false; } }
+  function rebuild() {
+    if (!bodyEl || !pfDashCache) return;
+    var cal = bodyEl.querySelector('.dash-calendar');
+    var wasOpen = cal && cal.open;
+    bodyEl.innerHTML = pfDashBuildHtml(pfDashCache);
+    if (wasOpen) { var c2 = bodyEl.querySelector('.dash-calendar'); if (c2) c2.open = true; }
+  }
+  async function start() {
+    if (host) return;
+    var my = ++token, en = isEn();
+    host = document.createElement('aside');
+    host.id = 'sideDashPanel'; host.className = 'side-dash-panel';
+    host.innerHTML = '<div class="side-panel-title">' + (en ? 'Today / This Week / This Month' : '今日・今週・今月') + '</div><div id="sideDashBody"><div class="pf-hint">' + (en ? 'Loading…' : '読み込み中…') + '</div></div>';
+    document.body.appendChild(host);
+    bodyEl = host.querySelector('#sideDashBody');
+    try {
+      if (!pfDashCache) { if (!pfDashLoading) pfDashLoading = pfDashLoadData(); pfDashCache = await pfDashLoading; }
+    } catch (e) {
+      console.error('sideDashPanel', e);
+      if (my === token && bodyEl) bodyEl.innerHTML = '<div class="dash-empty">' + (en ? 'Failed to load' : '読み込みに失敗しました') + '</div>';
+      return;
+    }
+    if (my !== token || !host) return;
+    rebuild();
+    timer = setInterval(rebuild, 1000);
+  }
+  function stop() {
+    token++;
+    if (timer) { clearInterval(timer); timer = null; }
+    if (host) { host.remove(); host = null; bodyEl = null; }
+  }
+  function sync() { if (enabled() && MQ.matches) start(); else stop(); }
+  if (MQ.addEventListener) MQ.addEventListener('change', sync); else if (MQ.addListener) MQ.addListener(sync);
+  window.addEventListener('storage', function (e) { if (e.key === 'sky_hub_side_panels') sync(); });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', sync); else sync();
+})();
 /* ================================================================
    🔔 ダッシュボードのカウントダウンに対する通知リマインダー（任意オプトイン）。
    ページを開きっぱなしにしない前提のツールのため、Service Worker等での
@@ -3218,11 +3263,11 @@ function pfInit() {
       <span class="site-dock-icon"><span class="icon-chip" style="width:28px; height:28px;"><svg width="22" height="22"><use href="#i-folder"/></svg></span></span>
       <span class="site-dock-label" id="siteDockProfileLabel">${pfT('プロフィール', 'Profiles')}</span>
     </button>
-    <button type="button" onclick="pfDashOpen()">
+    <button type="button" class="dock-dash" onclick="pfDashOpen()">
       <span class="site-dock-icon"><span class="icon-chip" style="width:28px; height:28px;"><svg width="22" height="22"><use href="#i-calendar"/></svg></span></span>
       <span class="site-dock-label">${pfT('ダッシュボード', 'Dashboard')}</span>
     </button>
-    <button type="button" onclick="pfToolsOpen()">
+    <button type="button" class="dock-tools" onclick="pfToolsOpen()">
       <span class="site-dock-icon"><span class="icon-chip" style="width:28px; height:28px;"><svg width="22" height="22"><use href="#i-menu"/></svg></span></span>
       <span class="site-dock-label">${pfT('他のツール', 'Other Tools')}</span>
     </button>
