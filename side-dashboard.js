@@ -868,7 +868,7 @@
   /* ── 右サイドパネル ── */
   var MQ = window.matchMedia('(min-width: 1280px)');
   var host = null, bodyEl = null, timer = null, token = 0, cache = null, loading = null;
-  function enabled() { try { return localStorage.getItem('sky_hub_side_panels') !== '0'; } catch (e) { return true; } }
+  function enabled() { return window.skySidePanelEnabled ? window.skySidePanelEnabled('dash') : true; }
   function html() { return pfDashBuildHtml(cache).replace(/href="#i-/g, 'href="#sd-i-'); }
   function rebuild() {
     if (!bodyEl || !cache) return;
@@ -904,6 +904,6 @@
   }
   function sync() { if (enabled() && MQ.matches) start(); else stop(); }
   if (MQ.addEventListener) MQ.addEventListener('change', sync); else if (MQ.addListener) MQ.addListener(sync);
-  window.addEventListener('storage', function (e) { if (e.key === 'sky_hub_side_panels') sync(); });
+  window.addEventListener('sidepanels-change', sync);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', sync); else sync();
 })();
