@@ -53,6 +53,7 @@ const SEASON_NAME_EN = {
   '光の修繕者の季節': 'Season of Lightmending',
   'カーニバルの季節': 'Season of Carnival',
   '親愛なるファン・ゴッホへ': 'Dear Van Gogh',
+  '遥かなる真珠の季節': 'Season of Pearl',
   // 日々（曜日イベント）※すべて英語版Wikiで確認済み
   '来福の日々': 'Days of Fortune',
   '癒しの日々': 'Days of Healing',
