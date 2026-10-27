@@ -53,32 +53,44 @@
   var T = en ? {
     title: 'We are moving to “tai-hub” by the end of October',
     body: 'All tools are being combined into one new site, tai-hub. From November 1, this site can no longer be used. In the same browser, your data carries over as is. ' +
-      'If you use a home-screen app or another browser, please make a backup code with Data Transfer before the move.',
+      'If you use a home-screen app or another browser, please save your data to a file with Data Transfer before the move.',
     open: 'Open tai-hub',
     soon: 'tai-hub (coming soon)',
     backup: 'Back up data',
     close: 'Close',
+    appGuide: 'Using a home-screen app?',
+    appSteps: [
+      'In this app, open "Data Transfer", select the sites, tap "Create Code", then "Download as File". You do not need to copy the code (it can be too long to paste).',
+      'Open tai-hub where you will use it (the tai-hub app added to your home screen, or Safari). They keep separate data, so use the one you will keep using.',
+      'In tai-hub, go to "Data Transfer" → "Restore from a Code", tap "Choose File", pick the saved file, and restore.'
+    ],
     endTitle: 'This site closed on October 31',
     endBody: 'All tools have moved to the new site, tai-hub. Please use tai-hub from now on. In the same browser, your data has already carried over.',
     endOpen: 'Open in tai-hub',
     endAppTitle: 'If you used this site as a home-screen app',
-    endAppBody: 'Data in a home-screen app does not move automatically. Save it to a file below, then restore it in tai-hub under Display Settings → Data Backup → Import.',
+    endAppBody: 'Data in a home-screen app does not move automatically. Save it to a file below, then in tai-hub go to "Data Transfer" → "Restore from a Code" and choose that file.',
     endSave: 'Save data to a file',
     endSaved: 'Saved {n} items. Restore the file in tai-hub.',
     endSaveFailed: 'Could not save the data.'
   } : {
     title: '10月末で、新サイト「tai-hub」へお引っ越しします',
     body: '各ツールを1つにまとめた新サイト「tai-hub」へ移ります。11月1日からはこのサイトは使えなくなります。同じブラウザならデータはそのまま引き継がれます。' +
-      'ホーム画面に追加したアプリや別のブラウザで使っている方は、引っ越し前に「データ引継ぎ」でバックアップのコードを作っておいてください。',
+      'ホーム画面に追加したアプリや別のブラウザで使っている方は、引っ越し前に「データ引継ぎ」でデータをファイルに保存しておいてください。',
     open: 'tai-hubを開く',
     soon: 'tai-hub（準備中）',
     backup: 'データをバックアップ',
     close: '閉じる',
+    appGuide: 'ホーム画面のアプリで使っている方へ',
+    appSteps: [
+      'このアプリの「データ引継ぎ」で移したいサイトを選び、「選んだサイトのコードを作成」→「ファイルとしてダウンロード」を押します。コードのコピーは長すぎて貼り付けられないことがあるので、使わなくて大丈夫です。',
+      'tai-hubを、これから使う場所で開きます（ホーム画面に追加したtai-hubのアプリ、またはSafari）。この2つでもデータは別々なので、使い続ける方で開いてください。',
+      'tai-hubの「データ引継ぎ」→「コードから復元」で「ファイルを選択」を押し、保存したファイルを選んで復元します。'
+    ],
     endTitle: 'このサイトは10月31日で終了しました',
     endBody: '各ツールは新サイト「tai-hub」に移りました。これからは tai-hub をご利用ください。同じブラウザなら、データはそのまま引き継がれています。',
     endOpen: 'tai-hubで開く',
     endAppTitle: 'ホーム画面に追加したアプリで使っていた方へ',
-    endAppBody: 'アプリに保存されたデータは自動では移りません。下のボタンでファイルに保存し、tai-hubの「表示設定 → データのバックアップ → 読み込み」で復元してください。',
+    endAppBody: 'アプリに保存されたデータは自動では移りません。下のボタンでファイルに保存し、tai-hubの「データ引継ぎ」→「コードから復元」でこのファイルを選んで復元してください。',
     endSave: 'データをファイルに保存',
     endSaved: '{n}件を保存しました。tai-hubで読み込んでください。',
     endSaveFailed: 'データを保存できませんでした。'
@@ -106,6 +118,11 @@
     '.hmn-title{margin:0 0 6px;padding-right:28px;font-size:15px;font-weight:700;line-height:1.35;letter-spacing:-.01em}' +
     '.hmn-body{margin:0 0 12px;font-size:13px;line-height:1.7;color:var(--hmn-text-2)}' +
     '.hmn-actions{display:flex;flex-wrap:wrap;gap:8px}' +
+    '.hmn-guide-btn{display:inline-flex;align-items:center;gap:4px;margin:10px 0 0;padding:0;border:0;background:none;font:inherit;font-size:12.5px;font-weight:600;color:var(--hmn-accent);cursor:pointer}' +
+    '.hmn-guide-btn::before{content:"›";display:inline-block;font-size:16px;line-height:1;transition:transform .2s ease}' +
+    '.hmn-guide-btn[aria-expanded="true"]::before{transform:rotate(90deg)}' +
+    '.hmn-steps{margin:8px 0 0;padding-left:1.4em;font-size:12.5px;line-height:1.7;color:var(--hmn-text-2)}' +
+    '.hmn-steps li+li{margin-top:4px}' +
     '.hmn-btn{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 14px;border:0;border-radius:999px;font:inherit;font-size:13px;font-weight:600;text-decoration:none;cursor:pointer;transition:transform .12s}' +
     '.hmn-btn:active{transform:scale(.96)}' +
     '.hmn-primary{background:var(--hmn-accent);color:var(--hmn-accent-ink)}' +
@@ -240,6 +257,20 @@
     actions.appendChild(open);
     if (location.pathname.indexOf(TRANSFER_PATH) !== 0) actions.appendChild(backup);
     box.appendChild(actions);
+
+    // ホーム画面アプリの人向けの手順（開閉式）
+    var guideBtn = el('button', 'hmn-guide-btn', T.appGuide);
+    guideBtn.type = 'button';
+    guideBtn.setAttribute('aria-expanded', 'false');
+    var steps = el('ol', 'hmn-steps');
+    steps.hidden = true;
+    T.appSteps.forEach(function (text) { steps.appendChild(el('li', '', text)); });
+    guideBtn.addEventListener('click', function () {
+      steps.hidden = !steps.hidden;
+      guideBtn.setAttribute('aria-expanded', String(!steps.hidden));
+    });
+    box.appendChild(guideBtn);
+    box.appendChild(steps);
 
     var close = el('button', 'hmn-close', '×');
     close.type = 'button';
