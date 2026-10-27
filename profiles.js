@@ -1569,14 +1569,14 @@ function pfDashFormatShardTime(d) {
 }
 
 // 日替わり大キャンドル（キャンドルのかたまり）の出現エリア予測。
-// 太平洋時間0時に、草原→雨林→峡谷→書庫→荒野の順で毎日切り替わる固定ローテーション
+// 太平洋時間0時に、草原→雨林→峡谷→捨てられた地→書庫の順で毎日切り替わる固定ローテーション
 // （Sky公式Xアカウント@thatskygameJPが「太平洋標準時の0時に更新」と明言済み）。
 // 2026-08-13（太平洋時間の日付）が荒野だったことを起点に計算する。
-// 大キャンドルの地域の並び（草原→雨林→峡谷→書庫→荒野の順で毎日切り替わる）。起点は「2026/10/27(太平洋時間)が書庫」（前日の10/26が峡谷）。
-// ※ 闇の破片のレルム順(SHARD_REALMS)とは別の並びなので、共用しないこと。クエスト・シーズンキャンドルは大キャンドルの前日として計算する。
-const GRAND_CANDLE_ORDER = ['prairie', 'forest', 'valley', 'vault', 'wasteland'];
+// 大キャンドルの地域の並び（草原→雨林→峡谷→捨てられた地→書庫の順で毎日切り替わる）。起点は「2026/10/27(太平洋時間)が書庫」（翌日10/28は草原）。
+// ※ クエスト・シーズンキャンドルは「2日前の大キャンドル」と同じ地域になる（10/27=峡谷、10/28=捨てられた地で確認）。
+const GRAND_CANDLE_ORDER = ['prairie', 'forest', 'valley', 'wasteland', 'vault'];
 const GRAND_CANDLE_ANCHOR_DATE = new Date(2026, 9, 27); // 月は0始まりなので9=10月
-const GRAND_CANDLE_ANCHOR_REALM_IDX = 3; // 書庫（GRAND_CANDLE_ORDERの添字）
+const GRAND_CANDLE_ANCHOR_REALM_IDX = 4; // 書庫（GRAND_CANDLE_ORDERの添字）
 function pfDashGrandCandleRealm(dayOffset = 0) {
   const pacNow = pfDashPacificNow();
   const today = new Date(pacNow);
@@ -2025,7 +2025,7 @@ function pfDashBuildHtml(data) {
   const candleRealm = pfDashGrandCandleRealm();
   const candleRealmLabel = pfT(SHARD_REALM_JA[candleRealm], SHARD_REALM_EN[candleRealm]);
   dailyRows.push(pfDashRow('<svg class="inline-icon" width="16" height="16"><use href="#i-candle"/></svg>', `${pfT('大キャンドル', 'Grand Candle')}：<b>${candleRealmLabel}</b><span class="dash-countdown">${pfT('次の変更まで', 'Changes in')} ${pfDashCountdown(pfDashNextPacificMidnight())}</span>`));
-  const questCandleRealm = pfDashGrandCandleRealm(-1);
+  const questCandleRealm = pfDashGrandCandleRealm(-2);
   const questCandleRealmLabel = pfT(SHARD_REALM_JA[questCandleRealm], SHARD_REALM_EN[questCandleRealm]);
   dailyRows.push(pfDashRow('<svg class="inline-icon" width="16" height="16"><use href="#i-scroll"/></svg>', `${pfT('クエスト・シーズンキャンドル', 'Quest & Season Candle')}：<b>${questCandleRealmLabel}</b><span class="dash-countdown">${pfT('次の変更まで', 'Changes in')} ${pfDashCountdown(pfDashNextPacificMidnight())}</span>`));
   dailyRows.push(pfDashRow('<svg class="inline-icon" width="16" height="16"><use href="#i-geyser"/></svg>', `${pfT('ウニ焼き', 'Geyser')}<span class="dash-countdown">${pfT('次回まで', 'Next in')} ${pfDashCountdown(pfDashNextEvenHourEvent(5))}</span>`));
